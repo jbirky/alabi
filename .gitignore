@@ -1,0 +1,6 @@
+*.svg
+*.png
+*.pdf
+*.hdf5
+*.csv
+approxposterior/*
