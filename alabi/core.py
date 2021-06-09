@@ -37,18 +37,10 @@ class SurrogateModel(object):
 
     Parameters
     ----------
-    theta : array-like
-        Input features (n_samples x n_features).  Defaults to None.
-    y : array-like
-        Input result of forward model (n_samples,). Defaults to None.
-    lnprior : function
-        Defines the log prior over the input features.
-    lnlike : function
+    fn : function
         Defines the log likelihood function.  In this function, it is assumed
         that the forward model is evaluated on the input theta and the output
         is used to evaluate the log likelihood.
-    priorSample : function
-        Method to randomly sample points over region allowed by prior
     bounds : tuple/iterable
         Hard bounds for parameters
     gp : george.GP, optional
@@ -57,6 +49,10 @@ class SurrogateModel(object):
         specify their own kernel, GP using george. If None is provided, then
         approxposterior initialized a GP with a single ExpSquaredKernel as
         these work well in practice.
+    theta : array-like, optional
+        Input features (n_samples x n_features).  Defaults to None.
+    y : array-like, optional
+        Input result of forward model (n_samples,). Defaults to None.
     algorithm : str, optional
         Point selection algorithm that specifies which utility (also
         referred to as acquisition) function to use.  Defaults to bape.
@@ -70,14 +66,16 @@ class SurrogateModel(object):
         For approximate Bayesian posterior estimation, bape or alternate
         are typically the best optimizations. For Bayesian optimization,
         jones (expected improvement) usually performs best.
+    cache : bool, optional
+    savedir : str, optional
 
     Returns
     -------
     """
 
     def __init__(self, fn=None, bounds=None, 
-                 gp=None, algorithm="bape", 
-                 theta=[], y=[], cache=True, savedir='.'):
+                 gp=None, theta=[], y=[],  
+                 algorithm="bape", cache=True, savedir='.'):
         """
         Initializer.
         """
@@ -90,10 +88,18 @@ class SurrogateModel(object):
 
         # Set function for training the GP, and initial training samples
         self.fn = fn
-        self.theta = np.array(theta)
-        self.y = np.array(y)
 
-        # Make sure y, theta are valid floats
+        # Make sure y, theta are valid 
+        if (len(theta) != 0) and (len(y) != 0):
+            if len(theta) != len(y):
+                raise ValueError("theta and y must be the same length.")
+            else:
+                self.theta = np.array(theta)
+                self.y = np.array(y)
+        else:
+            self.theta = np.array([])
+            self.y = np.array([])
+
         if np.any(~np.isfinite(self.theta)) or np.any(~np.isfinite(self.y)):
             print("theta, y:", theta, y)
             raise ValueError("All theta and y values must be finite!")
@@ -140,7 +146,7 @@ class SurrogateModel(object):
         self.savedir = savedir
 
 
-    def _gpll(self, theta, *args, **kwargs):
+    def evaluate(self, theta, *args, **kwargs):
         """
         Compute the approximate posterior conditional distibution, the
         likelihood + prior learned by the GP, at a given point, theta.
@@ -219,233 +225,15 @@ class SurrogateModel(object):
                                      gpHyperPrior=gpHyperPrior)
 
     
-    def findNextPoint(self, theta0=None, computeLnLike=True, seed=None,
+    def find_next_point(self, theta0=None, computeLnLike=True, seed=None,
                       cache=True, gpOptions=None, gpP0=None, verbose=True,
                       nGPRestarts=1, nMinObjRestarts=5, gpMethod="powell",
                       minObjMethod="nelder-mead", minObjOptions=None,
                       runName="apRun", numNewPoints=1, optGPEveryN=1,
                       gpHyperPrior=gpUtils.defaultHyperPrior, args=None,
                       **kwargs):
-        """
-        Find numNewPoints new point(s), thetaT, by maximizing utility function.
-        Note that we call a minimizer because minimizing negative of utility
-        function is the same as maximizing it.
-
-        This function can be used in 2 ways:
-            1) Finding the new point(s), thetaT, that would maximally improve the
-               GP's predictive ability.  This point could be used to select
-               where to run a new forward model, for example.
-            2) Find a new thetaT and evaluate the forward model at this location
-               to iteratively improve the GP's predictive performance, a core
-               function of the BAPE and AGP algorithms.
-
-        If computeLnLike is True, all results of this function are appended to
-        the corresponding object elements, e.g. thetaT appended to self.theta.
-        thetaT is returned, as well as yT if computeLnLike is True.  Note that
-        returning yT requires running the forward model and updating the GP.
-
-        If numNewPoints > 1, iteratively find numNewPoints. After each new
-        point is found, re-compute the GP covariance matrix. The GP
-        hyperparameters are then optionally re-optimized at the specified
-        cadence.
-
-        Parameters
-        ----------
-        theta0 : float/iterable, optional
-            Initial guess for optimization. Defaults to None, which draws a sample
-            from the prior function using sampleFn.
-        computeLnLike : bool, optional
-            Whether or not to run the forward model and compute yT, the sum of
-            the lnlikelihood and lnprior. Defaults to True. If True, also
-            appends all new values to self.theta, self.y, in addition to
-            returning the new values
-        seed : int, optional
-            RNG seed.  Defaults to None.
-        cache : bool, optional
-            Whether or not to cache forward model input-output pairs.  Defaults
-            to True since the forward model is expensive to evaluate. In
-            practice, users should cache forward model inputs, outputs,
-            ancillary parameters, etc in each likelihood function evaluation,
-            but saving theta and y here doesn't hurt.  Saves the results to
-            apFModelCache.npz in the current working directory (name can change
-            if user specifies runName).
-        optGPEveryN : int, optional
-            How often to optimize the GP hyperparameters.  Defaults to
-            re-optimizing everytime a new design point is found, e.g. every time
-            a new (theta, y) pair is added to the training set.  Increase this
-            parameter if approxposterior is running slowly. NB: GP hyperparameters
-            are optimized *only* if computeLnLike == True
-        gpMethod : str, optional
-            scipy.optimize.minimize method used when optimized GP hyperparameters.
-            Defaults to None, which is powell, and it usually works.
-        gpOptions : dict, optional
-            kwargs for the scipy.optimize.minimize function used to optimize GP
-            hyperparameters.  Defaults to None.
-        gpP0 : array, optional
-            Initial guess for kernel hyperparameters.  If None, defaults to
-            np.random.randn for each parameter.
-        nGPRestarts : int, optional
-            Number of times to restart GP hyperparameter optimization.  Defaults
-            to 1. Increase this number if the GP is not well-optimized.
-        nMinObjRestarts : int, optional
-            Number of times to restart minimizing -utility function to select
-            next point to improve GP performance.  Defaults to 5.  Increase this
-            number of the point selection is not working well.
-        runName : str, optional
-            Filename for hdf5 file where mcmc chains are saved.  Defaults to
-            apRun.
-        gpHyperPrior : str/callable, optional
-            Prior function for GP hyperparameters. Defaults to the defaultHyperPrior fn.
-            This function asserts that the mean must be negative and that each log
-            hyperparameter is within the range [-20,20].
-        numNewPoints : int, optional
-            Number of new points to find. Defaults to 1.
-        minObjMethod : str, optional
-            scipy.optimize.minimize method used when optimizing
-            utility functions for point selection.  Defaults to nelder-mead.
-        minObjOptions : dict, optional
-            kwargs for the scipy.optimize.minimize function used when optimizing
-            utility functions for point selection.  Defaults to None,
-            but if method == "nelder-mead", options = {"adaptive" : True}
-        verbose : bool, optional
-            Output all the diagnostics? Defaults to True.
-        args : iterable, optional
-            Arguments for user-specified loglikelihood function that calls the
-            forward model. Defaults to None.
-        kwargs : dict, optional
-            Keyword arguments for user-specified loglikelihood function that
-            calls the forward model. Defaults to None.
-
-        Returns
-        -------
-        thetaT : float or iterable
-            New design point(s) selected by maximizing GP utility function.
-        yT : float or iterable, optional
-            Value(s) of loglikelihood + logprior at thetaT. Only returned if
-            computeLnLike == True
-        """
-
-        # Validate inputs
-        assert (isinstance(numNewPoints, int) and (numNewPoints >= 1))
-        assert (isinstance(optGPEveryN, int) and (optGPEveryN >= 1))
-
-        if verbose:
-            if numNewPoints < optGPEveryN:
-                errMsg = "WARNING: numNewPoints < optGPEveryN."
-                errMsg += "GP hyperparameters will not be re-optimized. Set "
-                errMsg += "numNewPoints < optGPEveryN to fix this, if important (it probably is)."
-                print(errMsg)
-
-        if args is None:
-            args = ()
-
-        # Containers for new points
-        newTheta = list()
-        if computeLnLike:
-            newY = list()
-
-        # Find numNewPoints new design points
-        for ii in tqdm.tqdm(range(numNewPoints)):
-
-            # If alternating utility functions, switch here!
-            if self.algorithm == "alternate":
-                # AGP on even, BAPE on odd
-                if ii % 2 == 0:
-                    self.utility = ut.AGPUtility
-                else:
-                    self.utility = ut.BAPEUtility
-
-            # Find new theta that produces a valid loglikelihood
-            thetaT, uT = ut.minimizeObjective(self.utility, self.y, self.gp,
-                                              sampleFn=self.priorSample,
-                                              priorFn=self._lnprior,
-                                              nRestarts=nMinObjRestarts,
-                                              method=minObjMethod,
-                                              options=minObjOptions,
-                                              bounds=self.bounds,
-                                              theta0=theta0,
-                                              args=(self.y,self.gp,self._lnprior))
-
-            # Save new thetaT
-            newTheta.append(thetaT)
-
-            # Compute lnLikelihood at thetaT?
-            if computeLnLike:
-                # 2) Query forward model at new point, thetaT
-                # Evaluate forward model via loglikelihood function
-                loglikeT = self._lnlike(thetaT, *args, **kwargs)
-
-                # If loglike function returns loglike, blobs, ..., only use loglike
-                if hasattr(loglikeT, "__iter__"):
-                    yT = np.array([loglikeT[0] + self._lnprior(thetaT)])
-                else:
-                    yT = np.array([loglikeT + self._lnprior(thetaT)])
-
-                # Save new logprobability
-                newY.append(yT)
-
-                # Valid theta, y found. Join theta, y arrays with new points.
-                if self.theta.ndim > 1:
-                    self.theta = np.vstack([self.theta, np.array(thetaT)])
-                else:
-                    self.theta = np.hstack([self.theta, thetaT])
-                self.y = np.hstack([self.y, yT])
-
-                # Re-optimize GP with new point, optimize
-
-                # Re-conpute GP's covariance matrix since self.theta's shape changed
-                try:
-                    # Create GP using same kernel, updated estimate of the mean, but new theta
-                    # Always need to compute the covariance matrix when we find
-                    # a new theta
-                    currentHype = self.gp.get_parameter_vector()
-                    if verbose:
-                        print('hyperparameters', currentHype)
-                    if cache:
-                        self.gpPar.append(currentHype)
-
-                    self.gp = george.GP(kernel=self.gp.kernel, fit_mean=True,
-                                        mean=self.gp.mean,
-                                        white_noise=self.gp.white_noise,
-                                        fit_white_noise=False)
-                    self.gp.set_parameter_vector(currentHype)
-                    self.gp.compute(self.theta)
-
-                    # Reoptimize GP hyperparameters?
-                    if ii % optGPEveryN == 0:
-                        self.optGP(seed=seed, method=gpMethod, options=gpOptions,
-                                   p0=gpP0, nGPRestarts=nGPRestarts,
-                                   gpHyperPrior=gpHyperPrior)
-                    else:
-                        pass
-
-                except ValueError:
-                    print("theta:", self.theta)
-                    print("y:", self.y)
-                    print("gp parameters names:", self.gp.get_parameter_names())
-                    print("gp parameters:", self.gp.get_parameter_vector())
-                    raise ValueError("GP couldn't optimize!")
-
-                # Save forward model input-output pairs since they take forever to
-                # calculate and we want them around in case something weird happens.
-                # Users should probably do this in their likelihood function
-                # anyways, but might as well do it here too.
-                if cache:
-                    # If scaling, save theta in physical units
-                    np.savez(str(runName)+"APFModelCache.npz",
-                             theta=self.theta, y=self.y)
-        # end loop
-
-        # Figure out what to return
-        if numNewPoints == 1:
-            newTheta = newTheta[0]
-            if computeLnLike:
-                newY = newY[0]
-
-        if computeLnLike:
-            return np.asarray(newTheta), np.asarray(newY)
-        else:
-            return np.asarray(newTheta)
+                      
+        return NotImplementedError("Not implemented.")
 
 
     def initial_train(self, ninit=None, sampler='uniform'):
@@ -471,7 +259,7 @@ class SurrogateModel(object):
         #     # saved in self.theta, and self.y, expanding the training set
         #     # 2) In this function, GP hyperparameters are reoptimized after every
         #     # optGPEveryN new points
-        #     _, _ = self.findNextPoint(computeLnLike=True,
+        #     _, _ = self.find_next_point(computeLnLike=True,
         #                               seed=seed,
         #                               cache=cache,
         #                               gpMethod=gpMethod,
@@ -491,173 +279,14 @@ class SurrogateModel(object):
         return NotImplementedError("Not implemented.")
 
 
-    def runMCMC(self, samplerKwargs=None, mcmcKwargs=None, runName="apRun",
-                cache=True, estBurnin=True, thinChains=True, verbose=False,
-                args=None, **kwargs):
-        """
-        Given forward model input-output pairs, theta and y, and a trained GP,
-        run an MCMC using the GP to evaluate the logprobability instead of the
-        true, computationally-expensive forward model.
+    def run_mcmc(self, sampler="emcee", **kwargs):
 
-        Parameters
-        ----------
-        samplerKwargs : dict, optional
-            Parameters for emcee.EnsembleSampler object
-            If None, defaults to the following:
-                nwalkers : int, optional
-                    Number of emcee walkers.  Defaults to 10 * dim
-        mcmcKwargs : dict, optional
-            Parameters for emcee.EnsembleSampler.sample/.run_mcmc methods. If
-            None, defaults to the following required parameters:
-                iterations : int, optional
-                    Number of MCMC steps.  Defaults to 10,000
-                initial_state : array/emcee.State, optional
-                    Initial guess for MCMC walkers.  Defaults to None and
-                    creates guess from priors.
-        runName : str, optional
-            Filename prefix for all cached files, e.g. for hdf5 file where mcmc
-            chains are saved.  Defaults to runNameii.h5. where ii is the
-            current iteration number.
-        cache : bool, optional
-            Whether or not to cache MCMC chains, forward model input-output
-            pairs, and GP kernel parameters.  Defaults to True since they're
-            expensive to evaluate. In practice, users should cache forward model
-            inputs, outputs, ancillary parameters, etc in each likelihood
-            function evaluation, but saving theta and y here doesn't hurt.
-            Saves the forward model, results to runNameAPFModelCache.npz,
-            the chains as runNameii.h5 for each, iteration ii, and the GP
-            parameters in runNameAPGP.npz in the current working directory, etc.
-        estBurnin : bool, optional
-            Estimate burn-in time using integrated autocorrelation time
-            heuristic.  Defaults to True. In general, we recommend users
-            inspect the chains and calculate the burnin after the fact to ensure
-            convergence, but this function works pretty well.
-        thinChains : bool, optional
-            Whether or not to thin chains.  Useful if running long chains.
-            Defaults to True.  If true, estimates a thin cadence
-            via int(0.5*np.min(tau)) where tau is the intergrated autocorrelation
-            time.
-        verbose : bool, optional
-            Output all the diagnostics? Defaults to False.
-        args : iterable, optional
-            Arguments for user-specified loglikelihood function that calls the
-            forward model. Defaults to None.
-        kwargs : dict, optional
-            Keyword arguments for user-specified loglikelihood function that
-            calls the forward model.
-
-        Returns
-        -------
-        sampler : emcee.EnsembleSampler
-            emcee sampler object
-        iburn : int
-            burn-in index estimate.  If estBurnin == False, returns 0.
-        ithin : int
-            thin cadence estimate.  If thinChains == False, returns 1.
-        """
-
-        # Initialize, validate emcee.EnsembleSampler and run_mcmc parameters
-        samplerKwargs, mcmcKwargs = mcmcUtils.validateMCMCKwargs(self,
-                                                                 samplerKwargs,
-                                                                 mcmcKwargs,
-                                                                 verbose)
-
-        # Create backend to save chains?
-        if cache:
-            bname = str(runName) + ".h5"
-            self.backends.append(bname)
-            backend = emcee.backends.HDFBackend(bname)
-            backend.reset(samplerKwargs["nwalkers"], samplerKwargs["ndim"])
-        # Only keep last sampler object in memory
-        else:
-            backend = None
-
-        # Create sampler using GP lnlike function as forward model surrogate
-        self.sampler = emcee.EnsembleSampler(**samplerKwargs,
-                                             backend=backend,
-                                             args=args,
-                                             kwargs=kwargs,
-                                             blobs_dtype=[("lnprior", float)])
-
-        # Run MCMC!
-        for _ in self.sampler.sample(**mcmcKwargs):
-            pass
-        if verbose:
-            print("mcmc finished")
-
-        # If estimating burn in or thin scale, compute integrated
-        # autocorrelation length of the chains
-        iburn, ithin = mcmcUtils.estimateBurnin(self.sampler,
-                                                estBurnin=estBurnin,
-                                                thinChains=thinChains,
-                                                verbose=verbose)
-
-        return self.sampler, iburn, ithin
+        return NotImplementedError("Not implemented.")
 
 
-    def findMAP(self, theta0=None, method="nelder-mead", options=None,
+    def find_map(self, theta0=None, method="nelder-mead", options=None,
                 nRestarts=15):
-        """
-        Find the maximum a posteriori (MAP) estimate of the function learned
-        by the GP. To find the MAP, this function minimizes -mean predicted by
-        the GP, aka finds what the GP believes is the maximum of whatever
-        function is definded by self._lnlike + self._lnprior.
 
-        Note: MAP estimation typically work better when fitAmp = True, that is
-        the GP kernel fits for an amplitude term.
-
-        Parameters
-        ----------
-        theta0 : iterable
-            Initial guess. Defaults to a sample from the prior function.
-        method : str, optional
-            scipy.optimize.minimize method.  Defaults to powell.
-        options : dict, optional
-            kwargs for the scipy.optimize.minimize function.  Defaults to None.
-        nRestarts : int, optional
-            Number of times to restart the optimization. Defaults to 15.
-
-        Returns
-        -------
-        MAP : iterable
-            maximum a posteriori estimate
-        MAPVal : float
-            Mean of GP predictive function at MAP solution
-        """
-
-        # Initialize theta0 if not provided. If provided, validate it
-        if theta0 is not None:
-            theta0 = np.array(theta0).reshape(1,self.theta.shape[-1])
-        else:
-            # Guess current max of y
-            theta0 = self.theta[np.argmax(self.y)]
-
-        # Initialize option if method is nelder-mead and options not provided
-        if str(method).lower() == "nelder-mead":
-            if options is None:
-                options = {"adaptive" : True}
-
-        # Containers for solutions
-        res = []
-        vals = []
-
-        # Set optimization fn for MAP
-        def fn(x):
-            # If not allowed by the prior, reject!
-            if not np.isfinite(self._lnprior(x)):
-                return np.inf
-            else:
-                return -(self._gpll(x)[0])
-
-        # Minimize values predicted by GP, i.e. find minimum of mean of GP's
-        # conditional posterior distribution
-        MAP, MAPVal = ut.minimizeObjective(fn, self.y, self.gp,
-                                           self.priorSample, self._lnprior,
-                                           nRestarts=nRestarts, args=None,
-                                           method=method, options=options,
-                                           bounds=self.bounds, theta0=theta0)
-
-        # Return best answer (-MAPVal since we minimized function)
         return MAP, -MAPVal
 
 
@@ -666,220 +295,6 @@ class SurrogateModel(object):
                  gpOptions=None, gpP0=None, optGPEveryN=1, nGPRestarts=1,
                  nMinObjRestarts=5, initGPOpt=True, minObjMethod="nelder-mead",
                  gpHyperPrior=gpUtils.defaultHyperPrior, minObjOptions=None,
-                 findMAP=True, args=None, **kwargs):
-        """
-        Perform Bayesian optimization given a GP surrogate model to estimate
-
-        thetaBest = argmax(fn(theta))
-
-        given a GP trained on (theta, y). In this case, fn is the function
-        specified by self._lnlike + self._lnprior. Note that this function
-        *maximizes* the objective, so if performing a minimization,
-        define the objective as the negative of your function. See Brochu et al.
-        (2009) or Frazier (2018) for good reviews of Bayesian optimization.
-
-        This function terminates once nmax points have been selected or when
-        the function value changes by less than tol over consecutive iterations,
-        whichever one happens first.
-
-        Note 1: lnlike does not have to be a log likelihood, but rather can be any
-        continous function one wishes to optimize. The function lnprior is used
-        to place priors on parameters of the function, theta. The typical use
-        of lnprior is to ensure the solution remains within a hypercube or
-        simplex, i.e., bounding the possible values of theta.
-
-        Note 2: For this function, it is recommended to keep optGPEveryN = 1 to
-        ensure the GP properly learns the underlying function.
-
-        Note 3: Bayesian optimization and MAP estimation typically work better
-        when fitAmp = True, that is the GP kernel has an amplitude term
-
-        Parameters
-        ----------
-        nmax : int
-            Maximum number of new design points to find. These are the
-            points that are selected by maximizing the utility function, e.g.
-            the expected improvement, and sequentially added to the GP training
-            set.
-        theta0 : iterable
-            Initial guess. Defaults to a sample from the prior function.
-        tol : float, optional
-            Convergence tolerance. This function will terminate if the function
-            value at the estimated extremum changes by less than tol over
-            kmax consecutive iterations. Defaults to 1.0e-3.
-        kmax : int, optional
-            Number of iterations required for the difference in estimated
-            extremum functions values < tol required for convergence. Defaults
-            to 3.
-        seed : int, optional
-            RNG seed.  Defaults to None.
-        verbose : bool, optional
-            Output all the diagnostics? Defaults to True.
-        runName : str, optional
-            Filename to prepend to cache files where model input-output pairs
-            and the current GP hyperparameter values are saved. Defaults to
-            apRun.
-        cache : bool, optional
-            Whether or not to cache forward model input-output pairs, and GP
-            kernel parameters.  Defaults to True since they're
-            expensive to evaluate. In practice, users should cache forward model
-            inputs, outputs, ancillary parameters, etc in each likelihood
-            function evaluation, but saving theta and y here doesn't hurt.
-        gpMethod : str, optional
-            scipy.optimize.minimize method used when optimized GP hyperparameters.
-            Defaults to powell (it usually works)
-        gpOptions : dict, optional
-            kwargs for the scipy.optimize.minimize function used to optimize GP
-            hyperparameters.  Defaults to None.
-        gpP0 : array, optional
-            Initial guess for kernel hyperparameters.  If None, defaults to
-            np.random.randn for each parameter.
-        optGPEveryN : int, optional
-            How often to optimize the GP hyperparameters.  Defaults to
-            re-optimizing everytime a new design point is found, e.g. every time
-            a new (theta, y) pair is added to the training set.
-        nGPRestarts : int, optional
-            Number of times to restart GP hyperparameter optimization.  Defaults
-            to 1. Increase this number if the GP is not well-optimized.
-        nMinObjRestarts : int, optional
-            Number of times to restart minimizing -utility function to select
-            next point to improve GP performance.  Defaults to 5.  Increase this
-            number of the point selection is not working well.
-        initGPOpt : bool, optional
-            Whether or not to optimize GP hyperparameters before 0th iteration.
-            Defaults to True (aka assume user didn't optimize GP hyperparameters)
-        gpHyperPrior : str/callable, optional
-            Prior function for GP hyperparameters. Defaults to the defaultHyperPrior fn.
-            This function asserts that the mean must be negative and that each log
-            hyperparameter is within the range [-20,20].
-        minObjMethod : str, optional
-            scipy.optimize.minimize method used when optimizing
-            utility functions for point selection.  Defaults to nelder-mead.
-        minObjOptions : dict, optional
-            kwargs for the scipy.optimize.minimize function used when optimizing
-            utility functions for point selection.  Defaults to None,
-            but if method == "nelder-mead", options = {"adaptive" : True}
-        args : iterable, optional
-            Arguments for user-specified loglikelihood function that calls the
-            forward model. Defaults to None.
-        kwargs : dict, optional
-            Keyword arguments for user-specified loglikelihood function that
-            calls the forward model.
-
-        Returns
-        -------
-        soln : dict
-            Dictionary that contains the following keys: "thetaBest" : Best fit
-            solution, "valBest" : function value at best fit solution, thetas :
-            solution vector, vals : function values along solution, "nev" :
-            number of forward model evaluations, aka number of iterations
-        """
-
-        # Define holders for solutions
-        thetas = list()
-        vals = list()
-        if findMAP:
-            thetasMAP = list()
-            valsMAP = list()
-
-        # Save forward model input-output pairs since they take forever to
-        # calculate and we want them around in case something weird happens.
-        # Users should probably do this in their likelihood function
-        # anyways, but might as well do it here too.
-        if cache:
-            np.savez(str(runName) + "APFModelCache.npz",
-                     theta=self.theta, y=self.y)
-
-        # Set RNG seed?
-        if seed is not None:
-            np.random.seed(seed)
-
-        # Initial optimization of gaussian process?
-        if initGPOpt:
-            self.optGP(seed=seed, method=gpMethod, options=gpOptions, p0=gpP0,
-                       nGPRestarts=nGPRestarts, gpHyperPrior=gpHyperPrior)
-
-        # Main loop - run for nmax iterations or until converged
-        kk = 0
-        for nn in range(nmax):
-            if verbose:
-                print("Iteration: %d" % nn)
-
-            # Figure out when to re-optimize GP hyperparameters
-            if nn % optGPEveryN == 0:
-                optN = 1
-            else:
-                # Huge number so it doesn't reoptimize hyperparameters this iter
-                optN = 99999999
-
-            # 1) Find new (theta, y) pairs by maximizing utility (acquisition)
-            # function, Note that computeLnLike = True means new points are
-            # saved in self.theta, and self.y, expanding the training set
-            thetaT, yT = self.findNextPoint(computeLnLike=True,
-                                            seed=seed,
-                                            cache=cache,
-                                            gpMethod=gpMethod,
-                                            gpOptions=gpOptions,
-                                            nGPRestarts=nGPRestarts,
-                                            nMinObjRestarts=nMinObjRestarts,
-                                            optGPEveryN=optN,
-                                            numNewPoints=1,
-                                            gpHyperPrior=gpHyperPrior,
-                                            minObjMethod=minObjMethod,
-                                            minObjOptions=minObjOptions,
-                                            runName=runName,
-                                            args=args,
-                                            **kwargs)
-
-            if verbose:
-                print("Forward model evaluation at: ", thetaT, ", function value: ", yT)
-
-            # If cache, save current GP hyperparameters
-            if cache:
-                np.savez(str(runName) + "APGP.npz",
-                         gpParamNames=self.gp.get_parameter_names(),
-                         gpParamValues=self.gp.get_parameter_vector())
-
-            # 3a) Cache current best forward model run
-            thetas.append(self.theta[np.argmax(self.y)])
-            vals.append(self.y[np.argmax(self.y)])
-
-            # 3b) Find current MAP solution?
-            if findMAP:
-                thetaN, valN = self.findMAP(theta0=theta0, method=minObjMethod,
-                                            options=minObjOptions,
-                                            nRestarts=nMinObjRestarts)
-
-                if verbose:
-                    print("Current MAP solution: ", thetaN, valN)
-
-                # Save point
-                thetasMAP.append(thetaN)
-                valsMAP.append(valN)
-
-            # Convergence check
-            if nn > 0:
-                if np.fabs(vals[-1] - vals[-2]) < tol:
-                    kk = kk + 1
-                # Not close enough: reset counter
-                else:
-                    kk = 0
-
-                # Converged for enough consecutive iterations?
-                if kk >= kmax:
-                    break
-        # end loop
-
-        # Create solution dictionary that is sort of like minimizer's
-        # OptimizerSolution object
-        soln = {"thetaBest" : thetas[-1], "valBest" : vals[-1],
-                "thetas" : np.asarray(thetas),
-                "vals" : np.asarray(vals), "nev" : nn+1}
-
-        if findMAP:
-            soln["thetasMAP"] = np.asarray(thetasMAP)
-            soln["valsMAP"] = np.asarray(valsMAP)
-            soln["thetaMAPBest"] = soln["thetasMAP"][np.argmax(soln["valsMAP"])]
-            soln["valMAPBest"] = soln["valsMAP"][np.argmax(soln["valsMAP"])]
+                 find_map=True, args=None, **kwargs):
 
         return soln
