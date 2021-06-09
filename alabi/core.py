@@ -76,7 +76,7 @@ class SurrogateModel(object):
     """
 
     def __init__(self, fn=None, bounds=None, 
-                 priorSample=None, gp=None, algorithm="bape", 
+                 gp=None, algorithm="bape", 
                  theta=[], y=[], cache=True, savedir='.'):
         """
         Initializer.
@@ -88,6 +88,8 @@ class SurrogateModel(object):
         if bounds is None:
             raise ValueError("Must supply bounds for prior.")
 
+        # Set function for training the GP, and initial training samples
+        self.fn = fn
         self.theta = np.array(theta)
         self.y = np.array(y)
 
@@ -107,10 +109,7 @@ class SurrogateModel(object):
         else:
             self.bounds = bounds
 
-        # Set required functions, algorithm
-        self._lnprior = lnprior
-        self._lnlike = lnlike
-        self.priorSample = priorSample
+        # Set algorithm
         self.algorithm = str(algorithm).lower()
 
         # Assign utility function
@@ -449,7 +448,7 @@ class SurrogateModel(object):
             return np.asarray(newTheta)
 
 
-    def initial_train(self):
+    def initial_train(self, ninit=None, sampler='uniform'):
 
         return NotImplementedError("Not implemented.")
 
