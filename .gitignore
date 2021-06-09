@@ -3,4 +3,5 @@
 *.pdf
 *.hdf5
 *.csv
+*.ipynb
 approxposterior/*
