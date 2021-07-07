@@ -54,6 +54,19 @@ def plot_hyperparam_vs_iteration(training_results, hp_names,
     plt.close()
 
 
+def plot_train_time_vs_iteration(training_results, savedir):
+
+    plt.plot(training_results["iteration"], training_results["gp_train_time"], 
+                label='GP train time')
+    plt.xlabel('iteration', fontsize=18)
+    plt.ylabel('Time (s)', fontsize=18)
+    plt.legend(loc='best')
+    plt.minorticks_on()
+    plt.tight_layout()
+    plt.savefig(f"{savedir}/gp_train_time_vs_iteration.png")
+    plt.close()
+
+
 def plot_corner_scatter(tt, yy, labels, savedir):
 
     ndim = theta.shape[1]
@@ -79,7 +92,7 @@ def plot_corner_scatter(tt, yy, labels, savedir):
 
 
 def plot_gp_fit_1D(theta, y, gp):
-    
+
     xarr = np.linspace(bounds[0][0], bounds[0][1], 30)
     mu, var = gp.predict(y, xarr, return_var=True)
 
@@ -90,3 +103,17 @@ def plot_gp_fit_1D(theta, y, gp):
     plt.scatter(theta_test, y_test, color='g')
     plt.xlim(bounds[0])
     plt.savefig(f"{savedir}/gp_fit_1D.png")
+
+
+def plot_gp_fit_2D(theta, y, gp):
+
+    xarr = np.linspace(bounds[0][0], bounds[0][1], 30)
+    mu, var = gp.predict(y, xarr, return_var=True)
+
+    fig, ax = plt.subplots()
+    plt.plot(xarr, fn(xarr), color='k', linestyle='--', linewidth=.5)
+    ax.fill_between(xarr, mu-var, mu+var, color='r', alpha=.8)
+    plt.scatter(theta, y, color='r')
+    plt.scatter(theta_test, y_test, color='g')
+    plt.xlim(bounds[0])
+    plt.savefig(f"{savedir}/gp_fit_2D.png")
