@@ -23,6 +23,7 @@ import george
 import os
 import warnings
 import tqdm
+import pickle
 
 
 class SurrogateModel(object):
@@ -61,6 +62,13 @@ class SurrogateModel(object):
             self.labels = [r"$\theta_%s$"%(i) for i in range(self.ndim)]
         else:
             self.labels = labels
+
+    
+    def save(self, fname="surrogate_model.pkl"):
+        pkl_file = os.path.join(self.savedir, fname)
+        print(f"Caching model to {pkl_file}...")
+        with open(pkl_file, 'wb') as f:        
+            pickle.dump(self, f)
 
 
     def init_train(self, nsample=None, sampler='uniform', ncore=mp.cpu_count()):
@@ -252,6 +260,7 @@ class SurrogateModel(object):
                         msg += "If this issue persists, try expanding the hyperparameter prior"
                         print(msg)
 
+            # If proposed (theta, y) did not cause fitting issues, save to surrogate model obj
             self.theta = theta_prop
             self.y = y_prop
             self.gp = gp
@@ -277,6 +286,9 @@ class SurrogateModel(object):
             self.training_results["training_error"].append(training_error)
             self.training_results["test_error"].append(test_error)
             self.training_results["gp_kl_divergence"].append(gp_kl_divergence)
+
+        if self.cache:
+            self.save()
 
 
     def run_mcmc(self, sampler="emcee", lnprior=None, **kwargs):
