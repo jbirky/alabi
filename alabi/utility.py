@@ -344,8 +344,10 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=5, method="nelder-mead",
 
             # Too many iterations
             if test_iter >= max_iter:
-                err_msg = "ERROR: Cannot find a valid solution. Current iterations: %d\n" % test_iter
+                err_msg = "ERROR: Cannot find a valid solution to objective function minimization.\n" 
+                err_msg += "Current iterations: %d\n" % test_iter
                 err_msg += "Maximum iterations: %d\n" % max_iter
+                err_msg += "Try increasing the number of initial training samples.\n"
                 raise RuntimeError(err_msg)
 
             # Minimize the function

@@ -118,7 +118,8 @@ class SurrogateModel(object):
         self.y = y_test
 
         
-    def init_gp(self, kernel=None, fit_amp=True, fit_mean=True, white_noise=-12, overwrite=False):
+    def init_gp(self, kernel=None, fit_amp=True, fit_mean=True, white_noise=-12, 
+                gp_hyper_prior=None, overwrite=False):
         
         if hasattr(self, 'gp') and (overwrite == False):
             raise AssertionError("GP kernel already assigned. Use overwrite=True to re-assign the kernel.")
@@ -144,12 +145,16 @@ class SurrogateModel(object):
         else:
             # custom george kernel
             self.kernel = kernel
+
+        # assign GP hyperparameter prior
+        self.gp_hyper_prior = gp_hyper_prior
         
         warnings.simplefilter("ignore")
         self.gp = gp_utils.fit_gp(self.theta, self.y, self.kernel, 
                                   fit_amp=fit_amp, fit_mean=fit_mean,
                                   white_noise=white_noise)
-        self.gp = gp_utils.optimize_gp(self.gp, self.theta, self.y)
+        self.gp = gp_utils.optimize_gp(self.gp, self.theta, self.y,
+                                       gp_hyper_prior=self.gp_hyper_prior)
 
         if self.verbose:
             print("optimized hyperparameters:", self.gp.get_parameter_vector())
@@ -172,9 +177,7 @@ class SurrogateModel(object):
         # evaluate function at the optimized theta
         yT = self.fn(thetaT)
 
-        # add theta and y to training sample
-        self.theta = np.append(self.theta, [thetaT], axis=0)
-        self.y = np.append(self.y, yT)
+        return thetaT, yT
 
 
     def active_train(self, niter=100, algorithm="bape", gp_opt_freq=10): 
@@ -219,41 +222,39 @@ class SurrogateModel(object):
                 else:
                     self.utility = ut.bape_utility
 
-            self.find_next_point()
+            while True:
+                # Find next training point!
+                theta_new, y_new = self.find_next_point()
 
-            # Fit GP. Make sure to feed in previous iteration hyperparameters!
-            try:
-                t0 = time.time()
-                self.gp = gp_utils.fit_gp(self.theta, self.y, self.kernel,
-                                        hyperparameters=self.gp.get_parameter_vector())
-                tf = time.time()
-            except:
-                kmat = self.gp.get_matrix(self.theta)
-                im = plt.matshow(kmat)
-                plt.colorbar(im, fraction=0.046, pad=0.04)
-                plt.savefig(f"{self.savedir}/failed_covariance_matrix.png")
-                plt.close()
+                # add theta and y to training sample
+                theta_prop = np.append(self.theta, [theta_new], axis=0)
+                y_prop = np.append(self.y, y_new)
 
-                from sklearn.metrics.pairwise import euclidean_distances
-                dmat = euclidean_distances(self.theta, self.theta)
-                im = plt.matshow(dmat)
-                plt.colorbar(im, fraction=0.046, pad=0.04)
-                plt.savefig(f"{self.savedir}/failed_distance_matrix.png")
-                plt.close()
+                try:
+                    t0 = time.time()
+                    # Fit GP. Make sure to feed in previous iteration hyperparameters!
+                    gp = gp_utils.fit_gp(theta_prop, y_prop, self.kernel,
+                                         hyperparameters=self.gp.get_parameter_vector())
+                    tf = time.time()
 
-                plt.scatter(self.theta.T[0], self.theta.T[1], s=50, alpha=.3)
-                plt.savefig(f"{self.savedir}/theta_scatter.png")
-                plt.close()
+                    # Optimize GP?
+                    if ii % gp_opt_freq == 0:
+                        gp = gp_utils.optimize_gp(gp, theta_prop, y_prop,
+                                                  gp_hyper_prior=self.gp_hyper_prior)
+                        if self.verbose:
+                            print("optimized hyperparameters:", self.gp.get_parameter_vector())
+                    break
 
-                print('eigenvalues:', np.linalg.eigvals(kmat))
-                print('positive def:', np.all(np.linalg.eigvals(kmat) > 0))
-                raise ValueError("Covariance matrix inversion failed.")
+                except:
+                    if self.verbose:
+                        msg = "Warning: GP fit failed. Likely covariance matrix was not positive definite. "
+                        msg += "Attempting another training sample... "
+                        msg += "If this issue persists, try expanding the hyperparameter prior"
+                        print(msg)
 
-            # Optimize GP?
-            if ii % gp_opt_freq == 0:
-                self.gp = gp_utils.optimize_gp(self.gp, self.theta, self.y)
-                if self.verbose:
-                    print("optimized hyperparameters:", self.gp.get_parameter_vector())
+            self.theta = theta_prop
+            self.y = y_prop
+            self.gp = gp
 
             # evaluate gp training error
             ypred = self.gp.predict(self.y, self.theta, return_cov=False, return_var=False)
@@ -305,21 +306,21 @@ class SurrogateModel(object):
 
     def plot(self, plots=None, save=True):
 
+        # Test error vs iteration
         if 'gp_error' in plots:
             if hasattr(self, 'training_results'):
                 print("Plotting gp error...")
 
-                # Test error vs iteration
                 vis.plot_error_vs_iteration(self.training_results, self.savedir, log=True)
                 vis.plot_error_vs_iteration(self.training_results, self.savedir, log=False)
             else:
                 raise NameError("Must run active_train before plotting gp_error.")
 
+        # GP hyperparameters vs iteration
         if 'gp_hyperparam' in plots:
             if hasattr(self, 'training_results'):
                 print("Plotting gp hyperparameters...")
 
-                # GP hyperparameters vs iteration
                 hp_names = self.gp.get_parameter_names()
                 hp_values = np.array(self.training_results["gp_hyperparameters"])
 
@@ -328,15 +329,16 @@ class SurrogateModel(object):
             else:
                 raise NameError("Must run active_train before plotting gp_hyperparam.")
 
+        # GP training time vs iteration
         if 'gp_train_time' in plots:
             if hasattr(self, 'training_results'):
                 print("Plotting gp train time...")
 
-                # GP training time vs iteration
                 vis.plot_train_time_vs_iteration(self.training_results, self.savedir)
             else:
                 raise NameError("Must run active_train before plotting gp_hyperparam.")
 
+        # N-D scatterplots and histograms colored by function value
         if 'training_corner' in plots:  
             if hasattr(self, 'theta') and hasattr(self, 'y'):
                 plot_corner_scatter(self.theta, self.y, self.labels, self.savedir)
