@@ -9,17 +9,18 @@ hyperparameters.
 """
 
 # Tell module what it's allowed to import
-__all__ = ["defaultHyperPrior", "defaultGP", "optimizeGP"]
+__all__ = ["default_hyper_prior", "defaultGP", "optimize_gp"]
 
-from . import utility as util
+import utility as util
 import numpy as np
 import george
 from scipy.optimize import minimize
 from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
+from functools import partial
 
 
-def defaultHyperPrior(p):
+def default_hyper_prior(p, hp_rng=20, mu=None, sigma=None, sigma_level=3):
     """
     Default prior function for GP hyperparameters. This prior also keeps the
     hyperparameters within a reasonable huge range, [-20, 20]. Note that george
@@ -36,11 +37,15 @@ def defaultHyperPrior(p):
     """
 
     # Restrict range of hyperparameters (ignoring mean term)
-    if np.any(np.fabs(p)[1:] > 20):
+    if np.any(np.fabs(p)[1:] > hp_rng):
         return -np.inf
 
+    # Restrict mean hyperparameter to +/- sigma_level * sigma
+    if (mu is not None) and (sigma is not None):
+        if (p[0] < mu - sigma_level*sigma) or (p[0] > mu + sigma_level*sigma):
+            return -np.inf
+
     return 0.0
-# end function
 
 
 def _nll(p, gp, y, priorFn=None):
@@ -77,7 +82,6 @@ def _nll(p, gp, y, priorFn=None):
 
     ll = gp.log_likelihood(y, quiet=True)
     return -ll if np.isfinite(ll) else np.inf
-# end function
 
 
 def _grad_nll(p, gp, y, priorFn=None):
@@ -108,119 +112,47 @@ def _grad_nll(p, gp, y, priorFn=None):
 
     # Negative gradient of log likelihood
     return -gp.grad_log_likelihood(y, quiet=True)
-# end function
 
 
-def defaultGP(theta, y, order=None, white_noise=-12, fitAmp=False):
-    """
-    Basic utility function that initializes a simple GP with an ExpSquaredKernel.
-    This kernel  works well in many applications as it effectively enforces a
-    prior on the smoothness of the function and is infinitely differentiable.
+def fit_gp(theta, y, kernel, fit_amp=True, fit_mean=True, white_noise=-15, hyperparameters=None):
 
-    Parameters
-    ----------
-    theta : array
-        Design points
-    y : array
-        Data to condition GP on, e.g. the lnlike + lnprior at each design point,
-        theta.
-    order : int, optional
-        Order of PolynomialKernel to add to ExpSquaredKernel. Defaults to None,
-        that is, no PolynomialKernel is added and the GP only uses the
-        ExpSquaredKernel
-    white_noise : float, optional
-        From george docs: "A description of the logarithm of the white noise
-        variance added to the diagonal of the covariance matrix". Defaults to
-        ln(white_noise) = -12. Note: if order is not None, you might need to
-        set the white_noise to a larger value for the computation to be
-        numerically stable, but this, as always, depends on the application.
-    fitAmp : bool, optional
-        Whether or not to include an amplitude term. Defaults to False.
+    if np.any(~np.isfinite(theta)) or np.any(~np.isfinite(y)):
+        print("theta, y:", theta, y)
+        raise ValueError("All theta and y values must be finite!")
 
-    Returns
-    -------
-    gp : george.GP
-        Gaussian process with initialized kernel and factorized covariance
-        matrix.
-    """
+    if fit_amp == True:
+        kernel *= np.var(y)
 
-    # Tidy up the shapes and determine dimensionality
-    theta = np.asarray(theta).squeeze()
-    y = np.asarray(y).squeeze()
-    if theta.ndim <= 1:
-        ndim = 1
-    else:
-        ndim = theta.shape[-1]
+    gp = george.GP(kernel=kernel, fit_mean=fit_mean, mean=np.median(y),
+                white_noise=white_noise, fit_white_noise=False)
 
-    # Guess initial metric, or scale length of the covariances (must be > 0)
-    initialMetric = np.fabs(np.random.randn(ndim))
-
-    # Create kernel: We'll model coveriances in loglikelihood space using a
-    # ndim-dimensional Squared Expoential Kernel
-    kernel = george.kernels.ExpSquaredKernel(metric=initialMetric,
-                                             ndim=ndim)
-
-    # Include an amplitude term?
-    if fitAmp:
-        kernel = np.var(y) * kernel
-
-    # Add a linear regression kernel of order order?
-    # Use a meh guess for the amplitude and for the scale length (log(gamma^2))
-    if order is not None:
-        kernel = kernel + (np.var(y)/10.0) * george.kernels.LinearKernel(log_gamma2=initialMetric[0],
-                                                                         order=order,
-                                                                         bounds=None,
-                                                                         ndim=ndim)
-
-    # Create GP and compute the kernel, aka factor the covariance matrix
-    gp = george.GP(kernel=kernel, fit_mean=True, mean=np.median(y),
-                   white_noise=white_noise, fit_white_noise=False)
+    if hyperparameters is not None:
+        gp.set_parameter_vector(hyperparameters)
     gp.compute(theta)
 
     return gp
-# end function
 
 
-def optimizeGP(gp, theta, y, seed=None, nGPRestarts=1, method="powell",
-               options=None, p0=None, gpHyperPrior=defaultHyperPrior):
-    """
-    Optimize hyperparameters of an arbitrary george Gaussian Process by
-    maximizing the marginal loglikelihood.
+def optimize_gp(gp, theta, y, seed=None, nopt=1, method="powell",
+               options=None, p0=None, gp_hyper_prior=None):
+    
+    # Collapse arrays if 1D
+    theta = theta.squeeze()
+    y = y.squeeze()
 
-    Parameters
-    ----------
-    gp : george.GP
-    theta : array
-    y : array
-        data to condition GP on
-    seed : int, optional
-        numpy RNG seed.  Defaults to None.
-    nGPRestarts : int, optional
-        Number of times to restart the optimization.  Defaults to 1. Increase
-        this number if the GP isn't optimized well.
-    method : str, optional
-        scipy.optimize.minimize method.  Defaults to powell.
-    options : dict, optional
-        kwargs for the scipy.optimize.minimize function.  Defaults to None.
-    p0 : array, optional
-        Initial guess for kernel hyperparameters.  If None, defaults to
-        np.random.randn for each parameter
-    gpHyperPrior : str/callable, optional
-        Prior function for GP hyperparameters. Defaults to the defaultHyperPrior fn.
-        This function asserts that the mean must be negative and that each log
-        hyperparameter is within the range [-20,20].
-
-    Returns
-    -------
-    optimizedGP : george.GP
-    """
-
-    # Run the optimization routine nGPRestarts times
+    if gp_hyper_prior is None:
+        gp_hyper_prior = partial(default_hyper_prior, 
+                                 hp_rng=20,
+                                 mu=np.mean(y), 
+                                 sigma=np.std(y),
+                                 sigma_level=1)
+    
+    # Run the optimization routine nopt times
     res = []
     mll = []
 
     # Optimize GP hyperparameters by maximizing marginal log_likelihood
-    for ii in range(nGPRestarts):
+    for ii in range(nopt):
         # Initialize inputs for each minimization
         if p0 is None:
             # Pick random guesses for kernel hyperparameters
@@ -235,7 +167,7 @@ def optimizeGP(gp, theta, y, seed=None, nGPRestarts=1, method="powell",
         else:
             jac = None
 
-        resii = minimize(_nll, x0, args=(gp, y, gpHyperPrior), method=method,
+        resii = minimize(_nll, x0, args=(gp, y, gp_hyper_prior), method=method,
                          jac=jac, bounds=None, options=options)["x"]
         res.append(resii)
 
@@ -254,4 +186,3 @@ def optimizeGP(gp, theta, y, seed=None, nGPRestarts=1, method="powell",
     gp.recompute()
 
     return gp
-# end function

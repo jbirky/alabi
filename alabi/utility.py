@@ -8,19 +8,102 @@ or computing KL divergences, and the GP utility functions, e.g. the bape utility
 """
 
 # Tell module what it's allowed to import
-__all__ = ["logsubexp", "AGPUtility", "BAPEUtility", "JonesUtility",
-           "minimizeObjective", "klNumerical"]
+__all__ = ["logsubexp", "agp_utility", "bape_utility", "jones_utility",
+           "minimize_objective", "klNumerical", 
+           "prior_sampler", "eval_fn", "lnprior_uniform"]
 
 import numpy as np
 from scipy.optimize import minimize
 from scipy.stats import norm
+from skopt.space import Space
+from skopt.sampler import Sobol, Lhs, Halton, Hammersly, Grid
+import multiprocessing as mp
+import warnings
+import time
+import tqdm
 
 
-################################################################################
-#
+#===========================================================
+# Define sampling functions
+#===========================================================
+
+def prior_sampler(nsample=None, bounds=None, sampler='uniform'):
+    """
+    https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html
+    """
+
+    ndim = len(bounds)
+    space = Space(bounds)
+    
+    if sampler == 'uniform':
+        samples = space.rvs(nsample)
+
+    elif sampler == 'sobol':
+        sobol = Sobol()
+        samples = sobol.generate(space.dimensions, nsample)
+
+    elif sampler == 'lhs':
+        lhs = Lhs(lhs_type="classic", criterion=None)
+        samples = lhs.generate(space.dimensions, nsample)
+
+    elif sampler == 'halton':
+        halton = Halton()
+        samples = halton.generate(space.dimensions, nsample)
+
+    elif sampler == 'hammersly':
+        hammersly = Hammersly()
+        samples = hammersly.generate(space.dimensions, nsample)
+
+    elif sampler == 'grid':
+        grid = Grid(border="include", use_full_layout=False)
+        samples = grid.generate(space.dimensions, nsample)
+            
+    else:
+        err_msg = f"Sampler method '{sampler}' not implemented. "
+        err_msg += f"Valid options for 'sampler' are: "
+        err_msg += f"uniform, sobol, lhs, halton, hammersly, grid."
+        raise ValueError(err_msg)
+
+    return np.array(samples) 
+
+    
+def eval_fn(fn, theta, ncore=mp.cpu_count()):
+
+    t0 = time.time()
+ 
+    try:
+        with mp.Pool(ncore) as p:
+            y = np.array(p.map(fn, theta)).squeeze()
+    except:
+        print(f"Multiprocessing with {ncore} cores failed. Running sequentially.")
+        y = np.zeros(theta.shape[0])
+        for ii, tt in tqdm.tqdm(enumerate(theta)):
+            y[ii] = fn(tt)
+        
+    tf = time.time()
+    print(f"Computed {len(theta)} function evaluations: {np.round(tf - t0)}s \n")
+
+    return y
+
+
+def lnprior_uniform(x, bounds):
+
+    ndim = len(bounds)
+    if ndim == 1:
+        x = np.array([x])
+    else:
+        x = x.squeeze()
+
+    for i in range(ndim):
+        if (x[i] > bounds[i][0]) and (x[i] < bounds[i][1]):
+            return 0
+        else:
+            return -np.inf
+
+
+#===========================================================
 # Define math functions
-#
-################################################################################
+#===========================================================
 
 
 def klNumerical(x, p, q):
@@ -59,11 +142,10 @@ def klNumerical(x, p, q):
     try:
         res = np.sum(np.log(p(x)/q(x)))/len(x)
     except ValueError:
-        errMsg = "ERROR: inf/NaN encountered.  q(x) = 0 likely occured."
-        raise ValueError(errMsg)
+        err_msg = "ERROR: inf/NaN encountered.  q(x) = 0 likely occured."
+        raise ValueError(err_msg)
 
     return res
-# end function
 
 
 def logsubexp(x1, x2):
@@ -86,17 +168,14 @@ def logsubexp(x1, x2):
         return -np.inf
     else:
         return x1 + np.log(1.0 - np.exp(x2 - x1))
-# end function
 
 
-################################################################################
-#
+#===========================================================
 # Define utility functions
-#
-################################################################################
+#===========================================================
 
 
-def AGPUtility(theta, y, gp, priorFn):
+def agp_utility(theta, y, gp):
     """
     AGP (Adaptive Gaussian Process) utility function, the entropy of the
     posterior distribution. This is what you maximize to find the next x under
@@ -112,19 +191,12 @@ def AGPUtility(theta, y, gp, priorFn):
     y : array
         y values to condition the gp prediction on.
     gp : george GP object
-    priorFn : function
-        Function that computes lnPrior probability for a given theta.
 
     Returns
     -------
     util : float
         utility of theta under the gp
     """
-
-    # If guess isn't allowed by prior, we don't care what the value of the
-    # utility function is
-    if not np.isfinite(priorFn(theta)):
-        return np.inf
 
     # Only works if the GP object has been computed, otherwise you messed up
     if gp.computed:
@@ -139,10 +211,9 @@ def AGPUtility(theta, y, gp, priorFn):
         raise ValueError("util: %e. mu: %e. var: %e" % (util, mu, var))
 
     return util
-# end function
 
 
-def BAPEUtility(theta, y, gp, priorFn):
+def bape_utility(theta, y, gp):
     """
     BAPE (Bayesian Active Posterior Estimation) utility function.  This is what
     you maximize to find the next theta under the BAPE formalism.  Note here we
@@ -159,19 +230,16 @@ def BAPEUtility(theta, y, gp, priorFn):
     y : array
         y values to condition the gp prediction on.
     gp : george GP object
-    priorFn : function
-        Function that computes lnPrior probability for a given theta.
 
     Returns
     -------
     util : float
         utility of theta under the gp
     """
-
     # If guess isn't allowed by prior, we don't care what the value of the
     # utility function is
-    if not np.isfinite(priorFn(theta)):
-        return np.inf
+    # if not np.isfinite(lnprior_uniform(theta, bounds)):
+    #     return np.inf
 
     # Only works if the GP object has been computed, otherwise you messed up
     if gp.computed:
@@ -186,10 +254,9 @@ def BAPEUtility(theta, y, gp, priorFn):
         raise ValueError("util: %e. mu: %e. var: %e" % (util, mu, var))
 
     return util
-# end function
 
 
-def JonesUtility(theta, y, gp, priorFn, zeta=0.01):
+def jones_utility(theta, y, gp, zeta=0.01):
     """
     Jones utility function - Expected Improvement derived in Jones et al. (1998)
     EI(x) = E(max(f(theta) - f(thetaBest),0)) where f(thetaBest) is the best
@@ -202,8 +269,6 @@ def JonesUtility(theta, y, gp, priorFn, zeta=0.01):
     y : array
         y values to condition the gp prediction on.
     gp : george GP object
-    priorFn : function
-        Function that computes lnPrior probability for a given theta.
     zeta : float, optional
         Exploration parameter. Larger zeta leads to more exploration. Defaults
         to 0.01
@@ -213,11 +278,6 @@ def JonesUtility(theta, y, gp, priorFn, zeta=0.01):
     util : float
         utility of theta under the gp
     """
-
-    # If guess isn't allowed by prior, we don't care what the value of the
-    # utility function is
-    if not np.isfinite(priorFn(theta)):
-        return np.inf
 
     # Only works if the GP object has been computed, otherwise you messed up
     if gp.computed:
@@ -247,126 +307,70 @@ def JonesUtility(theta, y, gp, priorFn, zeta=0.01):
         raise ValueError("util: %e. mu: %e. var: %e" % (util, mu, var))
 
     return util
-# end function
 
 
-def minimizeObjective(fn, y, gp, sampleFn, priorFn, nRestarts=5,
-                      method="nelder-mead", options=None, bounds=None,
-                      theta0=None, args=None, maxIters=100):
-    """
-    Minimize some arbitrary function, fn. This function is most useful when
-    evaluating fn requires a Gaussian process model, gp. For example, this
-    function can be used to find the point that minimizes a utility fn for a gp
-    conditioned on y, the data, and is allowed by the prior, priorFn.
-
-    PriorFn is required as it helps to select against points with non-finite
-    likelihoods, e.g. NaNs or infs.  This is required as the GP can only train
-    on finite values.
-
-    Parameters
-    ----------
-    fn : function
-        function to minimize that expects x, y, gp as arguments aka fn looks
-        like fn_name(x, y, gp).  See *_utility functions above for examples.
-    y : array
-        y values to condition the gp prediction on.
-    gp : george GP object
-    sampleFn : function
-        Function to sample initial conditions from.
-    priorFn : function
-        Function that computes lnPrior probability for a given theta.
-    nMinObjRestarts : int, optional
-        Number of times to restart minimizing -utility function to select
-        next point to improve GP performance.  Defaults to 5.  Increase this
-        number of the point selection is not working well.
-    method : str, optional
-        scipy.optimize.minimize method.  Defaults to nelder-mead.
-    options : dict, optional
-        kwargs for the scipy.optimize.minimize function.  Defaults to None,
-        but if method == "nelder-mead", options = {"adaptive" : True}
-    theta0 : float/iterable, optional
-        Initial guess for optimization. Defaults to None, which draws a sample
-        from the prior function using sampleFn.
-    args : iterable, optional
-        Arguments for user-specified function that this function will minimize.
-        Defaults to None.
-    maxIters (int), optional
-        Maximum number of iterations to try restarting optimization if the
-        solution isn't finite and/nor allowed by the prior function. Defaults to
-        100.
-
-    Returns
-    -------
-    thetaBest : (1 x n_dims)
-        point that minimizes fn
-    fnBest : float
-        fn(thetaBest)
-    """
+def minimize_objective(obj_fn, y, gp, bounds=None, nopt=5, method="nelder-mead",
+                       args=None, options=None, max_iter=100):
 
     # Initialize options
     if str(method).lower() == "nelder-mead" and options is None:
         options = {"adaptive" : True}
 
-    # Minimize GP nll, save result, evaluate marginal likelihood
-    if str(method).lower() in [" l-bfgs-b", "tnc"]:
-        pass
-    # Bounds not allowed
-    else:
-        bounds = None
+    bound_methods = ["nelder-mead", "l-bfgs", "tnc", "slsqp", "powell", "trust-constr"]
+    # scipy >= 1.5 should be installed to use bounds in optimization
+    if str(method).lower() not in bound_methods:
+        msg = f"Optimization method {method} does not allow bounds."
+        msg += "Recommended bound optimization methods: "
+        msg += "Nelder-Mead, L-BFGS-B, TNC, SLSQP, Powell, and trust-constr."
+        print(msg)
 
+    # arguments for objective function
     if args is None:
         args = ()
-
-    # Ensure theta0 is in the proper form, determine its dimensionality
-    if theta0 is not None:
-        theta0 = np.asarray(theta0).squeeze()
-        ndim = theta0.ndim
-        if ndim <= 0:
-            ndim = 1
 
     # Containers
     res = []
     objective = []
 
     # Loop over optimization calls
-    for ii in range(nRestarts):
-
-        # Guess initial value from prior
-        if theta0 is None:
-            t0 = np.asarray(sampleFn(1)).reshape(1,-1)
-        else:
-            t0 = theta0 + np.min(theta0) * 1.0e-3 * np.random.randn(ndim)
+    for ii in range(nopt):
 
         # Keep minimizing until a valid solution is found
-        ii = 0
+        test_iter = 0
         while True:
 
+            t0 = prior_sampler(nsample=1, bounds=bounds)
+
             # Too many iterations
-            if ii >= maxIters:
-                errMsg = "ERROR: Cannot find a valid solution. Current iterations: %d\n" % ii
-                errMsg += "Maximum iterations: %d\n" % maxIters
-                raise RuntimeError(errMsg)
+            if test_iter >= max_iter:
+                err_msg = "ERROR: Cannot find a valid solution. Current iterations: %d\n" % test_iter
+                err_msg += "Maximum iterations: %d\n" % max_iter
+                raise RuntimeError(err_msg)
 
             # Minimize the function
-            tmp = minimize(fn, t0, args=args, bounds=bounds,
-                           method=method, options=options)["x"]
+            try:
+                # warnings.simplefilter("ignore")
+                tmp = minimize(obj_fn, t0, args=args, bounds=tuple(bounds),
+                               method=method, options=options)
+            except:
+                raise Warning('Objective function optimization failed')
+
+            x_opt = tmp.x 
+            f_opt = tmp.fun
 
             # If solution is finite and allowed by the prior, save
-            if np.all(np.isfinite(tmp)):
-                if np.isfinite(priorFn(tmp)):
-                    # Save solution, function value
-                    res.append(tmp)
-                    objective.append(fn(tmp, *args))
+            if np.all(np.isfinite(x_opt)) and np.all(np.isfinite(f_opt)):
+                if np.isfinite(lnprior_uniform(x_opt, bounds)):
+                    res.append(x_opt)
+                    objective.append(f_opt)
                     break
-
-            # If we're here, the solution didn't work. Try again with a new
-            # sample from the prior
-            t0 = np.array(sampleFn(1)).reshape(1,-1)
-
-            ii += 1
+            
+            test_iter += 1
         # end loop
 
     # Return value that minimizes objective function out of all minimizations
-    bestInd = np.argmin(objective)
-    return np.array(res)[bestInd], objective[bestInd]
-# end function
+    best_ind = np.argmin(objective)
+    theta_best = np.array(res)[best_ind]
+    obj_best = objective[best_ind]
+
+    return theta_best, obj_best
