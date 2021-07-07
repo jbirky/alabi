@@ -118,7 +118,7 @@ class SurrogateModel(object):
         self.y = y_test
 
         
-    def init_gp(self, kernel=None, fit_amp=True, fit_mean=True, white_noise=-15, overwrite=False):
+    def init_gp(self, kernel=None, fit_amp=True, fit_mean=True, white_noise=-12, overwrite=False):
         
         if hasattr(self, 'gp') and (overwrite == False):
             raise AssertionError("GP kernel already assigned. Use overwrite=True to re-assign the kernel.")
@@ -126,25 +126,32 @@ class SurrogateModel(object):
         # Initialize GP kernel
         if kernel is None:
             print("No kernel specified. Defaulting to squared exponential kernel.")
+            kernel = 'sqexp'
 
+        if kernel == 'sqexp':
             # Guess initial metric, or scale length of the covariances (must be > 0)
             initial_lscale = np.fabs(np.random.randn(self.ndim))
             self.kernel = george.kernels.ExpSquaredKernel(metric=initial_lscale, ndim=self.ndim)
-            
-            if fit_amp == True:
-                initial_amplitude = 1
-                self.kernel *= initial_amplitude
-
+            print("Initialized GP with squared exponential kernel.")
+        elif kernel == 'matern32':
+            initial_lscale = np.fabs(np.random.randn(self.ndim))
+            self.kernel = george.kernels.Matern32Kernel(metric=initial_lscale, ndim=self.ndim)
+            print("Initialized GP with squared matern-3/2 kernel.")
+        elif kernel == 'matern52':
+            initial_lscale = np.fabs(np.random.randn(self.ndim))
+            self.kernel = george.kernels.Matern52Kernel(metric=initial_lscale, ndim=self.ndim)
+            print("Initialized GP with squared matern-5/2 kernel.")
         else:
+            # custom george kernel
             self.kernel = kernel
         
+        warnings.simplefilter("ignore")
         self.gp = gp_utils.fit_gp(self.theta, self.y, self.kernel, 
                                   fit_amp=fit_amp, fit_mean=fit_mean,
                                   white_noise=white_noise)
         self.gp = gp_utils.optimize_gp(self.gp, self.theta, self.y)
 
         if self.verbose:
-            print("\nInitialized GP.")
             print("optimized hyperparameters:", self.gp.get_parameter_vector())
             print('')
 
@@ -205,8 +212,6 @@ class SurrogateModel(object):
 
         for ii in tqdm.tqdm(range(niter)):
 
-            t0 = time.time()
-
             # AGP on even, BAPE on odd
             if self.algorithm == "alternate":
                 if ii % 2 == 0:
@@ -214,23 +219,35 @@ class SurrogateModel(object):
                 else:
                     self.utility = ut.bape_utility
 
-            # Repeat active learning step until gp fit works w/o linear algebra errors
-            gp_fit = True
-            while gp_fit == True:
-                try:
-                    # Find m new (theta, y) pairs by maximizing utility function, one at a time
-                    self.find_next_point()
-                    print(theta.shape)
+            self.find_next_point()
 
-                    # Fit GP. Make sure to feed in previous iteration hyperparameters!
-                    gp = gp_utils.fit_gp(self.theta, self.y, self.kernel,
-                                         hyperparameters=self.gp.get_parameter_vector())
-                    gp_fit = False 
-                    if self.verbose:
-                        print("Warning: GP fit failed. Likely non positive-definite GP covariance.")
-                except:
-                    gp_fit = True
-            self.gp = gp
+            # Fit GP. Make sure to feed in previous iteration hyperparameters!
+            try:
+                t0 = time.time()
+                self.gp = gp_utils.fit_gp(self.theta, self.y, self.kernel,
+                                        hyperparameters=self.gp.get_parameter_vector())
+                tf = time.time()
+            except:
+                kmat = self.gp.get_matrix(self.theta)
+                im = plt.matshow(kmat)
+                plt.colorbar(im, fraction=0.046, pad=0.04)
+                plt.savefig(f"{self.savedir}/failed_covariance_matrix.png")
+                plt.close()
+
+                from sklearn.metrics.pairwise import euclidean_distances
+                dmat = euclidean_distances(self.theta, self.theta)
+                im = plt.matshow(dmat)
+                plt.colorbar(im, fraction=0.046, pad=0.04)
+                plt.savefig(f"{self.savedir}/failed_distance_matrix.png")
+                plt.close()
+
+                plt.scatter(self.theta.T[0], self.theta.T[1], s=50, alpha=.3)
+                plt.savefig(f"{self.savedir}/theta_scatter.png")
+                plt.close()
+
+                print('eigenvalues:', np.linalg.eigvals(kmat))
+                print('positive def:', np.all(np.linalg.eigvals(kmat) > 0))
+                raise ValueError("Covariance matrix inversion failed.")
 
             # Optimize GP?
             if ii % gp_opt_freq == 0:
@@ -255,7 +272,7 @@ class SurrogateModel(object):
             # save results to a dictionary
             self.training_results["iteration"].append(ii + first_iter)
             self.training_results["gp_hyperparameters"].append(self.gp.get_parameter_vector())
-            self.training_results["gp_train_time"].append(time.time() - t0)
+            self.training_results["gp_train_time"].append(tf - t0)
             self.training_results["training_error"].append(training_error)
             self.training_results["test_error"].append(test_error)
             self.training_results["gp_kl_divergence"].append(gp_kl_divergence)
@@ -308,6 +325,15 @@ class SurrogateModel(object):
 
                 vis.plot_hyperparam_vs_iteration(self.training_results, hp_names, 
                                                  hp_values, self.savedir)
+            else:
+                raise NameError("Must run active_train before plotting gp_hyperparam.")
+
+        if 'gp_train_time' in plots:
+            if hasattr(self, 'training_results'):
+                print("Plotting gp train time...")
+
+                # GP training time vs iteration
+                vis.plot_train_time_vs_iteration(self.training_results, self.savedir)
             else:
                 raise NameError("Must run active_train before plotting gp_hyperparam.")
 

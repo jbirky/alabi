@@ -33,7 +33,7 @@ def prior_sampler(nsample=None, bounds=None, sampler='uniform'):
     """
 
     ndim = len(bounds)
-    space = Space(bounds)
+    space = Space(np.array(bounds, dtype='float'))
     
     if sampler == 'uniform':
         samples = space.rvs(nsample)
@@ -310,11 +310,12 @@ def jones_utility(theta, y, gp, zeta=0.01):
 
 
 def minimize_objective(obj_fn, y, gp, bounds=None, nopt=5, method="nelder-mead",
-                       args=None, options=None, max_iter=100):
+                       args=None, options={}, max_iter=100):
 
     # Initialize options
     if str(method).lower() == "nelder-mead" and options is None:
-        options = {"adaptive" : True}
+        options["adaptive"] = True
+    options["maxiter"] = int(1e3)
 
     bound_methods = ["nelder-mead", "l-bfgs", "tnc", "slsqp", "powell", "trust-constr"]
     # scipy >= 1.5 should be installed to use bounds in optimization
@@ -349,7 +350,7 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=5, method="nelder-mead",
 
             # Minimize the function
             try:
-                # warnings.simplefilter("ignore")
+                warnings.simplefilter("ignore")
                 tmp = minimize(obj_fn, t0, args=args, bounds=tuple(bounds),
                                method=method, options=options)
             except:

@@ -114,7 +114,7 @@ def _grad_nll(p, gp, y, priorFn=None):
     return -gp.grad_log_likelihood(y, quiet=True)
 
 
-def fit_gp(theta, y, kernel, fit_amp=True, fit_mean=True, white_noise=-15, hyperparameters=None):
+def fit_gp(theta, y, kernel, fit_amp=True, fit_mean=True, white_noise=-12, hyperparameters=None):
 
     if np.any(~np.isfinite(theta)) or np.any(~np.isfinite(y)):
         print("theta, y:", theta, y)
@@ -145,7 +145,7 @@ def optimize_gp(gp, theta, y, seed=None, nopt=1, method="powell",
                                  hp_rng=20,
                                  mu=np.mean(y), 
                                  sigma=np.std(y),
-                                 sigma_level=1)
+                                 sigma_level=3)
     
     # Run the optimization routine nopt times
     res = []
