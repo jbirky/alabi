@@ -65,6 +65,7 @@ class SurrogateModel(object):
 
     
     def save(self, fname="surrogate_model.pkl"):
+        
         pkl_file = os.path.join(self.savedir, fname)
         print(f"Caching model to {pkl_file}...")
         with open(pkl_file, 'wb') as f:        
