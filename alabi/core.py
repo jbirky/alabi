@@ -62,12 +62,31 @@ class SurrogateModel(object):
             self.labels = labels
 
     
-    def save(self, fname="surrogate_model.pkl"):
+    def save(self, fname="surrogate_model"):
         
-        pkl_file = os.path.join(self.savedir, fname)
-        print(f"Caching model to {pkl_file}...")
-        with open(pkl_file, 'wb') as f:        
+        file = os.path.join(self.savedir, fname)
+
+        # pickle surrogate model object
+        print(f"Caching model to {file}...")
+        with open(file+".pkl", "wb") as f:        
             pickle.dump(self, f)
+
+        # print model summary to human-readable text file
+        lines =  f"Model summary:\n\n"
+
+        lines += f"Kernel: {self.kernel_name} \n"
+        lines += f"Active learning algorithm : {self.algorithm} \n\n" 
+
+        lines += f"Number of total training samples: {self.ntrain} \n"
+        lines += f"Number of initial training samples: {self.ninit_train} \n"
+        lines += f"Number of active training samples: {self.nactive} \n\n"
+
+        lines += f"Number of test samples: {self.ntest} \n"
+        lines += f"Final test error: {self.training_results['test_error'][-1]} \n"
+
+        summary = open(file+".txt", "w")
+        summary.write(lines)
+        summary.close()
 
 
     def init_train(self, nsample=None, sampler='uniform', ncore=mp.cpu_count()):
@@ -81,6 +100,11 @@ class SurrogateModel(object):
         self.theta = self.theta0
         self.y = self.y0
 
+        # record number of training samples
+        self.ninit_train = len(self.theta0)
+        self.ntrain = self.ninit_train
+        self.nactive = 0
+
         if self.cache:
             np.savez(f"{self.savedir}/initial_training_sample.npz", theta=self.theta, y=self.y)
 
@@ -92,6 +116,9 @@ class SurrogateModel(object):
 
         self.theta_test = ut.prior_sampler(nsample=nsample, bounds=self.bounds, sampler=sampler)
         self.y_test = ut.eval_fn(self.fn, self.theta_test, ncore=ncore)
+
+        # record number of test samples
+        self.ntest = len(self.theta_test)
 
         if self.cache:
             np.savez(f"{self.savedir}/initial_test_sample.npz", theta=self.theta_test, y=self.y_test)
@@ -141,38 +168,48 @@ class SurrogateModel(object):
             # Guess initial metric, or scale length of the covariances (must be > 0)
             initial_lscale = np.fabs(np.random.randn(self.ndim))
             self.kernel = kernels.ExpSquaredKernel(metric=initial_lscale, ndim=self.ndim)
+            self.kernel_name = kernel
             print("Initialized GP with squared exponential kernel.")
         elif kernel == "Matern32Kernel":
             initial_lscale = np.fabs(np.random.randn(self.ndim))
             self.kernel = kernels.Matern32Kernel(metric=initial_lscale, ndim=self.ndim)
+            self.kernel_name = kernel
             print("Initialized GP with squared matern-3/2 kernel.")
         elif kernel == "Matern52Kernel":
             initial_lscale = np.fabs(np.random.randn(self.ndim))
             self.kernel = kernels.Matern52Kernel(metric=initial_lscale, ndim=self.ndim)
+            self.kernel_name = kernel
             print("Initialized GP with squared matern-5/2 kernel.")
 
         # Non-stationary kernels
         elif kernel == "LinearKernel":
             self.kernel = kernels.LinearKernel(log_gamma2=1, ndim=self.ndim)
+            self.kernel_name = kernel
             print("Initialized GP with linear kernel.")
         elif kernel == "ExpSine2Kernel":
             self.kernel = kernels.ExpSine2Kernel(gamma=1, log_period=1, ndim=self.ndim)
+            self.kernel_name = kernel
             print("Initialized GP with exponential sin^2 kernel.")
         elif kernel == "CosineKernel":
             self.kernel = kernels.CosineKernel(log_period=1, ndim=self.ndim)
+            self.kernel_name = kernel
             print("Initialized GP with cosine kernel.")
         elif kernel == "DotProductKernel":
             self.kernel = kernels.DotProductKernel(ndim=self.ndim)
+            self.kernel_name = kernel
             print("Initialized GP with dot product kernel.")
         elif kernel == "LocalGaussianKernel":
             center = np.median(self.bounds, axis=1)
             self.kernel = kernels.LocalGaussianKernel(location=center, log_width=1, ndim=self.ndim)
+            self.kernel_name = kernel
             print("Initialized GP with local gaussian kernel.")
         elif kernel == "ConstantKernel":
             self.kernel = kernels.ConstantKernel(log_constant=1, ndim=self.ndim)
+            self.kernel_name = kernel
             print("Initialized GP with constant kernel.")
         elif kernel == "PolynomialKernel":
             self.kernel = kernels.PolynomialKernel(log_sigma2=1, ndim=self.ndim)
+            self.kernel_name = kernel
             print("Initialized GP with polynomial kernel.")
 
         # Custom george kernel
@@ -180,6 +217,7 @@ class SurrogateModel(object):
             try:
                 self.kernel = kernel
                 test_gp = george.GP(kernel)
+                self.kernel_name = "Custom Kernel"
                 print(f"Loaded custom kernel with parameters: {test_gp.get_parameter_names()}")
             except:
                 print(f"kernel {kernel} is not valid.\n")
@@ -193,11 +231,15 @@ class SurrogateModel(object):
         self.gp = gp_utils.fit_gp(self.theta, self.y, self.kernel, 
                                   fit_amp=fit_amp, fit_mean=fit_mean,
                                   white_noise=white_noise)
+
+        t0 = time.time()
         self.gp = gp_utils.optimize_gp(self.gp, self.theta, self.y,
                                        gp_hyper_prior=self.gp_hyper_prior)
+        tf = time.time()
 
         if self.verbose:
-            print("optimized hyperparameters:", self.gp.get_parameter_vector())
+            print(f"optimized hyperparameters: ({np.round(tf - t0, 1)}s)")
+            print(self.gp.get_parameter_vector())
             print('')
 
 
@@ -282,10 +324,13 @@ class SurrogateModel(object):
 
                     # Optimize GP?
                     if ii % gp_opt_freq == 0:
+                        t0 = time.time()
                         gp = gp_utils.optimize_gp(gp, theta_prop, y_prop,
                                                   gp_hyper_prior=self.gp_hyper_prior)
+                        tf = time.time()
                         if self.verbose:
-                            print("optimized hyperparameters:", self.gp.get_parameter_vector())
+                            print(f"optimized hyperparameters: ({np.round(tf - t0, 1)}s)")
+                            print(self.gp.get_parameter_vector())
                     break
 
                 except:
@@ -322,6 +367,11 @@ class SurrogateModel(object):
             self.training_results["gp_kl_divergence"].append(gp_kl_divergence)
             self.training_results["gp_train_time"].append(fit_gp_tf - fit_gp_t0)
             self.training_results["obj_fn_opt_time"].append(opt_obj_tf - opt_obj_t0)
+
+        # record total number of training samples
+        self.ntrain = len(self.theta)
+        # number of active training samples
+        self.nactive = self.ntrain - self.ninit_train
 
         if self.cache:
             self.save()
