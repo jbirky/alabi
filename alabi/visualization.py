@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib import rc
@@ -5,7 +6,12 @@ rc('text', usetex=True)
 rc('xtick', labelsize=16)
 rc('ytick', labelsize=16)
 
-__all__ = ["plot_error_vs_iteration", "plot_hyperparam_vs_iteration"]
+__all__ = ["plot_error_vs_iteration", 
+           "plot_hyperparam_vs_iteration", 
+           "plot_train_time_vs_iteration",
+           "plot_corner_scatter",
+           "plot_gp_fit_1D",
+           "plot_gp_fit_2D"]
 
 
 def plot_error_vs_iteration(training_results, savedir, log=False):
@@ -89,9 +95,10 @@ def plot_corner_scatter(tt, yy, labels, savedir):
     cb.set_ticks(cb_rng)
     cb.ax.tick_params(labelsize=18)
     fig.savefig(f"{savedir}/training_sample_corner.png")
+    plt.close()
 
 
-def plot_gp_fit_1D(theta, y, gp):
+def plot_gp_fit_1D(theta, y, gp, bounds):
 
     xarr = np.linspace(bounds[0][0], bounds[0][1], 30)
     mu, var = gp.predict(y, xarr, return_var=True)
@@ -103,17 +110,23 @@ def plot_gp_fit_1D(theta, y, gp):
     plt.scatter(theta_test, y_test, color='g')
     plt.xlim(bounds[0])
     plt.savefig(f"{savedir}/gp_fit_1D.png")
+    plt.close()
 
 
-def plot_gp_fit_2D(theta, y, gp):
+def plot_gp_fit_2D(theta, y, gp, bounds, savedir, ngrid=60):
 
-    xarr = np.linspace(bounds[0][0], bounds[0][1], 30)
-    mu, var = gp.predict(y, xarr, return_var=True)
+    xarr = np.linspace(bounds[0][0], bounds[0][1], ngrid)
+    yarr = np.linspace(bounds[1][0], bounds[1][1], ngrid)
 
-    fig, ax = plt.subplots()
-    plt.plot(xarr, fn(xarr), color='k', linestyle='--', linewidth=.5)
-    ax.fill_between(xarr, mu-var, mu+var, color='r', alpha=.8)
-    plt.scatter(theta, y, color='r')
-    plt.scatter(theta_test, y_test, color='g')
-    plt.xlim(bounds[0])
+    X, Y = np.meshgrid(xarr, yarr)
+    Z = np.zeros((ngrid, ngrid))
+    
+    for i in range(Z.shape[0]):
+        for j in range(Z.shape[1]):
+            tt = np.array([X[i][j], Y[i][j]]).reshape(1,-1)
+            Z[i][j] = gp.predict(y, tt, return_cov=False)[0]
+        
+    plt.contourf(X, Y, Z, 20, cmap='gist_heat')
+    plt.colorbar()
     plt.savefig(f"{savedir}/gp_fit_2D.png")
+    plt.close()

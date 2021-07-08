@@ -249,8 +249,7 @@ class SurrogateModel(object):
                     # Optimize GP?
                     if ii % gp_opt_freq == 0:
                         gp = gp_utils.optimize_gp(gp, theta_prop, y_prop,
-                                                  gp_hyper_prior=self.gp_hyper_prior,
-                                                  p0=self.gp.get_parameter_vector())
+                                                  gp_hyper_prior=self.gp_hyper_prior)
                         if self.verbose:
                             print("optimized hyperparameters:", self.gp.get_parameter_vector())
                     break
@@ -358,4 +357,16 @@ class SurrogateModel(object):
                 plot_corner_scatter(self.theta, self.y, self.labels, self.savedir)
             else:
                 raise NameError("Must run init_train and/or active_train before plotting training_corner.")
+
+        # GP training time vs iteration
+        if 'gp_fit_2D' in plots:
+            if hasattr(self, 'theta') and hasattr(self, 'y'):
+                print("Plotting gp fit 2D...")
+                if self.ndim == 2:
+                    vis.plot_gp_fit_2D(self.theta, self.y, self.gp, 
+                                       self.bounds, self.savedir, ngrid=60)
+                else:
+                    print("theta must be 2D to use gp_fit_2D!")
+            else:
+                raise NameError("Must run init_train and/or active_train before plotting gp_fit_2D.")
                     
