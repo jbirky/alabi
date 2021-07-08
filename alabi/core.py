@@ -210,11 +210,12 @@ class SurrogateModel(object):
 
         if hasattr(self, 'training_results') == False:
             self.training_results = {"iteration" : [], 
-                                     "gp_hyperparameters" : [], 
-                                     "gp_train_time" : [], 
+                                     "gp_hyperparameters" : [],  
                                      "training_error" : [],
                                      "test_error" : [], 
-                                     "gp_kl_divergence" : []}
+                                     "gp_kl_divergence" : [],
+                                     "gp_train_time" : [],
+                                     "obj_fn_opt_time" : []}
             first_iter = 0
         else:
             first_iter = self.training_results["iteration"][-1]
@@ -233,18 +234,20 @@ class SurrogateModel(object):
 
             while True:
                 # Find next training point!
+                opt_obj_t0 = time.time()
                 theta_new, y_new = self.find_next_point()
+                opt_obj_tf = time.time()
 
                 # add theta and y to training sample
                 theta_prop = np.append(self.theta, [theta_new], axis=0)
                 y_prop = np.append(self.y, y_new)
 
                 try:
-                    t0 = time.time()
+                    fit_gp_t0 = time.time()
                     # Fit GP. Make sure to feed in previous iteration hyperparameters!
                     gp = gp_utils.fit_gp(theta_prop, y_prop, self.kernel,
                                          hyperparameters=self.gp.get_parameter_vector())
-                    tf = time.time()
+                    fit_gp_tf = time.time()
 
                     # Optimize GP?
                     if ii % gp_opt_freq == 0:
@@ -283,10 +286,11 @@ class SurrogateModel(object):
             # save results to a dictionary
             self.training_results["iteration"].append(ii + first_iter)
             self.training_results["gp_hyperparameters"].append(self.gp.get_parameter_vector())
-            self.training_results["gp_train_time"].append(tf - t0)
             self.training_results["training_error"].append(training_error)
             self.training_results["test_error"].append(test_error)
             self.training_results["gp_kl_divergence"].append(gp_kl_divergence)
+            self.training_results["gp_train_time"].append(fit_gp_tf - fit_gp_t0)
+            self.training_results["obj_fn_opt_time"].append(opt_obj_tf - opt_obj_t0)
 
         if self.cache:
             self.save()
@@ -343,9 +347,9 @@ class SurrogateModel(object):
                 raise NameError("Must run active_train before plotting gp_hyperparam.")
 
         # GP training time vs iteration
-        if 'gp_train_time' in plots:
+        if 'timing' in plots:
             if hasattr(self, 'training_results'):
-                print("Plotting gp train time...")
+                print("Plotting timing...")
 
                 vis.plot_train_time_vs_iteration(self.training_results, self.savedir)
             else:

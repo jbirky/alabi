@@ -5,6 +5,9 @@ from matplotlib import rc
 rc('text', usetex=True)
 rc('xtick', labelsize=16)
 rc('ytick', labelsize=16)
+font = {'family' : 'normal',
+        'weight' : 'light'}
+rc('font', **font)
 
 __all__ = ["plot_error_vs_iteration", 
            "plot_hyperparam_vs_iteration", 
@@ -22,7 +25,7 @@ def plot_error_vs_iteration(training_results, savedir, log=False):
                 label='test error')
     plt.xlabel('iteration', fontsize=18)
     plt.ylabel('MSE', fontsize=18)
-    plt.legend(loc='best')
+    plt.legend(loc='best', fontsize=14)
     plt.minorticks_on()
     plt.tight_layout()
     if log:
@@ -63,10 +66,12 @@ def plot_hyperparam_vs_iteration(training_results, hp_names,
 def plot_train_time_vs_iteration(training_results, savedir):
 
     plt.plot(training_results["iteration"], training_results["gp_train_time"], 
-                label='GP train time')
+                label='GP train step')
+    plt.plot(training_results["iteration"], training_results["obj_fn_opt_time"], 
+                label='Active learning step')
     plt.xlabel('iteration', fontsize=18)
     plt.ylabel('Time (s)', fontsize=18)
-    plt.legend(loc='best')
+    plt.legend(loc='best', fontsize=14)
     plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(f"{savedir}/gp_train_time_vs_iteration.png")
@@ -126,7 +131,8 @@ def plot_gp_fit_2D(theta, y, gp, bounds, savedir, ngrid=60):
             tt = np.array([X[i][j], Y[i][j]]).reshape(1,-1)
             Z[i][j] = gp.predict(y, tt, return_cov=False)[0]
         
-    plt.contourf(X, Y, Z, 20, cmap='gist_heat')
-    plt.colorbar()
+    im = plt.contourf(X, Y, Z, 20, cmap='Blues_r')
+    plt.colorbar(im)
+    plt.scatter(theta.T[0], theta.T[1], color='r', s=5)
     plt.savefig(f"{savedir}/gp_fit_2D.png")
     plt.close()
