@@ -2,7 +2,6 @@ import numpy as np
 from scipy.optimize import rosen
 import math
 
-
 __all__ = ["rosenbrock",
            "gaussian_shells",
            "eggbox", 
@@ -14,7 +13,7 @@ __all__ = ["rosenbrock",
 # ================================5
 
 def rosenbrock_fn(x):
-    return -rosen(x)/100.0
+    return -rosen(x)/1e3
 
 rosenbrock_bounds = [(-5,5), (-5,5)]
 
