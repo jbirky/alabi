@@ -13,13 +13,11 @@ import visualization as vis
 
 import numpy as np
 from scipy.optimize import minimize
-import multiprocessing as mp
-import matplotlib.pyplot as plt
-import time
-import math
-import emcee
-import corner
 import george
+from george import kernels
+import multiprocessing as mp
+import time
+import emcee
 import os
 import warnings
 import tqdm
@@ -136,24 +134,57 @@ class SurrogateModel(object):
         # Initialize GP kernel
         if kernel is None:
             print("No kernel specified. Defaulting to squared exponential kernel.")
-            kernel = 'sqexp'
+            kernel = "ExpSquaredKernel"
 
-        if kernel == 'sqexp':
+        # Stationary kernels
+        if kernel == "ExpSquaredKernel":
             # Guess initial metric, or scale length of the covariances (must be > 0)
             initial_lscale = np.fabs(np.random.randn(self.ndim))
-            self.kernel = george.kernels.ExpSquaredKernel(metric=initial_lscale, ndim=self.ndim)
+            self.kernel = kernels.ExpSquaredKernel(metric=initial_lscale, ndim=self.ndim)
             print("Initialized GP with squared exponential kernel.")
-        elif kernel == 'matern32':
+        elif kernel == "Matern32Kernel":
             initial_lscale = np.fabs(np.random.randn(self.ndim))
-            self.kernel = george.kernels.Matern32Kernel(metric=initial_lscale, ndim=self.ndim)
+            self.kernel = kernels.Matern32Kernel(metric=initial_lscale, ndim=self.ndim)
             print("Initialized GP with squared matern-3/2 kernel.")
-        elif kernel == 'matern52':
+        elif kernel == "Matern52Kernel":
             initial_lscale = np.fabs(np.random.randn(self.ndim))
-            self.kernel = george.kernels.Matern52Kernel(metric=initial_lscale, ndim=self.ndim)
+            self.kernel = kernels.Matern52Kernel(metric=initial_lscale, ndim=self.ndim)
             print("Initialized GP with squared matern-5/2 kernel.")
+
+        # Non-stationary kernels
+        elif kernel == "LinearKernel":
+            self.kernel = kernels.LinearKernel(log_gamma2=1, ndim=self.ndim)
+            print("Initialized GP with linear kernel.")
+        elif kernel == "ExpSine2Kernel":
+            self.kernel = kernels.ExpSine2Kernel(gamma=1, log_period=1, ndim=self.ndim)
+            print("Initialized GP with exponential sin^2 kernel.")
+        elif kernel == "CosineKernel":
+            self.kernel = kernels.CosineKernel(log_period=1, ndim=self.ndim)
+            print("Initialized GP with cosine kernel.")
+        elif kernel == "DotProductKernel":
+            self.kernel = kernels.DotProductKernel(ndim=self.ndim)
+            print("Initialized GP with dot product kernel.")
+        elif kernel == "LocalGaussianKernel":
+            center = np.median(self.bounds, axis=1)
+            self.kernel = kernels.LocalGaussianKernel(location=center, log_width=1, ndim=self.ndim)
+            print("Initialized GP with local gaussian kernel.")
+        elif kernel == "ConstantKernel":
+            self.kernel = kernels.ConstantKernel(log_constant=1, ndim=self.ndim)
+            print("Initialized GP with constant kernel.")
+        elif kernel == "PolynomialKernel":
+            self.kernel = kernels.PolynomialKernel(log_sigma2=1, ndim=self.ndim)
+            print("Initialized GP with polynomial kernel.")
+
+        # Custom george kernel
         else:
-            # custom george kernel
-            self.kernel = kernel
+            try:
+                self.kernel = kernel
+                test_gp = george.GP(kernel)
+                print(f"Loaded custom kernel with parameters: {test_gp.get_parameter_names()}")
+            except:
+                print(f"kernel {kernel} is not valid.\n")
+                print("Enter either one of the following options, or a george kernel object.")
+                print(george.kernels.__all__)
 
         # assign GP hyperparameter prior
         self.gp_hyper_prior = gp_hyper_prior

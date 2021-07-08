@@ -114,7 +114,8 @@ def _grad_nll(p, gp, y, priorFn=None):
     return -gp.grad_log_likelihood(y, quiet=True)
 
 
-def fit_gp(theta, y, kernel, fit_amp=True, fit_mean=True, white_noise=-12, hyperparameters=None):
+def fit_gp(theta, y, kernel, fit_amp=True, fit_mean=True, 
+           white_noise=-12, hyperparameters=None):
 
     if np.any(~np.isfinite(theta)) or np.any(~np.isfinite(y)):
         print("theta, y:", theta, y)
@@ -134,7 +135,7 @@ def fit_gp(theta, y, kernel, fit_amp=True, fit_mean=True, white_noise=-12, hyper
 
 
 def optimize_gp(gp, theta, y, seed=None, nopt=1, method="powell",
-               options=None, p0=None, gp_hyper_prior=None):
+                options=None, p0=None, gp_hyper_prior=None):
     
     # Collapse arrays if 1D
     theta = theta.squeeze()
@@ -143,7 +144,7 @@ def optimize_gp(gp, theta, y, seed=None, nopt=1, method="powell",
     if gp_hyper_prior is None:
         gp_hyper_prior = partial(default_hyper_prior, 
                                  hp_rng=20,
-                                 mu=np.mean(y), 
+                                 mu=np.median(y), 
                                  sigma=np.std(y),
                                  sigma_level=3)
     
