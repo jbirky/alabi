@@ -172,7 +172,7 @@ class SurrogateModel(object):
 
     def evaluate(self, theta, **kwargs):
 
-        return gp.predict(self.y, theta, **kwargs)
+        return self.gp.predict(self.y, theta, **kwargs)
 
 
     def find_next_point(self, theta0=None, nopt=5, **kwargs):
