@@ -249,7 +249,8 @@ class SurrogateModel(object):
                     # Optimize GP?
                     if ii % gp_opt_freq == 0:
                         gp = gp_utils.optimize_gp(gp, theta_prop, y_prop,
-                                                  gp_hyper_prior=self.gp_hyper_prior)
+                                                  gp_hyper_prior=self.gp_hyper_prior,
+                                                  p0=self.gp.get_parameter_vector())
                         if self.verbose:
                             print("optimized hyperparameters:", self.gp.get_parameter_vector())
                     break
