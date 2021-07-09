@@ -17,7 +17,7 @@ __all__ = ["plot_error_vs_iteration",
            "plot_gp_fit_2D"]
 
 
-def plot_error_vs_iteration(training_results, savedir, log=False):
+def plot_error_vs_iteration(training_results, savedir, log=False, title="GP fit"):
 
     plt.plot(training_results["iteration"], training_results["training_error"], 
                 label='train error')
@@ -27,7 +27,7 @@ def plot_error_vs_iteration(training_results, savedir, log=False):
     plt.ylabel('MSE', fontsize=18)
     plt.legend(loc='best', fontsize=14)
     plt.minorticks_on()
-    plt.tight_layout()
+    plt.title(title, fontsize=22)
     if log:
         plt.yscale('log')
         plt.savefig(f"{savedir}/gp_error_vs_iteration_log.png")
@@ -37,7 +37,7 @@ def plot_error_vs_iteration(training_results, savedir, log=False):
 
 
 def plot_hyperparam_vs_iteration(training_results, hp_names, 
-                                 hp_values, savedir):
+                                 hp_values, savedir, title="GP fit"):
 
     fig, axs = plt.subplots(2,1, figsize=[8,10], sharex=True)
 
@@ -58,12 +58,12 @@ def plot_hyperparam_vs_iteration(training_results, hp_names,
     axs[1].minorticks_on()
     axs[0].legend(loc='best')
     axs[1].legend(loc='best')
-    plt.tight_layout()
+    plt.title(title, fontsize=22)
     plt.savefig(f"{savedir}/gp_hyperparameters_vs_iteration.png")
     plt.close()
 
 
-def plot_train_time_vs_iteration(training_results, savedir):
+def plot_train_time_vs_iteration(training_results, savedir, title="GP fit"):
 
     plt.plot(training_results["iteration"], training_results["gp_train_time"], 
                 label='GP train step')
@@ -72,13 +72,13 @@ def plot_train_time_vs_iteration(training_results, savedir):
     plt.xlabel('iteration', fontsize=18)
     plt.ylabel('Time (s)', fontsize=18)
     plt.legend(loc='best', fontsize=14)
+    plt.title(title, fontsize=22)
     plt.minorticks_on()
-    plt.tight_layout()
     plt.savefig(f"{savedir}/gp_train_time_vs_iteration.png")
     plt.close()
 
 
-def plot_corner_scatter(tt, yy, labels, savedir):
+def plot_corner_scatter(tt, yy, labels, savedir, title="GP fit"):
 
     ndim = theta.shape[1]
     fig = corner.corner(tt, c=yy, labels=labels, 
@@ -99,11 +99,12 @@ def plot_corner_scatter(tt, yy, labels, savedir):
     cb.set_label(r'$-\ln P$', fontsize=20)
     cb.set_ticks(cb_rng)
     cb.ax.tick_params(labelsize=18)
+    plt.title(title, fontsize=22)
     fig.savefig(f"{savedir}/training_sample_corner.png")
     plt.close()
 
 
-def plot_gp_fit_1D(theta, y, gp, bounds):
+def plot_gp_fit_1D(theta, y, gp, bounds, title="GP fit"):
 
     xarr = np.linspace(bounds[0][0], bounds[0][1], 30)
     mu, var = gp.predict(y, xarr, return_var=True)
@@ -114,11 +115,12 @@ def plot_gp_fit_1D(theta, y, gp, bounds):
     plt.scatter(theta, y, color='r')
     plt.scatter(theta_test, y_test, color='g')
     plt.xlim(bounds[0])
+    plt.title(title, fontsize=22)
     plt.savefig(f"{savedir}/gp_fit_1D.png")
     plt.close()
 
 
-def plot_gp_fit_2D(theta, y, gp, bounds, savedir, ngrid=60):
+def plot_gp_fit_2D(theta, y, gp, bounds, savedir, ngrid=60, title="GP fit"):
 
     xarr = np.linspace(bounds[0][0], bounds[0][1], ngrid)
     yarr = np.linspace(bounds[1][0], bounds[1][1], ngrid)
@@ -134,5 +136,26 @@ def plot_gp_fit_2D(theta, y, gp, bounds, savedir, ngrid=60):
     im = plt.contourf(X, Y, Z, 20, cmap='Blues_r')
     plt.colorbar(im)
     plt.scatter(theta.T[0], theta.T[1], color='r', s=5)
+    plt.title(title, fontsize=22)
     plt.savefig(f"{savedir}/gp_fit_2D.png")
+    plt.close()
+
+
+def plot_true_fit_2D(fn, bounds, savedir, ngrid=60):
+
+    xarr = np.linspace(bounds[0][0], bounds[0][1], ngrid)
+    yarr = np.linspace(bounds[1][0], bounds[1][1], ngrid)
+
+    X, Y = np.meshgrid(xarr, yarr)
+    Z = np.zeros((ngrid, ngrid))
+    
+    for i in range(Z.shape[0]):
+        for j in range(Z.shape[1]):
+            tt = np.array([X[i][j], Y[i][j]])
+            Z[i][j] = fn(tt)
+        
+    im = plt.contourf(X, Y, Z, 20, cmap='Blues_r')
+    plt.colorbar(im)
+    plt.title("True function", fontsize=22)
+    plt.savefig(f"true_function_2D.png")
     plt.close()
