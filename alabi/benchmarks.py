@@ -28,13 +28,13 @@ rosenbrock = {"fn": rosenbrock_fn,
 def logcirc(theta, c):
     r = 2.  # radius
     w = 0.1  # width
-    c1 = np.array([-3.5, 0.])  # center of shell 1
-    c2 = np.array([3.5, 0.])  # center of shell 2
     const = math.log(1. / math.sqrt(2. * math.pi * w**2))  # normalization constant
     d = np.sqrt(np.sum((theta - c)**2, axis=-1))  # |theta - c|
     return const - (d - r)**2 / (2. * w**2)
 
 def gaussian_shells_fn(theta):
+    c1 = np.array([-3.5, 0.])  # center of shell 1
+    c2 = np.array([3.5, 0.])  # center of shell 2
     return np.logaddexp(logcirc(theta, c1), logcirc(theta, c2))
 
 gaussian_shells_bounds = [(-5,5), (-5,5)]

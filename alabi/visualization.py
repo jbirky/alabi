@@ -14,7 +14,8 @@ __all__ = ["plot_error_vs_iteration",
            "plot_train_time_vs_iteration",
            "plot_corner_scatter",
            "plot_gp_fit_1D",
-           "plot_gp_fit_2D"]
+           "plot_gp_fit_2D",
+           "plot_true_fit_2D"]
 
 
 def plot_error_vs_iteration(training_results, savedir, log=False, title="GP fit"):
@@ -157,5 +158,5 @@ def plot_true_fit_2D(fn, bounds, savedir, ngrid=60):
     im = plt.contourf(X, Y, Z, 20, cmap='Blues_r')
     plt.colorbar(im)
     plt.title("True function", fontsize=22)
-    plt.savefig(f"true_function_2D.png")
+    plt.savefig(f"{savedir}/true_function_2D.png")
     plt.close()
