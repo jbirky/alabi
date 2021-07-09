@@ -27,7 +27,8 @@ import pickle
 class SurrogateModel(object):
 
     def __init__(self, fn=None, bounds=None, labels=None, 
-                 cache=True, savedir='results/', verbose=True):
+                 cache=True, savedir='results/', 
+                 verbose=True, ncore=mp.cpu_count()):
 
         # Check all required inputs are specified
         if fn is None:
@@ -50,10 +51,18 @@ class SurrogateModel(object):
         # Directory to save results and plots; defaults to local dir
         self.savedir = savedir
         if not os.path.exists(savedir):
-            os.mkdir(savedir)
+            os.makedirs(savedir)
 
         # Print progress statements
         self.verbose = verbose
+
+        # Number of cores alabi is allowed to use
+        if ncore > mp.cpu_count():
+            self.ncore = mp.cpu_count()
+        elif ncore <= 0:
+            self.ncore = 1
+        else:
+            self.ncore = ncore
 
         # Names of input parameters, used for plots
         if labels is None:
@@ -89,13 +98,13 @@ class SurrogateModel(object):
         summary.close()
 
 
-    def init_train(self, nsample=None, sampler='uniform', ncore=mp.cpu_count()):
+    def init_train(self, nsample=None, sampler='sobol'):
 
         if nsample is None:
             nsample = 10 * self.ndim
 
         self.theta0 = ut.prior_sampler(nsample=nsample, bounds=self.bounds, sampler=sampler)
-        self.y0 = ut.eval_fn(self.fn, self.theta0, ncore=ncore)
+        self.y0 = ut.eval_fn(self.fn, self.theta0, ncore=self.ncore)
 
         self.theta = self.theta0
         self.y = self.y0
@@ -109,13 +118,13 @@ class SurrogateModel(object):
             np.savez(f"{self.savedir}/initial_training_sample.npz", theta=self.theta, y=self.y)
 
 
-    def init_test(self, nsample=None, sampler='uniform', ncore=mp.cpu_count()):
+    def init_test(self, nsample=None, sampler='sobol'):
 
         if nsample is None:
             nsample = 10 * self.ndim
 
         self.theta_test = ut.prior_sampler(nsample=nsample, bounds=self.bounds, sampler=sampler)
-        self.y_test = ut.eval_fn(self.fn, self.theta_test, ncore=ncore)
+        self.y_test = ut.eval_fn(self.fn, self.theta_test, ncore=self.ncore)
 
         # record number of test samples
         self.ntest = len(self.theta_test)
@@ -170,6 +179,11 @@ class SurrogateModel(object):
             self.kernel = kernels.ExpSquaredKernel(metric=initial_lscale, ndim=self.ndim)
             self.kernel_name = kernel
             print("Initialized GP with squared exponential kernel.")
+        elif kernel == "RationalQuadraticKernel":
+            initial_lscale = np.fabs(np.random.randn(self.ndim))
+            self.kernel = kernels.RationalQuadraticKernel(log_alpha=1, metric=initial_lscale, ndim=self.ndim)
+            self.kernel_name = kernel
+            print("Initialized GP with rational quadratic kernel.")
         elif kernel == "Matern32Kernel":
             initial_lscale = np.fabs(np.random.randn(self.ndim))
             self.kernel = kernels.Matern32Kernel(metric=initial_lscale, ndim=self.ndim)
@@ -377,8 +391,7 @@ class SurrogateModel(object):
             self.save()
 
 
-    def run_mcmc(self, sampler="emcee", lnprior=None, **kwargs):
-
+    def run_emcee(self, lnprior=None, nwalkers=None, nsteps=int(5e4)):
 
         raise NotImplementedError("Not implemented.")
 
@@ -393,8 +406,41 @@ class SurrogateModel(object):
             return self.lnprior(theta) + self.evaluate(theta)
         self.lnprob = lnprob
 
-        sampler = emcee.EnsembleSampler(nwalkers, self.ndim, self.lnprob)
-        sampler.run_mcmc(p0, 10000)
+        if nwalkers is None:
+            nwalkers = 10 * self.ndim
+
+        if self.verbose:
+            print(f"Running emcee with {nwalkers} walkers for {nsteps} steps...")
+
+        # start walkers near the maximum
+        p0 = find_map(lnprior=self.lnprior)
+
+        # set up multiprocessing pool
+        pool = mp.Pool(self.ncore)
+
+        # run the sampler!
+        sampler = emcee.EnsembleSampler(nwalkers, self.ndim, self.lnprob, pool=pool)
+        sampler.run_mcmc(p0, nsteps, progress=True)
+
+        """
+        Outputs:
+
+        print   autocorrelation time
+                acceptance fraction
+                summary stats
+
+        plot    walkers
+                corner
+
+        cache   pickle object with mcmc results
+        """
+
+    
+    def run_dynasty(self, lnprior=None):
+
+        raise NotImplementedError("Not implemented.")
+
+        import dynesty
 
 
     def find_map(self, theta0=None, lnprior=None, method="nelder-mead", nRestarts=15, options=None):
@@ -409,8 +455,10 @@ class SurrogateModel(object):
             if hasattr(self, 'training_results'):
                 print("Plotting gp error...")
 
-                vis.plot_error_vs_iteration(self.training_results, self.savedir, log=True)
-                vis.plot_error_vs_iteration(self.training_results, self.savedir, log=False)
+                vis.plot_error_vs_iteration(self.training_results, self.savedir, log=True,
+                                            title=f"{self.kernel_name} surrogate")
+                vis.plot_error_vs_iteration(self.training_results, self.savedir, log=False,
+                                            title=f"{self.kernel_name} surrogate")
             else:
                 raise NameError("Must run active_train before plotting gp_error.")
 
@@ -423,7 +471,8 @@ class SurrogateModel(object):
                 hp_values = np.array(self.training_results["gp_hyperparameters"])
 
                 vis.plot_hyperparam_vs_iteration(self.training_results, hp_names, 
-                                                 hp_values, self.savedir)
+                                                 hp_values, self.savedir,
+                                                 title=f"{self.kernel_name} surrogate")
             else:
                 raise NameError("Must run active_train before plotting gp_hyperparam.")
 
@@ -432,7 +481,8 @@ class SurrogateModel(object):
             if hasattr(self, 'training_results'):
                 print("Plotting timing...")
 
-                vis.plot_train_time_vs_iteration(self.training_results, self.savedir)
+                vis.plot_train_time_vs_iteration(self.training_results, self.savedir,
+                                                 title=f"{self.kernel_name} surrogate")
             else:
                 raise NameError("Must run active_train before plotting gp_hyperparam.")
 
@@ -449,7 +499,8 @@ class SurrogateModel(object):
                 print("Plotting gp fit 2D...")
                 if self.ndim == 2:
                     vis.plot_gp_fit_2D(self.theta, self.y, self.gp, 
-                                       self.bounds, self.savedir, ngrid=60)
+                                       self.bounds, self.savedir, 
+                                       ngrid=60, title=f"{self.kernel_name} surrogate")
                 else:
                     print("theta must be 2D to use gp_fit_2D!")
             else:
