@@ -84,7 +84,8 @@ class SurrogateModel(object):
         lines =  f"Model summary:\n\n"
 
         lines += f"Kernel: {self.kernel_name} \n"
-        lines += f"Active learning algorithm : {self.algorithm} \n\n" 
+        lines += f"Active learning algorithm : {self.algorithm} \n" 
+        lines += f"GP hyperparameter optimization frequency: {self.gp_opt_freq} \n\n"
 
         lines += f"Number of total training samples: {self.ntrain} \n"
         lines += f"Number of initial training samples: {self.ninit_train} \n"
@@ -281,6 +282,9 @@ class SurrogateModel(object):
         # Set algorithm
         self.algorithm = str(algorithm).lower()
 
+        # GP hyperparameter optimization frequency
+        self.gp_opt_freq = gp_opt_freq
+
         # Assign utility function
         if self.algorithm == "bape":
             self.utility = ut.bape_utility
@@ -337,7 +341,7 @@ class SurrogateModel(object):
                     fit_gp_tf = time.time()
 
                     # Optimize GP?
-                    if ii % gp_opt_freq == 0:
+                    if ii % self.gp_opt_freq == 0:
                         t0 = time.time()
                         gp = gp_utils.optimize_gp(gp, theta_prop, y_prop,
                                                   gp_hyper_prior=self.gp_hyper_prior)
