@@ -27,7 +27,7 @@ import tqdm
 # Define sampling functions
 #===========================================================
 
-def prior_sampler(nsample=None, bounds=None, sampler='uniform'):
+def prior_sampler(nsample=1, bounds=None, sampler='uniform'):
     """
     https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html
     """
@@ -99,6 +99,13 @@ def lnprior_uniform(x, bounds):
             return 0
         else:
             return -np.inf
+
+
+def prior_sampler_loaded(samples, nsample=1, bounds=None):
+
+    index = np.random.choice(samples.shape[0], size=nsample, replace=False)
+
+    return  samples[index]
 
 
 #===========================================================
