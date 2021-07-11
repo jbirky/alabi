@@ -144,10 +144,10 @@ def plot_gp_fit_2D(theta, y, gp, bounds, savedir, ngrid=60, title="GP fit"):
     plt.close()
 
 
-def plot_true_fit_2D(sm, ngrid=60):
+def plot_true_fit_2D(fn, bounds, savedir, ngrid=60):
 
-    xarr = np.linspace(sm.bounds[0][0], sm.bounds[0][1], ngrid)
-    yarr = np.linspace(sm.bounds[1][0], sm.bounds[1][1], ngrid)
+    xarr = np.linspace(bounds[0][0], bounds[0][1], ngrid)
+    yarr = np.linspace(bounds[1][0], bounds[1][1], ngrid)
 
     X, Y = np.meshgrid(xarr, yarr)
     Z = np.zeros((ngrid, ngrid))
@@ -155,35 +155,35 @@ def plot_true_fit_2D(sm, ngrid=60):
     for i in range(Z.shape[0]):
         for j in range(Z.shape[1]):
             tt = np.array([X[i][j], Y[i][j]])
-            Z[i][j] = sm.fn(tt)
+            Z[i][j] = fn(tt)
         
     im = plt.contourf(X, Y, Z, 20, cmap='Blues_r')
     plt.colorbar(im)
     plt.title("True function", fontsize=22)
-    if not os.path.exists(sm.savedir):
-        os.makedirs(sm.savedir)
-    plt.savefig(f"{sm.savedir}/true_function_2D.png")
+    if not os.path.exists(savedir):
+        os.makedirs(savedir)
+    plt.savefig(f"{savedir}/true_function_2D.png")
     plt.close()
 
 
 def plot_emcee_corner(sm):
 
-    fig = corner.corner(sm..emcee_samples, quantiles=[0.16, 0.5, 0.84], show_titles=True,
-                        scale_hist=True, plot_contours=True, labels=sm..labels,
+    fig = corner.corner(sm.emcee_samples, quantiles=[0.16, 0.5, 0.84], show_titles=True,
+                        scale_hist=True, plot_contours=True, labels=sm.labels,
                         title_kwargs={"fontsize": 15}, label_kwargs={"fontsize": 15})
-    fig.savefig(f"{sm..savedir}/emcee_posterior.png", bbox_inches="tight")
+    fig.savefig(f"{sm.savedir}/emcee_posterior.png", bbox_inches="tight")
 
 
 def plot_emcee_walkers(sm):
 
-    fig, axes = plt.subplots(sm..ndim, figsize=(12, 3*sm..ndim), sharex=True)
-    samples = sm..sampler.get_chain()
-    for i in range(sm..ndim):
+    fig, axes = plt.subplots(sm.ndim, figsize=(12, 3*sm.ndim), sharex=True)
+    samples = sm.sampler.get_chain()
+    for i in range(sm.ndim):
         ax = axes[i]
         ax.plot(samples[:, :, i], "k", alpha=0.3)
         ax.set_xlim(0, len(samples))
-        ax.set_ylabel(sm..labels[i], fontsize=20)
+        ax.set_ylabel(sm.labels[i], fontsize=20)
         ax.yaxis.set_label_coords(-0.1, 0.5)
     axes[-1].set_xlabel("step number", fontsize=20)
 
-    fig.savefig(f"{sm..savedir}/emcee_walkers.png", bbox_inches="tight")
+    fig.savefig(f"{sm.savedir}/emcee_walkers.png", bbox_inches="tight")

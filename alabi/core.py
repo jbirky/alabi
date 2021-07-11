@@ -11,6 +11,7 @@ import utility as ut
 import visualization as vis
 import gp_utils
 import mcmc_utils 
+import cache_utils
 
 import numpy as np
 from scipy.optimize import minimize
@@ -29,7 +30,7 @@ import pickle
 class SurrogateModel(object):
 
     def __init__(self, fn=None, bounds=None, labels=None, 
-                 cache=True, savedir='results/', 
+                 cache=True, savedir="results/", model_name="surrogate_model",
                  verbose=True, ncore=mp.cpu_count()):
 
         # Check all required inputs are specified
@@ -55,6 +56,9 @@ class SurrogateModel(object):
         if not os.path.exists(self.savedir):
             os.makedirs(self.savedir)
 
+        # Name of model cache
+        self.model_name = model_name
+
         # Print progress statements
         self.verbose = verbose
 
@@ -72,34 +76,24 @@ class SurrogateModel(object):
         else:
             self.labels = labels
 
+        # false if emcee and dynesty have not been run for this object
+        self.emcee_run = False
+        self.dynesty_run = False
+
     
-    def save(self, fname="surrogate_model"):
-        
-        file = os.path.join(self.savedir, fname)
+    def save(self):
+
+        file = os.path.join(self.savedir, self.model_name)
 
         # pickle surrogate model object
         print(f"Caching model to {file}...")
         with open(file+".pkl", "wb") as f:        
             pickle.dump(self, f)
 
-        # print model summary to human-readable text file
-        lines =  f"Model summary:\n\n"
+        cache_utils.write_report_gp(self, file)
 
-        lines += f"Kernel: {self.kernel_name} \n"
-        lines += f"Function bounds: {self.bounds} \n"
-        lines += f"Active learning algorithm : {self.algorithm} \n" 
-        lines += f"GP hyperparameter optimization frequency: {self.gp_opt_freq} \n\n"
-
-        lines += f"Number of total training samples: {self.ntrain} \n"
-        lines += f"Number of initial training samples: {self.ninit_train} \n"
-        lines += f"Number of active training samples: {self.nactive} \n\n"
-
-        lines += f"Number of test samples: {self.ntest} \n"
-        lines += f"Final test error: {self.training_results['test_error'][-1]} \n"
-
-        summary = open(file+".txt", "w")
-        summary.write(lines)
-        summary.close()
+        if self.emcee_run == True:
+            cache_utils.write_report_emcee(self, file)
 
 
     def init_train(self, nsample=None, sampler='sobol'):
@@ -418,14 +412,18 @@ class SurrogateModel(object):
 
         import emcee
 
-        # if no prior is specified, use uniform prior
         if lnprior is None:
+            print(f"No lnprior specified. Defaulting to uniform prior with bounds {self.bounds}")
             self.lnprior = partial(ut.lnprior_uniform, bounds=self.bounds)
         else:
             self.lnprior = lnprior
 
+        # number of walkers, and number of steps per walker
         if nwalkers is None:
-            nwalkers = 10 * self.ndim
+            self.nwalkers = 10 * self.ndim
+        else:
+            self.nwalkers = nwalkers
+        self.nsteps = nsteps
 
         if self.verbose:
             print(f"Running emcee with {nwalkers} walkers for {nsteps} steps...")
@@ -452,12 +450,12 @@ class SurrogateModel(object):
         #     backend = None
 
         # Run the sampler!
-        self.sampler = emcee.EnsembleSampler(nwalkers, 
+        self.sampler = emcee.EnsembleSampler(self.nwalkers, 
                                              self.ndim, 
                                              self.lnprob, 
                                              pool=pool)
 
-        self.sampler.run_mcmc(p0, nsteps, progress=True)
+        self.sampler.run_mcmc(p0, self.nsteps, progress=True)
 
         # burn, thin, and flatten samples
         self.iburn, self.ithin = mcmc_utils.estimateBurnin(self.sampler, verbose=self.verbose)
@@ -472,8 +470,13 @@ class SurrogateModel(object):
             print("Mean acceptance fraction: {0:.3f}".format(acc_frac))
             print("Mean autocorrelation time: {0:.3f} steps".format(autcorr_time))
 
+        # record that emcee has been run
+        self.emcee_run = True
+
         if self.cache:
-            np.savez(f"{self.savedir}/emcee_samples_processed.npz", samples=self.emcee_samples)
+            self.save()
+
+            np.savez(f"{self.savedir}/emcee_samples_final.npz", samples=self.emcee_samples)
 
         """
         Outputs:
@@ -492,6 +495,9 @@ class SurrogateModel(object):
     def run_dynasty(self, lnprior=None):
 
         raise NotImplementedError("Not implemented.")
+
+        # record that emcee has been run
+        self.dynesty_run = True
 
         import dynesty
 
