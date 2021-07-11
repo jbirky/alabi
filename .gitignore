@@ -5,3 +5,4 @@
 *.csv
 *.ipynb
 approxposterior/*
+__pycache__/
