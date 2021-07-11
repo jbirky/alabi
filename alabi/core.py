@@ -8,11 +8,13 @@
 __all__ = ["SurrogateModel"]
 
 import utility as ut
-import gp_utils
 import visualization as vis
+import gp_utils
+import mcmc_utils 
 
 import numpy as np
 from scipy.optimize import minimize
+from functools import partial
 import george
 from george import kernels
 import multiprocessing as mp
@@ -50,8 +52,8 @@ class SurrogateModel(object):
 
         # Directory to save results and plots; defaults to local dir
         self.savedir = savedir
-        if not os.path.exists(savedir):
-            os.makedirs(savedir)
+        if not os.path.exists(self.savedir):
+            os.makedirs(self.savedir)
 
         # Print progress statements
         self.verbose = verbose
@@ -84,6 +86,7 @@ class SurrogateModel(object):
         lines =  f"Model summary:\n\n"
 
         lines += f"Kernel: {self.kernel_name} \n"
+        lines += f"Function bounds: {self.bounds} \n"
         lines += f"Active learning algorithm : {self.algorithm} \n" 
         lines += f"GP hyperparameter optimization frequency: {self.gp_opt_freq} \n\n"
 
@@ -223,7 +226,7 @@ class SurrogateModel(object):
             self.kernel_name = kernel
             print("Initialized GP with constant kernel.")
         elif kernel == "PolynomialKernel":
-            self.kernel = kernels.PolynomialKernel(log_sigma2=1, ndim=self.ndim)
+            self.kernel = kernels.PolynomialKernel(log_sigma2=1, order=1, ndim=self.ndim)
             self.kernel_name = kernel
             print("Initialized GP with polynomial kernel.")
 
@@ -258,9 +261,11 @@ class SurrogateModel(object):
             print('')
 
 
-    def evaluate(self, theta, **kwargs):
+    def evaluate(self, theta):
 
-        return self.gp.predict(self.y, theta, **kwargs)
+        theta = np.asarray(theta)
+
+        return self.gp.predict(self.y, theta, return_cov=False)
 
 
     def find_next_point(self, theta0=None, nopt=5, **kwargs):
@@ -395,20 +400,29 @@ class SurrogateModel(object):
             self.save()
 
 
-    def run_emcee(self, lnprior=None, nwalkers=None, nsteps=int(5e4)):
+    def lnprob(self, theta):
 
-        raise NotImplementedError("Not implemented.")
+        if not hasattr(self, 'gp'):
+            raise NameError("GP has not been trained")
+
+        if not hasattr(self, 'lnprior'):
+            raise NameError("lnprior has not been specified")
+
+        theta = np.asarray(theta).reshape(1,-1)
+
+        return self.evaluate(theta) + self.lnprior(theta)
+
+
+    def run_emcee(self, lnprior=None, nwalkers=None, nsteps=int(5e4),
+                  opt_init=True, multi_proc=True):
 
         import emcee
 
+        # if no prior is specified, use uniform prior
         if lnprior is None:
-            def lnprior(theta):
-                lnprior_uniform(theta, self.bounds)
-        self.lnprior = lnprior
-
-        def lnprob(theta):
-            return self.lnprior(theta) + self.evaluate(theta)
-        self.lnprob = lnprob
+            self.lnprior = partial(ut.lnprior_uniform, bounds=self.bounds)
+        else:
+            self.lnprior = lnprior
 
         if nwalkers is None:
             nwalkers = 10 * self.ndim
@@ -416,15 +430,50 @@ class SurrogateModel(object):
         if self.verbose:
             print(f"Running emcee with {nwalkers} walkers for {nsteps} steps...")
 
-        # start walkers near the maximum
-        p0 = find_map(lnprior=self.lnprior)
+        # Optimize walker initialization?
+        if opt_init == True:
+            # start walkers near the estimated maximum
+            p0 = find_map(lnprior=self.lnprior)
+        else:
+            # start walkers at random points in the prior space
+            p0 = ut.prior_sampler(nsample=nwalkers, bounds=self.bounds)
 
         # set up multiprocessing pool
-        pool = mp.Pool(self.ncore)
+        if multi_proc == True:
+            pool = mp.Pool(self.ncore)
+        else:
+            pool = None
 
-        # run the sampler!
-        sampler = emcee.EnsembleSampler(nwalkers, self.ndim, self.lnprob, pool=pool)
-        sampler.run_mcmc(p0, nsteps, progress=True)
+        # set up hdf5 backend
+        # if self.cache:
+        #     backend = emcee.backends.HDFBackend(f"{self.savedir}/emcee_samples_raw.h5")
+        #     backend.reset(nwalkers, self.ndim)
+        # else:
+        #     backend = None
+
+        # Run the sampler!
+        self.sampler = emcee.EnsembleSampler(nwalkers, 
+                                             self.ndim, 
+                                             self.lnprob, 
+                                             pool=pool)
+
+        self.sampler.run_mcmc(p0, nsteps, progress=True)
+
+        # burn, thin, and flatten samples
+        self.iburn, self.ithin = mcmc_utils.estimateBurnin(self.sampler, verbose=self.verbose)
+        self.emcee_samples = self.sampler.get_chain(discard=self.iburn, flat=True, thin=self.ithin) 
+
+        if self.verbose:
+            # get acceptance fraction and autocorrelation time
+            acc_frac = np.mean(self.sampler.acceptance_fraction)
+            autcorr_time = np.mean(self.sampler.get_autocorr_time())
+
+            print(f"Total samples: {self.emcee_samples.shape[0]}")
+            print("Mean acceptance fraction: {0:.3f}".format(acc_frac))
+            print("Mean autocorrelation time: {0:.3f} steps".format(autcorr_time))
+
+        if self.cache:
+            np.savez(f"{self.savedir}/emcee_samples_processed.npz", samples=self.emcee_samples)
 
         """
         Outputs:
@@ -509,4 +558,18 @@ class SurrogateModel(object):
                     print("theta must be 2D to use gp_fit_2D!")
             else:
                 raise NameError("Must run init_train and/or active_train before plotting gp_fit_2D.")
+
+        # emcee posterior samples
+        if 'emcee_corner' in plots:  
+            if hasattr(self, 'emcee_samples'):
+                vis.plot_emcee_corner(self)
+            else:
+                raise NameError("Must run run_emcee before plotting emcee_corner.")
+
+        # emcee walkers
+        if 'emcee_walkers' in plots:  
+            if hasattr(self, 'emcee_samples'):
+                vis.plot_emcee_walkers(self)
+            else:
+                raise NameError("Must run run_emcee before plotting emcee_walkers.")
                     

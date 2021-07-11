@@ -64,9 +64,9 @@ eggbox = {"fn": eggbox_fn,
 
 def multimodal_fn(x):
     "https://jakevdp.github.io/PythonDataScienceHandbook/04.04-density-and-contour-plots.html"
-    return np.sin(x[0]) ** 10 + np.cos(10 + x[1] * x[0]) * np.cos(x[0])
+    return -(np.sin(x[0]) ** 10 + np.cos(10 + x[1] * x[0]) * np.cos(x[0]))
 
-multimodal_bounds = [(-5,5), (-5,5)]
+multimodal_bounds = [(0,5), (0,5)]
 
 multimodal = {"fn": multimodal_fn,
               "bounds": multimodal_bounds}

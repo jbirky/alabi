@@ -94,18 +94,14 @@ def lnprior_uniform(x, bounds):
     else:
         x = x.squeeze()
 
+    lnp = 0
     for i in range(ndim):
         if (x[i] > bounds[i][0]) and (x[i] < bounds[i][1]):
-            return 0
+            lnp += 0
         else:
-            return -np.inf
+            lnp += -np.inf
 
-
-def prior_sampler_loaded(samples, nsample=1, bounds=None):
-
-    index = np.random.choice(samples.shape[0], size=nsample, replace=False)
-
-    return  samples[index]
+    return lnp
 
 
 #===========================================================
