@@ -36,6 +36,10 @@ def write_report_emcee(self, file):
     acc_frac = np.mean(self.sampler.acceptance_fraction)
     autcorr_time = np.mean(self.sampler.get_autocorr_time())
 
+    # compute summary statistics 
+    means = np.mean(self.emcee_samples, axis=0)
+    stds = np.std(self.emcee_samples, axis=0)
+
     lines =  f"==========================================\n"
     lines += f"emcee summary \n"
     lines += f"==========================================\n\n"
@@ -48,6 +52,11 @@ def write_report_emcee(self, file):
     lines += f"Burn: {self.iburn} \n"
     lines += f"Thin: {self.ithin} \n"
     lines += f"Total burned, thinned, flattened samples: {self.emcee_samples.shape[0]} \n\n"
+
+    lines += f"Summary statistics: \n"
+    for ii in range(self.ndim):
+        lines += f"{self.labels[ii]} = {means[ii]} +/- {stds[ii]} \n"
+    lines += ""
 
     summary = open(file+".txt", "a")
     summary.write(lines)
