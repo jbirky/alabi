@@ -10,10 +10,10 @@ __all__ = ["rosenbrock",
 
 # ================================
 # Rosenbrock function (2D)
-# ================================5
+# ================================
 
 def rosenbrock_fn(x):
-    return -rosen(x)/1e3
+    return -rosen(x)/100.0
 
 rosenbrock_bounds = [(-5,5), (-5,5)]
 

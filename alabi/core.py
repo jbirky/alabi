@@ -409,6 +409,18 @@ class SurrogateModel(object):
 
     def run_emcee(self, lnprior=None, nwalkers=None, nsteps=int(5e4),
                   opt_init=True, multi_proc=True):
+        """
+        Outputs:
+
+        print   autocorrelation time
+                acceptance fraction
+                summary stats
+
+        plot    walkers
+                corner
+
+        cache   pickle object with mcmc results
+        """
 
         import emcee
 
@@ -478,28 +490,31 @@ class SurrogateModel(object):
 
             np.savez(f"{self.savedir}/emcee_samples_final.npz", samples=self.emcee_samples)
 
-        """
-        Outputs:
-
-        print   autocorrelation time
-                acceptance fraction
-                summary stats
-
-        plot    walkers
-                corner
-
-        cache   pickle object with mcmc results
-        """
-
     
-    def run_dynasty(self, lnprior=None):
+    def run_dynesty(self, ptform=None, sampler_kwargs={}):
 
-        raise NotImplementedError("Not implemented.")
+        import dynesty
+        from dynesty import NestedSampler
+
+        # set up multiprocessing pool
+        if multi_proc == True:
+            pool = mp.Pool(self.ncore)
+        else:
+            pool = None
+
+        # initialize our nested sampler
+        sampler = NestedSampler(self.evaluate, 
+                                ptform, 
+                                self.ndim,
+                                pool=pool, 
+                                queue_size=self.ncore,
+                                **sampler_kwargs)
+
+        sampler.run_nested()
+        res = sampler.results
 
         # record that emcee has been run
         self.dynesty_run = True
-
-        import dynesty
 
 
     def find_map(self, theta0=None, lnprior=None, method="nelder-mead", nRestarts=15, options=None):
@@ -508,6 +523,10 @@ class SurrogateModel(object):
 
 
     def plot(self, plots=None, save=True):
+
+        # ================================
+        # GP training plots
+        # ================================
 
         # Test error vs iteration
         if 'gp_error' in plots:
@@ -565,6 +584,10 @@ class SurrogateModel(object):
             else:
                 raise NameError("Must run init_train and/or active_train before plotting gp_fit_2D.")
 
+        # ================================
+        # emcee plots
+        # ================================
+
         # emcee posterior samples
         if 'emcee_corner' in plots:  
             if hasattr(self, 'emcee_samples'):
@@ -578,4 +601,13 @@ class SurrogateModel(object):
                 vis.plot_emcee_walkers(self)
             else:
                 raise NameError("Must run run_emcee before plotting emcee_walkers.")
+
+        # ================================
+        # dynesty plots
+        # ================================
+
+
+        # ================================
+        # MCMC comparison plots
+        # ================================
                     

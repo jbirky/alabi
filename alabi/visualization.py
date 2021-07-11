@@ -187,3 +187,27 @@ def plot_emcee_walkers(sm):
     axes[-1].set_xlabel("step number", fontsize=20)
 
     fig.savefig(f"{sm.savedir}/emcee_walkers.png", bbox_inches="tight")
+
+
+def plot_mcmc_comparison(sm):
+
+    lw = 1.5
+    colors = ["orange", "royalblue"]
+
+    fig = corner.corner(sm.emcee_samples,  labels=sm.labels, range=self.bounds,
+                    show_titles=True, verbose=False, max_n_ticks=4,
+                    plot_contours=True, plot_datapoints=True, plot_density=True,
+                    color=colors[0], no_fill_contours=False, title_kwargs={"fontsize": 16},
+                    label_kwargs={"fontsize": 22}, hist_kwargs={"linewidth":2.0, "density":True})
+
+    fig = corner.corner(sm.dynesty_samples, labels=sm.labels, range=self.bounds, quantiles=[0.16, 0.5, 0.84],
+                        show_titles=True, verbose=False, max_n_ticks=4, title_fmt='.3f',
+                        plot_contours=True, plot_datapoints=True, plot_density=True,
+                        color=colors[1], no_fill_contours=False, title_kwargs={"fontsize": 16},
+                        label_kwargs={"fontsize": 22}, hist_kwargs={"linewidth":2.0, "density":True},
+                        fig=fig)
+
+    fig.axes[1].text(2.2, 0.725, r"--- emcee posterior", fontsize=26, color=colors[0], ha='left')
+    fig.axes[1].text(2.2, 0.55, r"--- dynesty posterior", fontsize=26, color=colors[1], ha='left')
+    
+    fig.savefig(f"{self.savedir}/mcmc_comparison.png")
