@@ -8,10 +8,17 @@ or computing KL divergences, and the GP utility functions, e.g. the bape utility
 """
 
 # Tell module what it's allowed to import
-__all__ = ["logsubexp", "agp_utility", "bape_utility", "jones_utility",
-           "minimize_objective", "klNumerical", 
-           "prior_sampler", "eval_fn", "lnprior_uniform",
+__all__ = ["logsubexp", 
+           "agp_utility", 
+           "bape_utility", 
+           "jones_utility",
+           "minimize_objective", 
+           "klNumerical", 
+           "prior_sampler", 
+           "eval_fn", 
+           "lnprior_uniform",
            "prior_transform_uniform"]
+           
 
 import numpy as np
 from scipy.optimize import minimize

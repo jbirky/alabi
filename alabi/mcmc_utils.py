@@ -1,13 +1,7 @@
 import numpy as np
 
+__all__ = ["estimateBurnin"]
 
-# ================================
-# probability functions
-# ================================
-
-def lnprob(theta, lnlike, lnprior):
-
-    return lnprior(theta) + lnlike(theta)
 
 # ================================
 # emcee utils

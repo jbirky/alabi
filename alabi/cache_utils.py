@@ -2,6 +2,10 @@ import numpy as np
 import pickle
 import os
 
+__all__ = ["write_report_gp",
+           "write_report_emcee",
+           "write_report_dynesty"]
+           
 
 def write_report_gp(self, file):
 
