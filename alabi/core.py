@@ -162,7 +162,7 @@ class SurrogateModel(object):
         self.y = y_test
 
         
-    def init_gp(self, kernel=None, fit_amp=True, fit_mean=True, white_noise=-12, 
+    def init_gp(self, kernel=None, fit_amp=True, fit_mean=True, white_noise=None, 
                 gp_hyper_prior=None, overwrite=False):
         
         if hasattr(self, 'gp') and (overwrite == False):
@@ -241,11 +241,14 @@ class SurrogateModel(object):
 
         # assign GP hyperparameter prior
         self.gp_hyper_prior = gp_hyper_prior
+
+        # save white noise to obj
+        self.white_noise = white_noise
         
         warnings.simplefilter("ignore")
         self.gp = gp_utils.fit_gp(self.theta, self.y, self.kernel, 
                                   fit_amp=fit_amp, fit_mean=fit_mean,
-                                  white_noise=white_noise)
+                                  white_noise=self.white_noise)
 
         t0 = time.time()
         self.gp = gp_utils.optimize_gp(self.gp, self.theta, self.y,
@@ -316,6 +319,9 @@ class SurrogateModel(object):
         if self.verbose:
             print(f"Running {niter} active learning iterations using {self.algorithm}...")
 
+        # start timing active learning 
+        train_t0 = time.time()
+
         for ii in tqdm.tqdm(range(niter)):
 
             # AGP on even, BAPE on odd
@@ -357,13 +363,16 @@ class SurrogateModel(object):
                     if self.verbose:
                         msg = "Warning: GP fit failed. Likely covariance matrix was not positive definite. "
                         msg += "Attempting another training sample... "
-                        msg += "If this issue persists, try expanding the hyperparameter prior"
+                        msg += "If this issue persists, try adjusting the white_noise or expanding the hyperparameter prior"
                         print(msg)
 
             # If proposed (theta, y) did not cause fitting issues, save to surrogate model obj
             self.theta = theta_prop
             self.y = y_prop
             self.gp = gp
+
+            # record active learning train runtime
+            self.train_runtime = time.time() - train_t0 
 
             # evaluate gp training error
             ypred = self.gp.predict(self.y, self.theta, return_cov=False, return_var=False)
@@ -418,8 +427,8 @@ class SurrogateModel(object):
         return self.evaluate(theta) + self.lnprior(theta)
 
 
-    def run_emcee(self, lnprior=None, nwalkers=None, nsteps=int(5e4),
-                  opt_init=True, multi_proc=True):
+    def run_emcee(self, lnprior=None, nwalkers=None, nsteps=int(5e4), sampler_kwargs={}, run_kwargs={},
+                  opt_init=True, multi_proc=True, lnprior_comment=None):
         """
         Outputs:
 
@@ -438,8 +447,24 @@ class SurrogateModel(object):
         if lnprior is None:
             print(f"No lnprior specified. Defaulting to uniform prior with bounds {self.bounds}")
             self.lnprior = partial(ut.lnprior_uniform, bounds=self.bounds)
+
+            # Comment for output log file
+            self.lnprior_comment =  f"Default uniform prior. \n" 
+            self.lnprior_comment += f"Prior function: ut.lnprior_uniform\n"
+            self.lnprior_comment += f"\twith bounds {self.bounds}"
+
         else:
             self.lnprior = lnprior
+
+            # Comment for output log file
+            if lnprior_comment is None:
+                self.lnprior_comment = f"User defined prior."
+                try:
+                    self.lnprior_comment += f"Prior function: {self.lnprior.__name__}"
+                except:
+                    self.lnprior_comment += "Prior function: unrecorded"
+            else:
+                self.lnprior_comment = lnprior_comment
 
         # number of walkers, and number of steps per walker
         if nwalkers is None:
@@ -465,20 +490,18 @@ class SurrogateModel(object):
         else:
             pool = None
 
-        # set up hdf5 backend
-        # if self.cache:
-        #     backend = emcee.backends.HDFBackend(f"{self.savedir}/emcee_samples_raw.h5")
-        #     backend.reset(nwalkers, self.ndim)
-        # else:
-        #     backend = None
-
         # Run the sampler!
+        emcee_t0 = time.time()
         self.sampler = emcee.EnsembleSampler(self.nwalkers, 
                                              self.ndim, 
                                              self.lnprob, 
-                                             pool=pool)
+                                             pool=pool,
+                                             **sampler_kwargs)
 
-        self.sampler.run_mcmc(p0, self.nsteps, progress=True)
+        self.sampler.run_mcmc(p0, self.nsteps, progress=True, **run_kwargs)
+
+        # record emcee runtime
+        self.emcee_runtime = time.time() - emcee_t0
 
         # burn, thin, and flatten samples
         self.iburn, self.ithin = mcmc_utils.estimateBurnin(self.sampler, verbose=self.verbose)
@@ -501,8 +524,12 @@ class SurrogateModel(object):
 
             np.savez(f"{self.savedir}/emcee_samples_final.npz", samples=self.emcee_samples)
 
+        # close pool
+        pool.close()
+
     
-    def run_dynesty(self, ptform=None, multi_proc=True, sampler_kwargs={}):
+    def run_dynesty(self, ptform=None, sampler_kwargs={}, run_kwargs={},
+                     multi_proc=True, ptform_comment=None):
 
         import dynesty
         from dynesty import DynamicNestedSampler
@@ -517,18 +544,41 @@ class SurrogateModel(object):
         # set up prior transform
         if ptform is None:
             self.ptform = partial(ut.prior_transform_uniform, bounds=self.bounds)
+
+            # Comment for output log file
+            self.ptform_comment =  f"Default uniform prior transform. \n" 
+            self.ptform_comment += f"Prior function: ut.prior_transform_uniform\n"
+            self.ptform_comment += f"\twith bounds {self.bounds}"
+        
         else:
             self.ptform = ptform
+
+            # Comment for output log file
+            if ptform_comment is None:
+                self.ptform_comment = f"User defined prior transform."
+                try:
+                    self.ptform_comment += f"Prior function: {self.ptform.__name__}"
+                except:
+                    self.ptform_comment += "Prior function: unrecorded"
+            else:
+                self.ptform_comment = ptform_comment
+
+        # start timing dynesty
+        dynesty_t0 = time.time()
 
         # initialize our nested sampler
         self.dsampler = DynamicNestedSampler(self.evaluate, 
                                              self.ptform, 
                                              self.ndim,
                                             #  pool=pool,
+                                            #  queue_size=self.ncore,
                                              **sampler_kwargs)
 
-        self.dsampler.run_nested()
+        self.dsampler.run_nested(**run_kwargs)
         self.res = self.dsampler.results
+
+        # record dynesty runtime
+        self.dynesty_runtime = time.time() - dynesty_t0
 
         samples = self.res.samples  # samples
         weights = np.exp(self.res.logwt - self.res.logz[-1])
@@ -543,6 +593,9 @@ class SurrogateModel(object):
             self.save()
 
             np.savez(f"{self.savedir}/dynesty_samples_final.npz", samples=self.dynesty_samples)
+
+        # close pool
+        pool.close()
 
 
     def find_map(self, theta0=None, lnprior=None, method="nelder-mead", nRestarts=15, options=None):

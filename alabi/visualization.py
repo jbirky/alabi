@@ -25,11 +25,11 @@ __all__ = ["plot_error_vs_iteration",
            "plot_mcmc_comparison"]
 
 
-def plot_error_vs_iteration(self, log=False, title="GP fit"):
+def plot_error_vs_iteration(sm, log=False, title="GP fit"):
 
-    plt.plot(self.training_results["iteration"], self.training_results["training_error"], 
+    plt.plot(sm.training_results["iteration"], sm.training_results["training_error"], 
                 label='train error')
-    plt.plot(self.training_results["iteration"], self.training_results["test_error"], 
+    plt.plot(sm.training_results["iteration"], sm.training_results["test_error"], 
                 label='test error')
     plt.xlabel('iteration', fontsize=18)
     plt.ylabel('MSE', fontsize=18)
@@ -38,100 +38,100 @@ def plot_error_vs_iteration(self, log=False, title="GP fit"):
     plt.title(title, fontsize=22)
     if log:
         plt.yscale('log')
-        plt.savefig(f"{self.savedir}/gp_error_vs_iteration_log.png")
+        plt.savefig(f"{sm.savedir}/gp_error_vs_iteration_log.png")
     else:
-        plt.savefig(f"{self.savedir}/gp_error_vs_iteration.png")
+        plt.savefig(f"{sm.savedir}/gp_error_vs_iteration.png")
     plt.close()
 
 
-def plot_hyperparam_vs_iteration(self, title="GP fit"):
+def plot_hyperparam_vs_iteration(sm, title="GP fit"):
 
-    hp_names = self.gp.get_parameter_names()
-    hp_values = np.array(self.training_results["gp_hyperparameters"])
+    hp_names = sm.gp.get_parameter_names()
+    hp_values = np.array(sm.training_results["gp_hyperparameters"])
 
     fig, axs = plt.subplots(2,1, figsize=[8,10], sharex=True)
 
     # Plot mean value on separate panel
-    axs[0].plot(self.training_results["iteration"], hp_values.T[0], 
+    axs[0].plot(sm.training_results["iteration"], hp_values.T[0], 
                 label=hp_names[0].replace('_', ' '), color='k')
     axs[0].set_ylabel('GP mean hyperparameter', fontsize=18)
 
     # Plot log hyperparameters
     for ii, name in enumerate(hp_names[1:]):
-        axs[1].plot(self.training_results["iteration"], hp_values.T[ii+1], 
+        axs[1].plot(sm.training_results["iteration"], hp_values.T[ii+1], 
                 label=name.replace('_', ' '))
     
     axs[1].set_xlabel('iteration', fontsize=18)
     axs[1].set_ylabel('GP scale hyperparameters', fontsize=18)
-    axs[1].set_xlim(0, max(self.training_results["iteration"]))
+    axs[1].set_xlim(0, max(sm.training_results["iteration"]))
     axs[0].minorticks_on()
     axs[1].minorticks_on()
     axs[0].legend(loc='best')
     axs[1].legend(loc='best')
     plt.title(title, fontsize=22)
-    plt.savefig(f"{self.savedir}/gp_hyperparameters_vs_iteration.png")
+    plt.savefig(f"{sm.savedir}/gp_hyperparameters_vs_iteration.png")
     plt.close()
 
 
-def plot_train_time_vs_iteration(self, title="GP fit"):
+def plot_train_time_vs_iteration(sm, title="GP fit"):
 
-    plt.plot(self.training_results["iteration"], self.training_results["gp_train_time"], 
+    plt.plot(sm.training_results["iteration"], sm.training_results["gp_train_time"], 
                 label='GP train step')
-    plt.plot(self.training_results["iteration"], self.training_results["obj_fn_opt_time"], 
+    plt.plot(sm.training_results["iteration"], sm.training_results["obj_fn_opt_time"], 
                 label='Active learning step')
     plt.xlabel('iteration', fontsize=18)
     plt.ylabel('Time (s)', fontsize=18)
     plt.legend(loc='best', fontsize=14)
     plt.title(title, fontsize=22)
     plt.minorticks_on()
-    plt.savefig(f"{self.savedir}/gp_train_time_vs_iteration.png")
+    plt.savefig(f"{sm.savedir}/gp_train_time_vs_iteration.png")
     plt.close()
 
 
-def plot_corner_scatter(self):
+def plot_corner_scatter(sm):
 
-    fig = corner.corner(self.theta, c=self.y, labels=self.labels, 
+    fig = corner.corner(sm.theta, c=sm.y, labels=sm.labels, 
             plot_datapoints=False, plot_density=False, plot_contours=False,
             show_titles=True, title_kwargs={"fontsize": 18}, 
             label_kwargs={"fontsize": 22})
 
-    axes = np.array(fig.axes).reshape((self.ndim, self.ndim))
-    cb_rng = [self.y.min(), self.y.max()]
+    axes = np.array(fig.axes).reshape((sm.ndim, sm.ndim))
+    cb_rng = [sm.y.min(), sm.y.max()]
 
-    for yi in range(self.ndim):
+    for yi in range(sm.ndim):
         for xi in range(yi):
             ax = axes[yi, xi]
-            im = ax.scatter(self.theta.T[xi], self.theta.T[yi], c=self.y, s=2, cmap='coolwarm', 
+            im = ax.scatter(sm.theta.T[xi], sm.theta.T[yi], c=sm.y, s=2, cmap='coolwarm', 
                             norm=colors.LogNorm(vmin=min(cb_rng), vmax=max(cb_rng)))
 
     cb = fig.colorbar(im, ax=axes.ravel().tolist(), orientation='horizontal', shrink=.98, pad=.1)
     cb.set_label(r'$-\ln P$', fontsize=20)
     cb.set_ticks(cb_rng)
     cb.ax.tick_params(labelsize=18)
-    fig.savefig(f"{self.savedir}/gp_training_sample_corner.png")
+    fig.savefig(f"{sm.savedir}/gp_training_sample_corner.png")
     plt.close()
 
 
-def plot_gp_fit_1D(theta, y, gp, bounds, title="GP fit"):
+def plot_gp_fit_1D(sm, title="GP fit"):
 
-    xarr = np.linspace(bounds[0][0], bounds[0][1], 30)
-    mu, var = gp.predict(y, xarr, return_var=True)
+    xarr = np.linspace(sm.bounds[0][0], sm.bounds[0][1], 30)
+    mu, var = sm.gp.predict(sm.y, xarr, return_var=True)
 
     fig, ax = plt.subplots()
     plt.plot(xarr, fn(xarr), color='k', linestyle='--', linewidth=.5)
     ax.fill_between(xarr, mu-var, mu+var, color='r', alpha=.8)
-    plt.scatter(theta, y, color='r')
-    plt.scatter(theta_test, y_test, color='g')
-    plt.xlim(bounds[0])
+    plt.scatter(sm.theta, sm.y, color='r')
+    plt.scatter(sm.theta_test, sm.y_test, color='g')
+    plt.xlim(sm.bounds[0])
     plt.title(title, fontsize=22)
-    plt.savefig(f"{savedir}/gp_fit_1D.png")
+    plt.savefig(f"{sm.savedir}/gp_fit_1D.png")
     plt.close()
 
 
-def plot_gp_fit_2D(self, ngrid=60, title="GP fit"):
+def plot_gp_fit_2D(sm, ngrid=60, title="GP fit"):
 
-    xarr = np.linspace(self.bounds[0][0], self.bounds[0][1], ngrid)
-    yarr = np.linspace(self.bounds[1][0], self.bounds[1][1], ngrid)
+    xarr = np.linspace(sm.bounds[0][0], sm.bounds[0][1], ngrid)
+    yarr = np.linspace(sm.bounds[1][0], sm.bounds[1][1], ngrid)
 
     X, Y = np.meshgrid(xarr, yarr)
     Z = np.zeros((ngrid, ngrid))
@@ -139,13 +139,13 @@ def plot_gp_fit_2D(self, ngrid=60, title="GP fit"):
     for i in range(Z.shape[0]):
         for j in range(Z.shape[1]):
             tt = np.array([X[i][j], Y[i][j]]).reshape(1,-1)
-            Z[i][j] = self.gp.predict(self.y, tt, return_cov=False)[0]
+            Z[i][j] = sm.gp.predict(sm.y, tt, return_cov=False)[0]
         
     im = plt.contourf(X, Y, Z, 20, cmap='Blues_r')
     plt.colorbar(im)
-    plt.scatter(self.theta.T[0], self.theta.T[1], color='r', s=5)
+    plt.scatter(sm.theta.T[0], sm.theta.T[1], color='r', s=5)
     plt.title(title, fontsize=22)
-    plt.savefig(f"{self.savedir}/gp_fit_2D.png")
+    plt.savefig(f"{sm.savedir}/gp_fit_2D.png")
     plt.close()
 
 
@@ -201,18 +201,18 @@ def plot_emcee_walkers(sm):
     fig.savefig(f"{sm.savedir}/emcee_walkers.png", bbox_inches="tight")
 
 
-def plot_dynesty_traceplot(self):
+def plot_dynesty_traceplot(sm):
 
-    fig, axes = dyplot.traceplot(self.res, trace_cmap='plasma',
+    fig, axes = dyplot.traceplot(sm.res, trace_cmap='plasma',
                                  quantiles=None, show_titles=True,
                                  label_kwargs={"fontsize": 22})
-    fig.savefig(f"{self.savedir}/dynesty_traceplot.png")
+    fig.savefig(f"{sm.savedir}/dynesty_traceplot.png")
 
 
-def plot_dynesty_runplot(self):
+def plot_dynesty_runplot(sm):
 
-    fig, axes = dyplot.runplot(self.res, label_kwargs={"fontsize": 22})
-    fig.savefig(f"{self.savedir}/dynesty_runplot.png")
+    fig, axes = dyplot.runplot(sm.res, label_kwargs={"fontsize": 22})
+    fig.savefig(f"{sm.savedir}/dynesty_runplot.png")
 
 
 def plot_mcmc_comparison(sm):
@@ -220,13 +220,13 @@ def plot_mcmc_comparison(sm):
     lw = 1.5
     colors = ["orange", "royalblue"]
 
-    fig = corner.corner(sm.emcee_samples,  labels=sm.labels, range=self.bounds,
+    fig = corner.corner(sm.emcee_samples,  labels=sm.labels, range=sm.bounds,
                     show_titles=True, verbose=False, max_n_ticks=4,
                     plot_contours=True, plot_datapoints=True, plot_density=True,
                     color=colors[0], no_fill_contours=False, title_kwargs={"fontsize": 16},
                     label_kwargs={"fontsize": 22}, hist_kwargs={"linewidth":2.0, "density":True})
 
-    fig = corner.corner(sm.dynesty_samples, labels=sm.labels, range=self.bounds, quantiles=[0.16, 0.5, 0.84],
+    fig = corner.corner(sm.dynesty_samples, labels=sm.labels, range=sm.bounds, quantiles=[0.16, 0.5, 0.84],
                         show_titles=True, verbose=False, max_n_ticks=4, title_fmt='.3f',
                         plot_contours=True, plot_datapoints=True, plot_density=True,
                         color=colors[1], no_fill_contours=False, title_kwargs={"fontsize": 16},
@@ -236,4 +236,4 @@ def plot_mcmc_comparison(sm):
     fig.axes[1].text(2.2, 0.725, r"--- emcee posterior", fontsize=26, color=colors[0], ha='left')
     fig.axes[1].text(2.2, 0.55, r"--- dynesty posterior", fontsize=26, color=colors[1], ha='left')
     
-    fig.savefig(f"{self.savedir}/mcmc_comparison.png")
+    fig.savefig(f"{sm.savedir}/mcmc_comparison.png")
