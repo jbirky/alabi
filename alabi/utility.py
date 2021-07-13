@@ -10,7 +10,8 @@ or computing KL divergences, and the GP utility functions, e.g. the bape utility
 # Tell module what it's allowed to import
 __all__ = ["logsubexp", "agp_utility", "bape_utility", "jones_utility",
            "minimize_objective", "klNumerical", 
-           "prior_sampler", "eval_fn", "lnprior_uniform"]
+           "prior_sampler", "eval_fn", "lnprior_uniform",
+           "prior_transform_uniform"]
 
 import numpy as np
 from scipy.optimize import minimize
@@ -103,6 +104,14 @@ def lnprior_uniform(x, bounds):
 
     return lnp
 
+
+def prior_transform_uniform(theta, bounds):
+
+    pt = np.zeros(len(bounds))
+    for i, b in enumerate(bounds):
+        pt[i] = (b[1] - b[0]) * theta[i] + b[0]
+
+    return pt
 
 #===========================================================
 # Define math functions

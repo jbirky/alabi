@@ -37,7 +37,7 @@ def gaussian_shells_fn(theta):
     c2 = np.array([3.5, 0.])  # center of shell 2
     return np.logaddexp(logcirc(theta, c1), logcirc(theta, c2))
 
-gaussian_shells_bounds = [(-5,5), (-5,5)]
+gaussian_shells_bounds = [(-8,8), (-6,6)]
 
 gaussian_shells = {"fn": gaussian_shells_fn,
                    "bounds": gaussian_shells_bounds}

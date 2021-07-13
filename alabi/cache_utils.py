@@ -5,6 +5,10 @@ import os
 
 def write_report_gp(self, file):
 
+    # get hyperparameter names and values
+    hp_name = self.gp.get_parameter_names()
+    hp_vect = self.gp.get_parameter_vector()
+
     # print model summary to human-readable text file
     lines =  f"==========================================\n"
     lines += f"GP summary \n"
@@ -14,9 +18,10 @@ def write_report_gp(self, file):
     lines += f"Function bounds: {self.bounds} \n"
     lines += f"Active learning algorithm : {self.algorithm} \n\n" 
 
-    lines += f"GP hyperparameter names: {self.gp.get_parameter_names()} \n"
-    lines += f"GP hyperparameter values (final): {self.gp.get_parameter_vector()} \n"
-    lines += f"GP hyperparameter optimization frequency: {self.gp_opt_freq} \n\n"
+    lines += f"GP final hyperparameters: \n"
+    for ii in range(len(hp_name)):
+        lines += f"   [{hp_name[ii]}] \t{hp_vect[ii]} \n"
+    lines += "\n"
 
     lines += f"Number of total training samples: {self.ntrain} \n"
     lines += f"Number of initial training samples: {self.ninit_train} \n"
@@ -45,13 +50,33 @@ def write_report_emcee(self, file):
     lines += f"==========================================\n\n"
 
     lines += f"Number of walkers: {self.nwalkers} \n"
-    lines += f"Number of steps: {self.nsteps} \n\n"
+    lines += f"Number of steps per walker: {self.nsteps} \n\n"
 
     lines += "Mean acceptance fraction: {0:.3f} \n".format(acc_frac)
     lines += "Mean autocorrelation time: {0:.3f} steps \n".format(autcorr_time)
     lines += f"Burn: {self.iburn} \n"
     lines += f"Thin: {self.ithin} \n"
     lines += f"Total burned, thinned, flattened samples: {self.emcee_samples.shape[0]} \n\n"
+
+    lines += f"Summary statistics: \n"
+    for ii in range(self.ndim):
+        lines += f"{self.labels[ii]} = {means[ii]} +/- {stds[ii]} \n"
+    lines += ""
+
+    summary = open(file+".txt", "a")
+    summary.write(lines)
+    summary.close()
+
+
+def write_report_dynesty(self, file):
+
+    # compute summary statistics 
+    means = np.mean(self.dynesty_samples, axis=0)
+    stds = np.std(self.dynesty_samples, axis=0)
+
+    lines =  f"==========================================\n"
+    lines += f"dynesty summary \n"
+    lines += f"==========================================\n\n"
 
     lines += f"Summary statistics: \n"
     for ii in range(self.ndim):

@@ -166,12 +166,12 @@ def plot_true_fit_2D(fn, bounds, savedir, ngrid=60):
     plt.close()
 
 
-def plot_emcee_corner(sm):
+def plot_corner(sm, samples, sampler=""):
 
-    fig = corner.corner(sm.emcee_samples, quantiles=[0.16, 0.5, 0.84], show_titles=True,
+    fig = corner.corner(samples, quantiles=[0.16, 0.5, 0.84], show_titles=True,
                         scale_hist=True, plot_contours=True, labels=sm.labels,
                         title_kwargs={"fontsize": 15}, label_kwargs={"fontsize": 15})
-    fig.savefig(f"{sm.savedir}/emcee_posterior.png", bbox_inches="tight")
+    fig.savefig(f"{sm.savedir}/{sampler}posterior.png", bbox_inches="tight")
 
 
 def plot_emcee_walkers(sm):

@@ -95,6 +95,9 @@ class SurrogateModel(object):
         if self.emcee_run == True:
             cache_utils.write_report_emcee(self, file)
 
+        if self.dynesty_run == True:
+            cache_utils.write_report_dynesty(self, file)
+
 
     def init_train(self, nsample=None, sampler='sobol'):
 
@@ -257,9 +260,9 @@ class SurrogateModel(object):
 
     def evaluate(self, theta):
 
-        theta = np.asarray(theta)
+        theta = np.asarray(theta).reshape(1,-1)
 
-        return self.gp.predict(self.y, theta, return_cov=False)
+        return self.gp.predict(self.y, theta, return_cov=False)[0]
 
 
     def find_next_point(self, theta0=None, nopt=5, **kwargs):
@@ -491,10 +494,11 @@ class SurrogateModel(object):
             np.savez(f"{self.savedir}/emcee_samples_final.npz", samples=self.emcee_samples)
 
     
-    def run_dynesty(self, ptform=None, sampler_kwargs={}):
+    def run_dynesty(self, ptform=None, multi_proc=True, sampler_kwargs={}):
 
         import dynesty
-        from dynesty import NestedSampler
+        from dynesty import DynamicNestedSampler
+        from dynesty import utils as dyfunc
 
         # set up multiprocessing pool
         if multi_proc == True:
@@ -502,19 +506,35 @@ class SurrogateModel(object):
         else:
             pool = None
 
+        # set up prior transform
+        if ptform is None:
+            self.ptform = partial(ut.prior_transform_uniform, bounds=self.bounds)
+        else:
+            self.ptform = ptform
+
         # initialize our nested sampler
-        sampler = NestedSampler(self.evaluate, 
-                                ptform, 
-                                self.ndim,
-                                pool=pool, 
-                                queue_size=self.ncore,
-                                **sampler_kwargs)
+        self.dsampler = DynamicNestedSampler(self.evaluate, 
+                                             self.ptform, 
+                                             self.ndim,
+                                            #  pool=pool,
+                                             **sampler_kwargs)
 
-        sampler.run_nested()
-        res = sampler.results
+        self.dsampler.run_nested()
+        self.res = self.dsampler.results
 
-        # record that emcee has been run
+        samples = self.res.samples  # samples
+        weights = np.exp(self.res.logwt - self.res.logz[-1])
+
+        # Resample weighted samples.
+        self.dynesty_samples = dyfunc.resample_equal(samples, weights)
+
+        # record that dynesty has been run
         self.dynesty_run = True
+
+        if self.cache:
+            self.save()
+
+            np.savez(f"{self.savedir}/dynesty_samples_final.npz", samples=self.dynesty_samples)
 
 
     def find_map(self, theta0=None, lnprior=None, method="nelder-mead", nRestarts=15, options=None):
@@ -591,7 +611,7 @@ class SurrogateModel(object):
         # emcee posterior samples
         if 'emcee_corner' in plots:  
             if hasattr(self, 'emcee_samples'):
-                vis.plot_emcee_corner(self)
+                vis.plot_corner(self, self.emcee_samples, sampler="emcee_")
             else:
                 raise NameError("Must run run_emcee before plotting emcee_corner.")
 
@@ -606,6 +626,21 @@ class SurrogateModel(object):
         # dynesty plots
         # ================================
 
+        # dynesty posterior samples
+        if 'dynesty_corner' in plots:  
+            if hasattr(self, 'res'):
+                vis.plot_corner(self, self.dynesty_samples, sampler="dynesty_")
+            else:
+                raise NameError("Must run run_dynesty before plotting dynesty_corner.")
+
+        if 'dynesty_traceplot' in plots:
+            from dynesty import plotting as dyplot
+            if hasattr(self, 'res'):
+                fig, axes = dyplot.traceplot(self.res, trace_cmap='plasma',
+                                             quantiles=None, show_titles=True)
+                fig.savefig(f"{self.savedir}/dynesty_traceplot.png")
+            else:
+                raise NameError("Must run run_dynesty before plotting dynesty_traceplot.")
 
         # ================================
         # MCMC comparison plots
