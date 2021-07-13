@@ -102,7 +102,7 @@ class SurrogateModel(object):
     def init_train(self, nsample=None, sampler='sobol'):
 
         if nsample is None:
-            nsample = 10 * self.ndim
+            nsample = 50 * self.ndim
 
         self.theta0 = ut.prior_sampler(nsample=nsample, bounds=self.bounds, sampler=sampler)
         self.y0 = ut.eval_fn(self.fn, self.theta0, ncore=self.ncore)
@@ -122,7 +122,7 @@ class SurrogateModel(object):
     def init_test(self, nsample=None, sampler='sobol'):
 
         if nsample is None:
-            nsample = 10 * self.ndim
+            nsample = 50 * self.ndim
 
         self.theta_test = ut.prior_sampler(nsample=nsample, bounds=self.bounds, sampler=sampler)
         self.y_test = ut.eval_fn(self.fn, self.theta_test, ncore=self.ncore)
@@ -397,6 +397,14 @@ class SurrogateModel(object):
             self.save()
 
 
+    def train_gp_default(self):
+
+        sm.init_train()
+        sm.init_test()
+        sm.init_gp()
+        sm.active_train()
+
+
     def lnprob(self, theta):
 
         if not hasattr(self, 'gp'):
@@ -548,57 +556,50 @@ class SurrogateModel(object):
         # GP training plots
         # ================================
 
-        # Test error vs iteration
-        if 'gp_error' in plots:
-            if hasattr(self, 'training_results'):
-                print("Plotting gp error...")
+        if "gp_all" in plots:
+            gp_plots = ["gp_error", "gp_hyperparam", "gp_timing", "gp_train_corner"]
+            for pl in gp_plots:
+                plots.append(pl)
 
-                vis.plot_error_vs_iteration(self.training_results, self.savedir, log=True,
-                                            title=f"{self.kernel_name} surrogate")
-                vis.plot_error_vs_iteration(self.training_results, self.savedir, log=False,
-                                            title=f"{self.kernel_name} surrogate")
+        # Test error vs iteration
+        if "gp_error" in plots:
+            if hasattr(self, "training_results"):
+                print("Plotting gp error...")
+                vis.plot_error_vs_iteration(self, log=True, title=f"{self.kernel_name} surrogate")
+                vis.plot_error_vs_iteration(self, log=False, title=f"{self.kernel_name} surrogate")
             else:
                 raise NameError("Must run active_train before plotting gp_error.")
 
         # GP hyperparameters vs iteration
-        if 'gp_hyperparam' in plots:
-            if hasattr(self, 'training_results'):
+        if "gp_hyperparam" in plots:
+            if hasattr(self, "training_results"):
                 print("Plotting gp hyperparameters...")
-
-                hp_names = self.gp.get_parameter_names()
-                hp_values = np.array(self.training_results["gp_hyperparameters"])
-
-                vis.plot_hyperparam_vs_iteration(self.training_results, hp_names, 
-                                                 hp_values, self.savedir,
-                                                 title=f"{self.kernel_name} surrogate")
+                vis.plot_hyperparam_vs_iteration(self, title=f"{self.kernel_name} surrogate")
             else:
                 raise NameError("Must run active_train before plotting gp_hyperparam.")
 
         # GP training time vs iteration
-        if 'timing' in plots:
-            if hasattr(self, 'training_results'):
-                print("Plotting timing...")
-
-                vis.plot_train_time_vs_iteration(self.training_results, self.savedir,
-                                                 title=f"{self.kernel_name} surrogate")
+        if "gp_timing" in plots:
+            if hasattr(self, "training_results"):
+                print("Plotting gp timing...")
+                vis.plot_train_time_vs_iteration(self, title=f"{self.kernel_name} surrogate")
             else:
-                raise NameError("Must run active_train before plotting gp_hyperparam.")
+                raise NameError("Must run active_train before plotting gp_timing.")
 
         # N-D scatterplots and histograms colored by function value
-        if 'training_corner' in plots:  
-            if hasattr(self, 'theta') and hasattr(self, 'y'):
-                plot_corner_scatter(self.theta, self.y, self.labels, self.savedir)
+        if "gp_train_corner" in plots:  
+            if hasattr(self, "theta") and hasattr(self, "y"):
+                print("Plotting training sample corner plot...")
+                vis.plot_corner_scatter(self)
             else:
-                raise NameError("Must run init_train and/or active_train before plotting training_corner.")
+                raise NameError("Must run init_train and/or active_train before plotting gp_train_corner.")
 
         # GP training time vs iteration
-        if 'gp_fit_2D' in plots:
-            if hasattr(self, 'theta') and hasattr(self, 'y'):
+        if "gp_fit_2D" in plots:
+            if hasattr(self, "theta") and hasattr(self, "y"):
                 print("Plotting gp fit 2D...")
                 if self.ndim == 2:
-                    vis.plot_gp_fit_2D(self.theta, self.y, self.gp, 
-                                       self.bounds, self.savedir, 
-                                       ngrid=60, title=f"{self.kernel_name} surrogate")
+                    vis.plot_gp_fit_2D(self, ngrid=60, title=f"{self.kernel_name} surrogate")
                 else:
                     print("theta must be 2D to use gp_fit_2D!")
             else:
@@ -608,16 +609,23 @@ class SurrogateModel(object):
         # emcee plots
         # ================================
 
+        if "emcee_all" in plots:
+            emcee_plots = ["emcee_corner", "emcee_walkers"]
+            for pl in emcee_plots:
+                plots.append(pl)
+
         # emcee posterior samples
-        if 'emcee_corner' in plots:  
-            if hasattr(self, 'emcee_samples'):
+        if "emcee_corner" in plots:  
+            if hasattr(self, "emcee_samples"):
+                print("Plotting emcee posterior...")
                 vis.plot_corner(self, self.emcee_samples, sampler="emcee_")
             else:
                 raise NameError("Must run run_emcee before plotting emcee_corner.")
 
         # emcee walkers
-        if 'emcee_walkers' in plots:  
-            if hasattr(self, 'emcee_samples'):
+        if "emcee_walkers" in plots:  
+            if hasattr(self, "emcee_samples"):
+                print("Plotting emcee walkers...")
                 vis.plot_emcee_walkers(self)
             else:
                 raise NameError("Must run run_emcee before plotting emcee_walkers.")
@@ -626,23 +634,49 @@ class SurrogateModel(object):
         # dynesty plots
         # ================================
 
+        if "dynesty_all" in plots:
+            dynesty_plots = ["dynesty_corner", "dynesty_corner_kde", 
+                             "dynesty_traceplot", "dynesty_runplot"]
+            for pl in dynesty_plots:
+                plots.append(pl)
+
         # dynesty posterior samples
-        if 'dynesty_corner' in plots:  
-            if hasattr(self, 'res'):
+        if "dynesty_corner" in plots:  
+            if hasattr(self, "res"):
+                print("Plotting dynesty posterior...")
                 vis.plot_corner(self, self.dynesty_samples, sampler="dynesty_")
             else:
                 raise NameError("Must run run_dynesty before plotting dynesty_corner.")
 
-        if 'dynesty_traceplot' in plots:
-            from dynesty import plotting as dyplot
-            if hasattr(self, 'res'):
-                fig, axes = dyplot.traceplot(self.res, trace_cmap='plasma',
-                                             quantiles=None, show_titles=True)
-                fig.savefig(f"{self.savedir}/dynesty_traceplot.png")
+        if "dynesty_corner_kde" in plots:  
+            if hasattr(self, "dynesty_samples"):
+                print("Plotting dynesty posterior kde...")
+                vis.plot_corner_kde(self)
+            else:
+                raise NameError("Must run run_dynesty before plotting dynesty_corner.")
+
+        if "dynesty_traceplot" in plots:
+            if hasattr(self, "res"):
+                print("Plotting dynesty traceplot...")
+                vis.plot_dynesty_traceplot(self)
             else:
                 raise NameError("Must run run_dynesty before plotting dynesty_traceplot.")
+
+        if "dynesty_runplot" in plots:
+            if hasattr(self, "res"):
+                print("Plotting dynesty runplot...")
+                vis.plot_dynesty_runplot(self)
+            else:
+                raise NameError("Must run run_dynesty before plotting dynesty_runplot.")
 
         # ================================
         # MCMC comparison plots
         # ================================
+
+        if "mcmc_comparison" in plots:
+            if hasattr(self, "emcee_samples") and hasattr(self, "res"):
+                print("Plotting emcee vs dynesty posterior comparison...")
+                vis.plot_mcmc_comparison(self)
+            else:
+                raise NameError("Must run run_emcee and run_dynesty before plotting emcee_comparison.")
                     
