@@ -7,7 +7,16 @@ Utility functions in terms of usefulness, e.g. minimizing GP utility functions
 or computing KL divergences, and the GP utility functions, e.g. the bape utility.
 """
 
-# Tell module what it's allowed to import
+import numpy as np
+from scipy.optimize import minimize
+from scipy.stats import norm
+from skopt.space import Space
+from skopt.sampler import Sobol, Lhs, Halton, Hammersly, Grid
+import multiprocessing as mp
+import warnings
+import time
+import tqdm
+
 __all__ = ["logsubexp", 
            "agp_utility", 
            "bape_utility", 
@@ -18,17 +27,6 @@ __all__ = ["logsubexp",
            "eval_fn", 
            "lnprior_uniform",
            "prior_transform_uniform"]
-           
-
-import numpy as np
-from scipy.optimize import minimize
-from scipy.stats import norm
-from skopt.space import Space
-from skopt.sampler import Sobol, Lhs, Halton, Hammersly, Grid
-import multiprocessing as mp
-import warnings
-import time
-import tqdm
 
 
 #===========================================================

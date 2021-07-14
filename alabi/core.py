@@ -7,11 +7,11 @@
 
 __all__ = ["SurrogateModel"]
 
-import utility as ut
-import visualization as vis
-import gp_utils
-import mcmc_utils 
-import cache_utils
+import alabi.utility as ut
+import alabi.visualization as vis
+import alabi.gp_utils
+import alabi.mcmc_utils 
+import alabi.cache_utils
 
 import numpy as np
 from scipy.optimize import minimize
@@ -132,6 +132,12 @@ class SurrogateModel(object):
 
         if self.cache:
             np.savez(f"{self.savedir}/initial_test_sample.npz", theta=self.theta_test, y=self.y_test)
+
+
+    def init_samples(self, ntrain=None, ntest=None, sampler=None):
+
+        self.init_train(nsample=ntrain)
+        self.init_test(nsample=ntest)
 
 
     def load_train(self, savedir=None, theta0=None, y0=None):
@@ -572,6 +578,7 @@ class SurrogateModel(object):
                                              self.ndim,
                                             #  pool=pool,
                                             #  queue_size=self.ncore,
+                                            #  rstate=np.random.RandomState(),
                                              **sampler_kwargs)
 
         self.dsampler.run_nested(**run_kwargs)
