@@ -76,16 +76,15 @@ def prior_sampler(nsample=1, bounds=None, sampler='uniform'):
 def eval_fn(fn, theta, ncore=mp.cpu_count()):
 
     t0 = time.time()
- 
-    try:
-        with mp.Pool(ncore) as p:
-            y = np.array(p.map(fn, theta)).squeeze()
-    except:
-        print(f"Multiprocessing with {ncore} cores failed. Running sequentially.")
+
+    if ncore <= 1:
         y = np.zeros(theta.shape[0])
         for ii, tt in tqdm.tqdm(enumerate(theta)):
             y[ii] = fn(tt)
-        
+    else:
+        with mp.Pool(ncore) as p:
+            y = np.array(p.map(fn, theta)).squeeze()
+
     tf = time.time()
     print(f"Computed {len(theta)} function evaluations: {np.round(tf - t0)}s \n")
 
