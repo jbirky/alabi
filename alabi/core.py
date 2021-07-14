@@ -363,6 +363,9 @@ class SurrogateModel(object):
                         if self.verbose:
                             print(f"optimized hyperparameters: ({np.round(tf - t0, 1)}s)")
                             print(self.gp.get_parameter_vector())
+
+                        if self.cache():
+                            self.save()
                     break
 
                 except:
