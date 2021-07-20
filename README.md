@@ -1,8 +1,8 @@
 # alabi
 
-Active Learning Accelerated Bayesian Inference (ALABI)
+#### *Active Learning Accelerated Bayesian Inference (ALABI)*
 
 ### Authors:
-- Jessica Birky
-- David Fleming
-- Rory Barnes
+- [Jessica Birky (@jbirky)](https://github.com/jbirky)
+- [David Fleming (@dflemin3)](https://github.com/dflemin3)
+- [Rory Barnes (@RoryBarnes)](https://github.com/RoryBarnes)
