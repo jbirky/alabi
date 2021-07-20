@@ -112,7 +112,7 @@ def _grad_nll(p, gp, y, priorFn=None):
     return -gp.grad_log_likelihood(y, quiet=True)
 
 
-def fit_gp(theta, y, kernel, fit_amp=True, fit_mean=True, 
+def fit_gp(theta, y, kernel, fit_amp=True, fit_mean=True, fit_white_noise=False,
            white_noise=-12, hyperparameters=None):
 
     if np.any(~np.isfinite(theta)) or np.any(~np.isfinite(y)):
@@ -123,7 +123,7 @@ def fit_gp(theta, y, kernel, fit_amp=True, fit_mean=True,
         kernel *= np.var(y)
 
     gp = george.GP(kernel=kernel, fit_mean=fit_mean, mean=np.median(y),
-                white_noise=white_noise, fit_white_noise=False)
+                white_noise=white_noise, fit_white_noise=fit_white_noise)
 
     if hyperparameters is not None:
         gp.set_parameter_vector(hyperparameters)
@@ -144,7 +144,7 @@ def optimize_gp(gp, theta, y, seed=None, nopt=1, method="powell",
                                  hp_rng=20,
                                  mu=np.median(y), 
                                  sigma=np.std(y),
-                                 sigma_level=3)
+                                 sigma_level=5)
     
     # Run the optimization routine nopt times
     res = []

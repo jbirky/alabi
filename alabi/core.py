@@ -7,14 +7,15 @@
 
 __all__ = ["SurrogateModel"]
 
-import alabi.utility as ut
-import alabi.visualization as vis
-import alabi.gp_utils
-import alabi.mcmc_utils 
-import alabi.cache_utils
+from alabi import utility as ut
+from alabi import visualization as vis
+from alabi import gp_utils
+from alabi import mcmc_utils 
+from alabi import cache_utils
 
 import numpy as np
 from scipy.optimize import minimize
+from sklearn.preprocessing import StandardScaler
 from functools import partial
 import george
 from george import kernels
@@ -134,41 +135,46 @@ class SurrogateModel(object):
             np.savez(f"{self.savedir}/initial_test_sample.npz", theta=self.theta_test, y=self.y_test)
 
 
-    def init_samples(self, ntrain=None, ntest=None, sampler=None):
+    def init_samples(self, train_file=None, test_file=None,
+                     ntrain=None, ntest=None, sampler=None):
 
-        self.init_train(nsample=ntrain)
-        self.init_test(nsample=ntest)
+        if train_file is not None:
+            sims = np.load(f"{self.savedir}/{train_file}")
+            self.theta0 = sims["theta"]
+            self.y0 = sims["y"]
+            self.theta = self.theta0
+            self.y = self.y0
 
-
-    def load_train(self, savedir=None, theta0=None, y0=None):
-
-        if savedir is not None:
-            sims = np.load(f"{savedir}/initial_training_sample.npz")
-            theta0 = sims["theta"]
-            y0 = sims["y"]
+            # record number of training samples
+            self.ninit_train = len(self.theta0)
+            self.ntrain = self.ninit_train
+            self.nactive = 0
         else:
-            try:
-                sims = np.load(f"{self.savedir}/initial_training_sample.npz")
-                theta0 = sims["theta"]
-                y0 = sims["y"]
-            except:
-                pass
-            
-        if (theta0 is not None) and (y0 is not None):
-            self.theta0 = theta0 
-            self.y0 = y0
+            self.init_train(nsample=ntrain)
 
-        self.theta = self.theta0
-        self.y = self.y0
+        if test_file is not None:
+            sims = np.load(f"{self.savedir}/{test_file}")
+            self.theta_test = sims["theta"]
+            self.y_test = sims["y"]
 
+            # record number of test samples
+            self.ntest = len(self.theta_test)
+        else:
+            self.init_test(nsample=ntest)
 
-    def load_train(self, savedir=None, theta_test=None, y_test=None):
+        # scale training data!
+        self.scaler_t = StandardScaler()
+        self.scaler_t.fit(self.theta)
+        self.theta = self.scaler_t.transform(self.theta)
 
-        self.theta = theta_test 
-        self.y = y_test
+        self.scaler_y = StandardScaler()
+        yT = self.y.reshape(1,-1).T
+        self.scaler_y.fit(yT)
+        self.y = self.scaler_y.transform(yT).flatten()
 
         
-    def init_gp(self, kernel=None, fit_amp=True, fit_mean=True, white_noise=None, 
+    def init_gp(self, kernel=None, fit_amp=True, fit_mean=True, 
+                fit_white_noise=False, white_noise=None, 
                 gp_hyper_prior=None, overwrite=False):
         
         if hasattr(self, 'gp') and (overwrite == False):
@@ -254,6 +260,7 @@ class SurrogateModel(object):
         warnings.simplefilter("ignore")
         self.gp = gp_utils.fit_gp(self.theta, self.y, self.kernel, 
                                   fit_amp=fit_amp, fit_mean=fit_mean,
+                                  fit_white_noise=fit_white_noise,
                                   white_noise=self.white_noise)
 
         t0 = time.time()
@@ -263,29 +270,38 @@ class SurrogateModel(object):
 
         if self.verbose:
             print(f"optimized hyperparameters: ({np.round(tf - t0, 1)}s)")
+            print(self.gp.get_parameter_names())
             print(self.gp.get_parameter_vector())
             print('')
 
 
     def evaluate(self, theta):
 
+        # inverse scale the data!
+
+        raise NotImplementedError("Scale data!")
+
         theta = np.asarray(theta).reshape(1,-1)
 
         return self.gp.predict(self.y, theta, return_cov=False)[0]
 
 
-    def find_next_point(self, theta0=None, nopt=5, **kwargs):
+    def find_next_point(self, nopt=1, **kwargs):
         
         # Find new theta that produces a valid loglikelihood
-        thetaT, uT = ut.minimize_objective(self.utility, self.y, self.gp,
+        theta_new, _ = ut.minimize_objective(self.utility, self.y, self.gp,
                                             bounds=self.bounds,
                                             nopt=nopt,
+                                            t0=self.theta[np.argmax(self.y)],
                                             args=(self.y, self.gp))
 
         # evaluate function at the optimized theta
-        yT = self.fn(thetaT)
+        y_new = self.fn(theta_new)
 
-        return thetaT, yT
+        theta_new = self.scaler_t.transform(theta_new.reshape(1,-1)).flatten()
+        y_new = self.scaler_y.transform(y_new.reshape(1,-1)).flatten()
+
+        return theta_new, y_new
 
 
     def active_train(self, niter=100, algorithm="bape", gp_opt_freq=10): 
