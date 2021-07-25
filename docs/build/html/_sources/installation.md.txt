@@ -1,0 +1,14 @@
+---
+hide-toc: true
+---
+
+### Installation 
+
+```
+git clone https://github.com/jbirky/alabi
+```
+
+```
+cd alabi
+python setup.py
+```

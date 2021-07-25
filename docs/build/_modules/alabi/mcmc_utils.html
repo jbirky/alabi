@@ -1,0 +1,258 @@
+<!doctype html>
+<html class="no-js">
+  <head><meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1"/>
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
+
+    <meta name="generator" content="sphinx-4.1.1, furo 2021.07.05.beta38"/>
+        <title>alabi.mcmc_utils - alabi</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css" />
+    
+
+
+<style>
+  :root {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  --font-stack: Roboto, sans-serif;
+  --font-stack--monospace: Courier, monospace;
+  
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+  }
+
+  /* For allowing end-user-specific overrides */
+  .override-light {
+    --color-code-background: #f8f8f8;
+  --color-code-foreground: black;
+  --font-stack: Roboto, sans-serif;
+  --font-stack--monospace: Courier, monospace;
+  
+  }
+  .override-dark {
+    --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+  }
+</style><link media="(prefers-color-scheme: dark)" rel="stylesheet" href="../../_static/pygments_dark.css"></head>
+  <body dir="">
+    
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+      stroke-width="1.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+      <path stroke="none" d="M0 0h24v24H0z"/>
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="10" y1="12" x2="20" y2="12" />
+      <line x1="6" y1="18" x2="20" y2="18" />
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+      class="feather feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+      class="feather feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="../../index.html"><div class="brand">alabi</div></a>
+    </div>
+    <div class="header-right">
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
+  
+  
+  <span class="sidebar-brand-text">alabi</span>
+  
+</a><form class="sidebar-search-container" method="get" action="../../search.html">
+  <input class="sidebar-search" placeholder=Search name="q">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../basic.html">Basic Usage</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../modules.html">alabi</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label for="toctree-checkbox-1"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../alabi.html">alabi package</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi">GitHub Repository</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi/LICENSE">License</a></li>
+</ul>
+
+</div>
+</div>
+      </div>
+      
+    </div>
+  </aside>
+  <main class="main">
+    <div class="content">
+      <article role="main">
+        <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+        </label>
+        <h1>Source code for alabi.mcmc_utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">"""</span>
+<span class="sd">:py:mod:`mcmc_utils.py` </span>
+<span class="sd">-------------------------------------</span>
+<span class="sd">"""</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"estimateBurnin"</span><span class="p">]</span>
+
+
+<span class="c1"># ================================</span>
+<span class="c1"># emcee utils</span>
+<span class="c1"># ================================</span>
+
+<div class="viewcode-block" id="estimateBurnin"><a class="viewcode-back" href="../../alabi.html#alabi.mcmc_utils.estimateBurnin">[docs]</a><span class="k">def</span> <span class="nf">estimateBurnin</span><span class="p">(</span><span class="n">sampler</span><span class="p">,</span> <span class="n">estBurnin</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">thinChains</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Estimate the integrated autocorrelation length on the MCMC chain associated</span>
+<span class="sd">    with an emcee sampler object. With the integrated autocorrelation length,</span>
+<span class="sd">    we can then estimate the burn-in length for the MCMC chain. This procedure</span>
+<span class="sd">    follows the example outlined here:</span>
+<span class="sd">    https://emcee.readthedocs.io/en/stable/tutorials/autocorr/</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sampler : emcee.EnsembleSampler</span>
+<span class="sd">        emcee MCMC sampler object/backend handler, given a complete chain</span>
+<span class="sd">    estBurnin : bool, optional</span>
+<span class="sd">        Estimate burn-in time using integrated autocorrelation time</span>
+<span class="sd">        heuristic.  Defaults to True. In general, we recommend users</span>
+<span class="sd">        inspect the chains and calculate the burnin after the fact to ensure</span>
+<span class="sd">        convergence, but this function works pretty well.</span>
+<span class="sd">    thinChains : bool, optional</span>
+<span class="sd">        Whether or not to thin chains.  Useful if running long chains.</span>
+<span class="sd">        Defaults to True.  If true, estimates a thin cadence</span>
+<span class="sd">        via int(0.5*np.min(tau)) where tau is the intergrated autocorrelation</span>
+<span class="sd">        time.</span>
+<span class="sd">    verbose : bool, optional</span>
+<span class="sd">        Output all the diagnostics? Defaults to False.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    iburn : int</span>
+<span class="sd">        burn-in index estimate.  If estBurnin == False, returns 0.</span>
+<span class="sd">    ithin : int</span>
+<span class="sd">        thin cadence estimate.  If thinChains == False, returns 1.</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># Set tol = 0 so it always returns an answer</span>
+    <span class="n">tau</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">get_autocorr_time</span><span class="p">(</span><span class="n">tol</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Catch NaNs</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">tau</span><span class="p">)):</span>
+        <span class="c1"># Try removing NaNs</span>
+        <span class="n">tau</span> <span class="o">=</span> <span class="n">tau</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">tau</span><span class="p">))]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tau</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">"Failed to compute integrated autocorrelation length, tau."</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">"Setting tau = 1"</span><span class="p">)</span>
+            <span class="n">tau</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="c1"># Estimate burn-in?</span>
+    <span class="k">if</span> <span class="n">estBurnin</span><span class="p">:</span>
+        <span class="n">iburn</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">2.0</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">tau</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">iburn</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># Thin chains?</span>
+    <span class="k">if</span> <span class="n">thinChains</span><span class="p">:</span>
+        <span class="n">ithin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">tau</span><span class="p">)),</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ithin</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"burn-in estimate: </span><span class="si">%d</span><span class="s2">"</span> <span class="o">%</span> <span class="n">iburn</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"thin estimate: </span><span class="si">%d</span><span class="se">\n</span><span class="s2">"</span> <span class="o">%</span> <span class="n">ithin</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">iburn</span><span class="p">,</span> <span class="n">ithin</span></div>
+</pre></div>
+      </article>
+      <footer>
+        
+        <div class="related-pages">
+          
+          
+        </div>
+
+        <div class="related-information">
+              Copyright &#169; 2021, Jessica Birky
+            |
+            Built with <a href="https://www.sphinx-doc.org/">Sphinx</a>
+              and
+              <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+              <a href="https://github.com/pradyunsg/furo">Furo theme</a>.
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer no-toc">
+      
+      
+      
+    </aside>
+  </main>
+</div><script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/scripts/main.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/tabs.js"></script>
+    </body>
+</html>
