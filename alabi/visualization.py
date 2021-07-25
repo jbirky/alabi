@@ -1,3 +1,8 @@
+"""
+:py:mod:`visualization.py` 
+-------------------------------------
+"""
+
 import numpy as np
 import os
 import corner
@@ -44,30 +49,52 @@ def plot_error_vs_iteration(sm, log=False, title="GP fit"):
     plt.close()
 
 
+# def plot_hyperparam_vs_iteration(sm, title="GP fit"):
+
+#     hp_names = sm.gp.get_parameter_names()
+#     hp_values = np.array(sm.training_results["gp_hyperparameters"])
+
+#     fig, axs = plt.subplots(2,1, figsize=[8,10], sharex=True)
+
+#     # Plot mean value on separate panel
+#     axs[0].plot(sm.training_results["iteration"], hp_values.T[0], 
+#                 label=hp_names[0].replace('_', ' '), color='k')
+#     axs[0].set_ylabel('GP mean hyperparameter', fontsize=18)
+
+#     # Plot log hyperparameters
+#     for ii, name in enumerate(hp_names):
+#         axs[1].plot(sm.training_results["iteration"], hp_values.T[ii+1], 
+#                 label=name.replace('_', ' '))
+    
+#     axs[1].set_xlabel('iteration', fontsize=18)
+#     axs[1].set_ylabel('GP scale hyperparameters', fontsize=18)
+#     axs[1].set_xlim(0, max(sm.training_results["iteration"]))
+#     axs[0].minorticks_on()
+#     axs[1].minorticks_on()
+#     axs[0].legend(loc='best')
+#     axs[1].legend(loc='best')
+#     plt.title(title, fontsize=22)
+#     plt.savefig(f"{sm.savedir}/gp_hyperparameters_vs_iteration.png")
+#     plt.close()
+
+
 def plot_hyperparam_vs_iteration(sm, title="GP fit"):
 
     hp_names = sm.gp.get_parameter_names()
     hp_values = np.array(sm.training_results["gp_hyperparameters"])
 
-    fig, axs = plt.subplots(2,1, figsize=[8,10], sharex=True)
-
-    # Plot mean value on separate panel
-    axs[0].plot(sm.training_results["iteration"], hp_values.T[0], 
-                label=hp_names[0].replace('_', ' '), color='k')
-    axs[0].set_ylabel('GP mean hyperparameter', fontsize=18)
+    fig = plt.figure(figsize=[8,6])
 
     # Plot log hyperparameters
-    for ii, name in enumerate(hp_names[1:]):
-        axs[1].plot(sm.training_results["iteration"], hp_values.T[ii+1], 
+    for ii, name in enumerate(hp_names):
+        plt.plot(sm.training_results["iteration"], hp_values.T[ii], 
                 label=name.replace('_', ' '))
     
-    axs[1].set_xlabel('iteration', fontsize=18)
-    axs[1].set_ylabel('GP scale hyperparameters', fontsize=18)
-    axs[1].set_xlim(0, max(sm.training_results["iteration"]))
-    axs[0].minorticks_on()
-    axs[1].minorticks_on()
-    axs[0].legend(loc='best')
-    axs[1].legend(loc='best')
+    plt.xlabel('iteration', fontsize=18)
+    plt.ylabel('GP scale hyperparameters', fontsize=18)
+    plt.xlim(0, max(sm.training_results["iteration"]))
+    plt.minorticks_on()
+    plt.legend(loc='best')
     plt.title(title, fontsize=22)
     plt.savefig(f"{sm.savedir}/gp_hyperparameters_vs_iteration.png")
     plt.close()
@@ -139,7 +166,7 @@ def plot_gp_fit_2D(sm, ngrid=60, title="GP fit"):
     for i in range(Z.shape[0]):
         for j in range(Z.shape[1]):
             tt = np.array([X[i][j], Y[i][j]]).reshape(1,-1)
-            Z[i][j] = sm.gp.predict(sm.y, tt, return_cov=False)[0]
+            Z[i][j] = sm.evaluate(tt)
         
     im = plt.contourf(X, Y, Z, 20, cmap='Blues_r')
     plt.colorbar(im)

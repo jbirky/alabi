@@ -31,9 +31,26 @@ __all__ = ["agp_utility",
 # Define sampling functions
 #===========================================================
 
-def prior_sampler(nsample=1, bounds=None, sampler='uniform'):
+def prior_sampler(bounds=None, nsample=1, sampler='uniform'):
     """
+    Hypercube sampling function which draws ``nsample`` within given ``bounds``. 
+    Wrapper around ``scikit-optimize`` sampling methods. For more info see:
     https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html
+
+    :param bounds: *(array, required)* 
+        Array of ``(min,max)`` bounds for each dimension of the prior.
+
+    :param nsample: *(int, optional)* 
+        Defaults to ``nsample=1``.
+
+    :param sampler: *(str, optional)* 
+        Defaults to ``'uniform'``. Options:
+            ``'uniform'``,
+            ``'sobol'``,
+            ``'lhs'``,
+            ``'halton'``,
+            ``'hammersly'``,
+            ``'grid'``
     """
 
     ndim = len(bounds)
@@ -194,7 +211,7 @@ def bape_utility(theta, y, gp, bounds):
 
     .. math::
 
-        u(x_*) = e^{2\\mu(x_*) + \\sigma^2(x_*)} \\left(\\sigma^2(x_*) - 1 \\right)
+        u(x_*) = e^{2\\mu(x_*) + \\sigma^2(x_*)} \\left(e^{\\sigma^2(x_*)} - 1 \\right)
 
     See Kandasamy et al. (2015) for derivation/explaination.
 
@@ -350,6 +367,7 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
                 if np.isfinite(lnprior_uniform(x_opt, bounds)):
                     res.append(x_opt)
                     objective.append(f_opt)
+
                     break
                 else:
                     print('Utility function optimization prior fail', x_opt)
