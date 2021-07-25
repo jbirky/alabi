@@ -1,11 +1,36 @@
+"""
+:py:mod:`benchmarks.py` 
+-------------------------------------
+"""
+
 import numpy as np
 from scipy.optimize import rosen
 import math
 
-__all__ = ["rosenbrock",
+__all__ = ["test1d",
+           "rosenbrock",
            "gaussian_shells",
            "eggbox", 
            "multimodal"]
+
+
+# ================================
+# 1D test function (1D)
+# ================================
+
+def test1d_fn(theta):
+    """
+    Simple 1D test Bayesian optimization function adapted from
+    https://krasserm.github.io/2018/03/21/bayesian-optimization/
+    """
+
+    theta = np.asarray(theta)
+    return -np.sin(3*theta) - theta**2 + 0.7*theta
+
+test1d_bounds = [(-2,1)]
+
+test1d = {"fn": test1d_fn,
+          "bounds": test1d_bounds}
 
 
 # ================================

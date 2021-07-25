@@ -1,3 +1,8 @@
+"""
+:py:mod:`mcmc_utils.py` 
+-------------------------------------
+"""
+
 import numpy as np
 
 __all__ = ["estimateBurnin"]

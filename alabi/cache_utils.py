@@ -1,3 +1,8 @@
+"""
+:py:mod:`cache_utils.py` 
+-------------------------------------
+"""
+
 import numpy as np
 import pickle
 import os
@@ -37,7 +42,8 @@ def write_report_gp(self, file):
         lines += f"   [{hp_name[ii]}] \t{hp_vect[ii]} \n"
     lines += "\n"
 
-    lines += f"Active learning train runtime (s): {np.round(self.train_runtime)} \n\n"
+    if hasattr(self, 'train_runtime'):
+        lines += f"Active learning train runtime (s): {np.round(self.train_runtime)} \n\n"
 
     lines += f"Final test error: {self.training_results['test_error'][-1]} \n\n"
 

@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 """
-:py:mod:`gpUtils.py` - Gaussian Process Utilities
+:py:mod:`gp_utils.py` 
 -------------------------------------------------
 
 Gaussian process utility functions for initializing GPs and optimizing their
@@ -21,17 +20,14 @@ __all__ = ["default_hyper_prior", "optimize_gp"]
 def default_hyper_prior(p, hp_rng=20, mu=None, sigma=None, sigma_level=3):
     """
     Default prior function for GP hyperparameters. This prior also keeps the
-    hyperparameters within a reasonable huge range, [-20, 20]. Note that george
+    hyperparameters within a reasonable huge range ``[-20, 20]``. Note that george
     operates on the *log* hyperparameters, except for the mean function.
 
-    Parameters
-    ----------
-    p : array/iterable
+    :param p: *(array, required)* 
         Array of GP hyperparameters
 
-    Returns
-    -------
-    prior : float
+    :returns lnprior: *(float)* 
+        log prior value 
     """
 
     # Restrict range of hyperparameters (ignoring mean term)
@@ -144,7 +140,7 @@ def optimize_gp(gp, theta, y, seed=None, nopt=1, method="powell",
                                  hp_rng=20,
                                  mu=np.median(y), 
                                  sigma=np.std(y),
-                                 sigma_level=5)
+                                 sigma_level=3)
     
     # Run the optimization routine nopt times
     res = []
