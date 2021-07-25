@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-:py:mod:`utility.py` - Utility Functions
+:py:mod:`utility.py`
 ----------------------------------------
 
 Utility functions in terms of usefulness, e.g. minimizing GP utility functions
@@ -17,12 +17,10 @@ import warnings
 import time
 import tqdm
 
-__all__ = ["logsubexp", 
-           "agp_utility", 
+__all__ = ["agp_utility", 
            "bape_utility", 
            "jones_utility",
            "minimize_objective", 
-           "klNumerical", 
            "prior_sampler", 
            "eval_fn", 
            "lnprior_uniform",
@@ -121,49 +119,6 @@ def prior_transform_uniform(theta, bounds):
 # Define math functions
 #===========================================================
 
-
-def klNumerical(x, p, q):
-    """
-    Estimate the KL-Divergence between pdfs p and q via Monte Carlo intergration
-    using x, samples from p.
-
-    KL ~ 1/n * sum_{i=1,n}(log (p(x_i)/q(x_i)))
-
-    For our purposes, q is the current estimate of the pdf while p is the
-    previous estimate.  This method is the only feasible method for large
-    dimensions.
-
-    See Hershey and Olsen, "Approximating the Kullback Leibler
-    Divergence Between Gaussian Mixture Models" for more info
-
-    Note that this method can result in D_kl < 0 but it's the only method with
-    guaranteed convergence properties as the number of samples (len(x)) grows.
-    Also, this method is shown to have the lowest error, on average
-    (see Hershey and Olsen).
-
-    Parameters
-    ----------
-    x : array
-        Samples drawn from p
-    p : function
-        Callable previous estimate of the density
-    q : function
-        Callable current estimate of the density
-
-    Returns
-    -------
-    kl : float
-        KL divergence
-    """
-    try:
-        res = np.sum(np.log(p(x)/q(x)))/len(x)
-    except ValueError:
-        err_msg = "ERROR: inf/NaN encountered.  q(x) = 0 likely occured."
-        raise ValueError(err_msg)
-
-    return res
-
-
 def logsubexp(x1, x2):
     """
     Numerically stable way to compute log(exp(x1) - exp(x2))
@@ -229,13 +184,17 @@ def agp_utility(theta, y, gp):
     return util
 
 
-def bape_utility(theta, y, gp):
+def bape_utility(theta, y, gp, bounds):
     """
     BAPE (Bayesian Active Posterior Estimation) utility function.  This is what
     you maximize to find the next theta under the BAPE formalism.  Note here we
     use the negative of the utility function so minimizing this is the same as
     maximizing the actual utility function.  Also, we log the BAPE utility
     function as the log is monotonic so the minima are equivalent.
+
+    .. math::
+
+        u(x_*) = e^{2\\mu(x_*) + \\sigma^2(x_*)} \\left(\\sigma^2(x_*) - 1 \\right)
 
     See Kandasamy et al. (2015) for derivation/explaination.
 
@@ -254,8 +213,8 @@ def bape_utility(theta, y, gp):
     """
     # If guess isn't allowed by prior, we don't care what the value of the
     # utility function is
-    # if not np.isfinite(lnprior_uniform(theta, bounds)):
-    #     return np.inf
+    if not np.isfinite(lnprior_uniform(theta, bounds)):
+        return np.inf
 
     # Only works if the GP object has been computed, otherwise you messed up
     if gp.computed:
@@ -263,11 +222,18 @@ def bape_utility(theta, y, gp):
     else:
         raise RuntimeError("ERROR: Need to compute GP before using it!")
 
+    if var <= 0:
+        return np.inf
+
     try:
         util = -((2.0 * mu + var) + logsubexp(var, 0.0))
+        # util = -(np.exp(2*mu + var) * (np.exp(var) - 1))
     except ValueError:
         print("Invalid util value.  Negative variance or inf mu?")
         raise ValueError("util: %e. mu: %e. var: %e" % (util, mu, var))
+
+    # print(mu, var, logsubexp(var, 0.0), util)
+    # print('theta:', theta, 'util', util)
 
     return util
 
@@ -325,13 +291,14 @@ def jones_utility(theta, y, gp, zeta=0.01):
     return util
 
 
-def minimize_objective(obj_fn, y, gp, bounds=None, nopt=5, method="nelder-mead",
-                       args=None, options={}, max_iter=100):
+def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
+                       t0=None, args=None, options={}, max_iter=100):
 
     # Initialize options
     if str(method).lower() == "nelder-mead" and options is None:
         options["adaptive"] = True
-    options["maxiter"] = int(1e3)
+    # options["maxiter"] = 20
+    # options["disp"] = True
 
     bound_methods = ["nelder-mead", "l-bfgs", "tnc", "slsqp", "powell", "trust-constr"]
     # scipy >= 1.5 should be installed to use bounds in optimization
@@ -356,7 +323,8 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=5, method="nelder-mead",
         test_iter = 0
         while True:
 
-            t0 = prior_sampler(nsample=1, bounds=bounds)
+            if t0 is None:
+                t0 = prior_sampler(nsample=1, bounds=bounds)
 
             # Too many iterations
             if test_iter >= max_iter:
@@ -383,6 +351,13 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=5, method="nelder-mead",
                     res.append(x_opt)
                     objective.append(f_opt)
                     break
+                else:
+                    print('Utility function optimization prior fail', x_opt)
+            else:
+                print('Utility function optimization infinite fail', x_opt, f_opt)
+
+            # Try a new initialization point
+            t0 = prior_sampler(nsample=1, bounds=bounds)
             
             test_iter += 1
         # end loop
