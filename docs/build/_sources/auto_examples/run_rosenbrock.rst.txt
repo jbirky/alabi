@@ -47,7 +47,7 @@ Initialize training function
 .. admonition:: results/rosenbrock/true_function_2D.png
    :class: dropdown, tip
 
-   .. image:: ../../examples/results/rosenbrock/true_function_2D.png
+   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/true_function_2D.png
 
 .. GENERATED FROM PYTHON SOURCE LINES 28-30
 
@@ -98,28 +98,28 @@ Plot GP diagnostics
 .. admonition:: results/rosenbrock/ExpSquaredKernel/gp_error_vs_iteration.png
    :class: dropdown, tip
 
-   .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/gp_error_vs_iteration.png
+   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/ExpSquaredKernel/gp_error_vs_iteration.png
 
 .. GENERATED FROM PYTHON SOURCE LINES 57-61
 
 .. admonition:: results/rosenbrock/ExpSquaredKernel/gp_hyperparameters_vs_iteration.png
    :class: dropdown, tip
 
-   .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/gp_hyperparameters_vs_iteration.png
+   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/ExpSquaredKernel/gp_hyperparameters_vs_iteration.png
 
 .. GENERATED FROM PYTHON SOURCE LINES 63-67
 
 .. admonition:: results/rosenbrock/ExpSquaredKernel/gp_train_time_vs_iteration.png
    :class: dropdown, tip
 
-   .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/gp_train_time_vs_iteration.png
+   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/ExpSquaredKernel/gp_train_time_vs_iteration.png
 
 .. GENERATED FROM PYTHON SOURCE LINES 69-73
 
 .. admonition:: results/rosenbrock/ExpSquaredKernel/gp_fit_2D.png
    :class: dropdown, tip
 
-   .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/gp_fit_2D.png
+   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/ExpSquaredKernel/gp_fit_2D.png
 
 .. GENERATED FROM PYTHON SOURCE LINES 76-78
 
@@ -141,7 +141,7 @@ Run MCMC using ``emcee``
 .. admonition:: results/rosenbrock/ExpSquaredKernel/emcee_posterior.png
    :class: dropdown, tip
 
-   .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/emcee_posterior.png
+   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/ExpSquaredKernel/emcee_posterior.png
 
 .. GENERATED FROM PYTHON SOURCE LINES 91-93
 
@@ -162,7 +162,7 @@ Run MCMC using ``dynesty``
 .. admonition:: results/rosenbrock/ExpSquaredKernel/dynesty_posterior.png
    :class: dropdown, tip
 
-   .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/dynesty_posterior.png
+   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/ExpSquaredKernel/dynesty_posterior.png
 
 
 .. rst-class:: sphx-glr-timing

@@ -47,7 +47,7 @@ Initialize training function
 .. admonition:: results/eggbox/true_function_2D.png
    :class: dropdown, tip
 
-   .. image:: ../../examples/results/eggbox/true_function_2D.png
+   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/eggbox/true_function_2D.png
 
 .. GENERATED FROM PYTHON SOURCE LINES 28-30
 
@@ -98,28 +98,28 @@ Plot GP diagnostics
 .. admonition:: results/eggbox/ExpSquaredKernel/gp_error_vs_iteration.png
    :class: dropdown, tip
 
-   .. image:: ../../examples/results/eggbox/ExpSquaredKernel/gp_error_vs_iteration.png
+   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/eggbox/ExpSquaredKernel/gp_error_vs_iteration.png
 
 .. GENERATED FROM PYTHON SOURCE LINES 57-61
 
 .. admonition:: results/eggbox/ExpSquaredKernel/gp_hyperparameters_vs_iteration.png
    :class: dropdown, tip
 
-   .. image:: ../../examples/results/eggbox/ExpSquaredKernel/gp_hyperparameters_vs_iteration.png
+   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/eggbox/ExpSquaredKernel/gp_hyperparameters_vs_iteration.png
 
 .. GENERATED FROM PYTHON SOURCE LINES 63-67
 
 .. admonition:: results/eggbox/ExpSquaredKernel/gp_train_time_vs_iteration.png
    :class: dropdown, tip
 
-   .. image:: ../../examples/results/eggbox/ExpSquaredKernel/gp_train_time_vs_iteration.png
+   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/eggbox/ExpSquaredKernel/gp_train_time_vs_iteration.png
 
 .. GENERATED FROM PYTHON SOURCE LINES 69-73
 
 .. admonition:: results/eggbox/ExpSquaredKernel/gp_fit_2D.png
    :class: dropdown, tip
 
-   .. image:: ../../examples/results/eggbox/ExpSquaredKernel/gp_fit_2D.png
+   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/eggbox/ExpSquaredKernel/gp_fit_2D.png
 
 .. GENERATED FROM PYTHON SOURCE LINES 76-84
 
@@ -151,7 +151,7 @@ Run MCMC using ``dynesty``
 .. admonition:: results/eggbox/ExpSquaredKernel/dynesty_posterior_kde.png
    :class: dropdown, tip
 
-   .. image:: ../../examples/results/eggbox/ExpSquaredKernel/dynesty_posterior_kde.png
+   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/eggbox/ExpSquaredKernel/dynesty_posterior_kde.png
 
 
 .. rst-class:: sphx-glr-timing

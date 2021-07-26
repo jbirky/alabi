@@ -21,7 +21,7 @@ vis.plot_true_fit_2D(eval(benchmark)["fn"], eval(benchmark)["bounds"],
 # .. admonition:: results/rosenbrock/true_function_2D.png
 #    :class: dropdown, tip
 # 
-#    .. image:: ../../examples/results/rosenbrock/true_function_2D.png
+#    .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/true_function_2D.png
 
 
 # %%
@@ -51,25 +51,25 @@ sm.plot(plots=["gp_error", "gp_hyperparam", "gp_timing", "gp_fit_2D"])
 # .. admonition:: results/rosenbrock/ExpSquaredKernel/gp_error_vs_iteration.png
 #    :class: dropdown, tip
 # 
-#    .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/gp_error_vs_iteration.png
+#    .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/ExpSquaredKernel/gp_error_vs_iteration.png
 
 # %%
 # .. admonition:: results/rosenbrock/ExpSquaredKernel/gp_hyperparameters_vs_iteration.png
 #    :class: dropdown, tip
 # 
-#    .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/gp_hyperparameters_vs_iteration.png
+#    .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/ExpSquaredKernel/gp_hyperparameters_vs_iteration.png
 
 # %%
 # .. admonition:: results/rosenbrock/ExpSquaredKernel/gp_train_time_vs_iteration.png
 #    :class: dropdown, tip
 # 
-#    .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/gp_train_time_vs_iteration.png
+#    .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/ExpSquaredKernel/gp_train_time_vs_iteration.png
 
 # %%
 # .. admonition:: results/rosenbrock/ExpSquaredKernel/gp_fit_2D.png
 #    :class: dropdown, tip
 # 
-#    .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/gp_fit_2D.png
+#    .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/ExpSquaredKernel/gp_fit_2D.png
 
 
 # %%
@@ -84,7 +84,7 @@ sm.plot(plots=["emcee_all"])
 # .. admonition:: results/rosenbrock/ExpSquaredKernel/emcee_posterior.png
 #    :class: dropdown, tip
 # 
-#    .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/emcee_posterior.png
+#    .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/ExpSquaredKernel/emcee_posterior.png
 
 
 # %%
@@ -98,4 +98,4 @@ sm.plot(plots=["dynesty_all"])
 # .. admonition:: results/rosenbrock/ExpSquaredKernel/dynesty_posterior.png
 #    :class: dropdown, tip
 # 
-#    .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/dynesty_posterior.png
+#    .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/ExpSquaredKernel/dynesty_posterior.png
