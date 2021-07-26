@@ -22,6 +22,7 @@ __all__ = ["plot_error_vs_iteration",
            "plot_hyperparam_vs_iteration", 
            "plot_train_time_vs_iteration",
            "plot_corner_scatter",
+           "plot_train_sample_vs_iteration",
            "plot_gp_fit_1D",
            "plot_gp_fit_2D",
            "plot_true_fit_2D",
@@ -47,35 +48,6 @@ def plot_error_vs_iteration(sm, log=False, title="GP fit"):
     else:
         plt.savefig(f"{sm.savedir}/gp_error_vs_iteration.png")
     plt.close()
-
-
-# def plot_hyperparam_vs_iteration(sm, title="GP fit"):
-
-#     hp_names = sm.gp.get_parameter_names()
-#     hp_values = np.array(sm.training_results["gp_hyperparameters"])
-
-#     fig, axs = plt.subplots(2,1, figsize=[8,10], sharex=True)
-
-#     # Plot mean value on separate panel
-#     axs[0].plot(sm.training_results["iteration"], hp_values.T[0], 
-#                 label=hp_names[0].replace('_', ' '), color='k')
-#     axs[0].set_ylabel('GP mean hyperparameter', fontsize=18)
-
-#     # Plot log hyperparameters
-#     for ii, name in enumerate(hp_names):
-#         axs[1].plot(sm.training_results["iteration"], hp_values.T[ii+1], 
-#                 label=name.replace('_', ' '))
-    
-#     axs[1].set_xlabel('iteration', fontsize=18)
-#     axs[1].set_ylabel('GP scale hyperparameters', fontsize=18)
-#     axs[1].set_xlim(0, max(sm.training_results["iteration"]))
-#     axs[0].minorticks_on()
-#     axs[1].minorticks_on()
-#     axs[0].legend(loc='best')
-#     axs[1].legend(loc='best')
-#     plt.title(title, fontsize=22)
-#     plt.savefig(f"{sm.savedir}/gp_hyperparameters_vs_iteration.png")
-#     plt.close()
 
 
 def plot_hyperparam_vs_iteration(sm, title="GP fit"):
@@ -115,24 +87,39 @@ def plot_train_time_vs_iteration(sm, title="GP fit"):
     plt.close()
 
 
+def plot_train_sample_vs_iteration(sm):
+
+    yy = -sm.y[sm.ninit_train:] 
+    plt.scatter(sm.training_results["iteration"], yy)
+    plt.yscale('log')
+    plt.xlabel('iteration', fontsize=18)
+    plt.ylabel(r'$-\ln P$', fontsize=18)
+    plt.minorticks_on()
+    plt.savefig(f"{sm.savedir}/gp_train_sample_vs_iteration.png")
+    plt.close()
+
+
 def plot_corner_scatter(sm):
 
-    fig = corner.corner(sm.theta, c=sm.y, labels=sm.labels, 
+    yy = -sm.y 
+
+    fig = corner.corner(sm.theta, c=yy, labels=sm.labels, 
             plot_datapoints=False, plot_density=False, plot_contours=False,
             show_titles=True, title_kwargs={"fontsize": 18}, 
             label_kwargs={"fontsize": 22})
 
     axes = np.array(fig.axes).reshape((sm.ndim, sm.ndim))
-    cb_rng = [sm.y.min(), sm.y.max()]
+    cb_rng = [yy.min(), yy.max()]
 
     for yi in range(sm.ndim):
         for xi in range(yi):
             ax = axes[yi, xi]
-            im = ax.scatter(sm.theta.T[xi], sm.theta.T[yi], c=sm.y, s=2, cmap='coolwarm', 
+            im = ax.scatter(sm.theta.T[xi], sm.theta.T[yi], c=yy, s=2, cmap='coolwarm', 
                             norm=colors.LogNorm(vmin=min(cb_rng), vmax=max(cb_rng)))
 
-    cb = fig.colorbar(im, ax=axes.ravel().tolist(), orientation='horizontal', shrink=.98, pad=.1)
-    cb.set_label(r'$-\ln P$', fontsize=20)
+    cb = fig.colorbar(im, ax=axes.ravel().tolist(), orientation='vertical', anchor=(0,1), 
+                        shrink=.7, pad=.1)
+    cb.set_label(r'$-\ln P$', fontsize=20, labelpad=-80)
     cb.set_ticks(cb_rng)
     cb.ax.tick_params(labelsize=18)
     fig.savefig(f"{sm.savedir}/gp_training_sample_corner.png")

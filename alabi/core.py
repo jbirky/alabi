@@ -821,6 +821,13 @@ class SurrogateModel(object):
             else:
                 raise NameError("Must run init_train and/or active_train before plotting gp_train_corner.")
 
+        if "gp_train_iteration" in plots:  
+            if hasattr(self, "theta") and hasattr(self, "y"):
+                print("Plotting training sample corner plot...")
+                vis.plot_train_sample_vs_iteration(self)
+            else:
+                raise NameError("Must run init_train and/or active_train before plotting gp_train_iteration.")
+
         # GP training time vs iteration
         if "gp_fit_2D" in plots:
             if hasattr(self, "theta") and hasattr(self, "y"):
