@@ -18,8 +18,13 @@
   :root {
     --color-code-background: #f8f8f8;
   --color-code-foreground: black;
-  --font-stack: Roboto, sans-serif;
+  --font-stack: Roboto Light, sans-serif;
   --font-stack--monospace: Courier, monospace;
+  --color-background-secondary: #eff1f6;
+  --color-inline-code-background: #eff1f6;
+  --color-sidebar-item-background--hover: white;
+  --color-brand-primary: #006600;
+  --color-brand-content: #006600;
   
   }
   @media (prefers-color-scheme: dark) {
@@ -34,8 +39,13 @@
   .override-light {
     --color-code-background: #f8f8f8;
   --color-code-foreground: black;
-  --font-stack: Roboto, sans-serif;
+  --font-stack: Roboto Light, sans-serif;
   --font-stack--monospace: Courier, monospace;
+  --color-background-secondary: #eff1f6;
+  --color-inline-code-background: #eff1f6;
+  --color-sidebar-item-background--hover: white;
+  --color-brand-primary: #006600;
+  --color-brand-content: #006600;
   
   }
   .override-dark {
@@ -128,6 +138,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi">GitHub Repository</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi/LICENSE">License</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi/issues">Issues</a></li>
 </ul>
 
 </div>
@@ -165,17 +176,14 @@
 <div class="viewcode-block" id="default_hyper_prior"><a class="viewcode-back" href="../../alabi.html#alabi.gp_utils.default_hyper_prior">[docs]</a><span class="k">def</span> <span class="nf">default_hyper_prior</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">hp_rng</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sigma_level</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Default prior function for GP hyperparameters. This prior also keeps the</span>
-<span class="sd">    hyperparameters within a reasonable huge range, [-20, 20]. Note that george</span>
+<span class="sd">    hyperparameters within a reasonable huge range ``[-20, 20]``. Note that george</span>
 <span class="sd">    operates on the *log* hyperparameters, except for the mean function.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    p : array/iterable</span>
+<span class="sd">    :param p: *(array, required)* </span>
 <span class="sd">        Array of GP hyperparameters</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    prior : float</span>
+<span class="sd">    :returns lnprior: *(float)* </span>
+<span class="sd">        log prior value </span>
 <span class="sd">    """</span>
 
     <span class="c1"># Restrict range of hyperparameters (ignoring mean term)</span>

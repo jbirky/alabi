@@ -3,14 +3,19 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="setup module" href="setup.html" /><link rel="prev" title="alabi" href="modules.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="prev" title="alabi" href="modules.html" />
 
-    <meta name="generator" content="sphinx-4.1.1, furo 2021.07.05.beta38"/>
+    <meta name="generator" content="sphinx-4.0.2, furo 2021.07.05.beta38"/>
         <title>alabi package - alabi</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
     <link rel="stylesheet" type="text/css" href="_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/gallery.css" />
+    <link rel="stylesheet" type="text/css" href="_static/gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="_static/gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="_static/gallery-rendered-html.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css" />
     
 
@@ -19,8 +24,13 @@
   :root {
     --color-code-background: #f8f8f8;
   --color-code-foreground: black;
-  --font-stack: Roboto, sans-serif;
+  --font-stack: Roboto Light, sans-serif;
   --font-stack--monospace: Courier, monospace;
+  --color-background-secondary: #eff1f6;
+  --color-inline-code-background: #eff1f6;
+  --color-sidebar-item-background--hover: white;
+  --color-brand-primary: #004080;
+  --color-brand-content: #0059b3;
   
   }
   @media (prefers-color-scheme: dark) {
@@ -35,8 +45,13 @@
   .override-light {
     --color-code-background: #f8f8f8;
   --color-code-foreground: black;
-  --font-stack: Roboto, sans-serif;
+  --font-stack: Roboto Light, sans-serif;
   --font-stack--monospace: Courier, monospace;
+  --color-background-secondary: #eff1f6;
+  --color-inline-code-background: #eff1f6;
+  --color-sidebar-item-background--hover: white;
+  --color-brand-primary: #004080;
+  --color-brand-content: #0059b3;
   
   }
   .override-dark {
@@ -114,22 +129,31 @@
   <input type="hidden" name="check_keywords" value="yes">
   <input type="hidden" name="area" value="default">
 </form><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+  <p class="caption"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="basic.html">Basic Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basic_usage/training.html">GP Training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basic_usage/bayes_opt.html">Bayesian Optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basic_usage/mcmc.html">MCMC</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="auto_examples/index.html">Example Gallery</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label for="toctree-checkbox-1"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="auto_examples/run_eggbox.html">Eggbox (2D)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="auto_examples/run_rosenbrock.html">Rosenbrock (2D)</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">API</span></p>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
 <ul class="current">
-<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">alabi</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label for="toctree-checkbox-1"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
+<li class="toctree-l1 current has-children"><a class="reference internal" href="modules.html">alabi</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label for="toctree-checkbox-2"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul class="current">
 <li class="toctree-l2 current current-page"><a class="current reference internal" href="#">alabi package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="setup.html">setup module</a></li>
 </ul>
 </li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<p class="caption"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi">GitHub Repository</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi/LICENSE">License</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi/issues">Issues</a></li>
 </ul>
 
 </div>
@@ -146,9 +170,6 @@
         </label>
         <section id="alabi-package">
 <h1>alabi package<a class="headerlink" href="#alabi-package" title="Permalink to this headline">¶</a></h1>
-<section id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
-</section>
 <section id="module-alabi.benchmarks">
 <span id="alabi-benchmarks-module"></span><h2>alabi.benchmarks module<a class="headerlink" href="#module-alabi.benchmarks" title="Permalink to this headline">¶</a></h2>
 <section id="benchmarks-py">
@@ -175,32 +196,100 @@
 </section>
 <section id="module-alabi.core">
 <span id="alabi-core-module"></span><h2>alabi.core module<a class="headerlink" href="#module-alabi.core" title="Permalink to this headline">¶</a></h2>
-<section id="core-py-alabi">
-<h3><code class="xref py py-mod docutils literal notranslate"><span class="pre">core.py</span></code> - alabi<a class="headerlink" href="#core-py-alabi" title="Permalink to this headline">¶</a></h3>
+<section id="core-py">
+<h3><code class="xref py py-mod docutils literal notranslate"><span class="pre">core.py</span></code><a class="headerlink" href="#core-py" title="Permalink to this headline">¶</a></h3>
 <dl class="py class">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel">
 <em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">alabi.core.</span></span><span class="sig-name descname"><span class="pre">SurrogateModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">savedir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'results/'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'surrogate_model'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncore</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class used to estimate approximate Bayesian posterior distributions or perform Bayesian 
+optimization using a Gaussian process surrogate model</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fn</strong> – <em>(function, required)</em>
+Python function which takes input array <code class="docutils literal notranslate"><span class="pre">theta</span></code> and returns output array <code class="docutils literal notranslate"><span class="pre">y=fn(theta)</span></code>. 
+For bayesian inference problems <code class="docutils literal notranslate"><span class="pre">fn</span></code> would be your log-likelihood function.</p></li>
+<li><p><strong>bounds</strong> – <em>(array, required)</em>
+Prior bounds. List of min and max values for each dimension of <code class="docutils literal notranslate"><span class="pre">theta</span></code>.
+Example: <code class="docutils literal notranslate"><span class="pre">bounds</span> <span class="pre">=</span> <span class="pre">[(0,1),</span> <span class="pre">(2,3),</span> <span class="pre">...]</span></code></p></li>
+<li><p><strong>labels</strong> – <em>(array, optional)</em></p></li>
+<li><p><strong>cache</strong> – <em>(bool, optional)</em></p></li>
+<li><p><strong>savedir</strong> – <em>(str, optional)</em></p></li>
+<li><p><strong>savedir</strong> – <em>(str, optional)</em></p></li>
+<li><p><strong>model_name</strong> – <em>(str, optional)</em></p></li>
+<li><p><strong>verbose</strong> – <em>(bool, optional)</em></p></li>
+<li><p><strong>ncore</strong> – <em>(int, optional)</em></p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.active_train">
 <span class="sig-name descname"><span class="pre">active_train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">niter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">algorithm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'bape'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_opt_freq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.active_train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.active_train" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.evaluate">
-<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.evaluate" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">evaluate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta_xs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.evaluate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.evaluate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate predictive mean of the GP at point <code class="docutils literal notranslate"><span class="pre">theta_xs</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>theta_xs</strong> – <em>(array, required)</em> Point to evaluate GP mean at.</p>
+</dd>
+<dt class="field-even">Returns ypred</dt>
+<dd class="field-even"><p><em>(float)</em> GP mean evaluated at <code class="docutils literal notranslate"><span class="pre">theta_xs</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.find_map">
 <span class="sig-name descname"><span class="pre">find_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lnprior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'nelder-mead'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nRestarts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.find_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.find_map" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.find_next_point">
-<span class="sig-name descname"><span class="pre">find_next_point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nopt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.find_next_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.find_next_point" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<span class="sig-name descname"><span class="pre">find_next_point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nopt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.find_next_point"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.find_next_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find next set of <code class="docutils literal notranslate"><span class="pre">(theta,</span> <span class="pre">y)</span></code> training points by maximizing the
+active learning utility function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>nopt</strong> – <em>(int, optional)</em> 
+Number of times to restart the objective function optimization. 
+Defaults to 1. Increase to avoid converging to local maxima.</p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.init_gp">
 <span class="sig-name descname"><span class="pre">init_gp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_amp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_mean</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fit_white_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">white_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp_hyper_prior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.init_gp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.init_gp" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Initialize the Gaussian Process with specified kernel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>kernel</strong> – <p><em>(str/george kernel obj, optional)</em>
+<code class="docutils literal notranslate"><span class="pre">george</span></code> kernel object. Defaults to “ExpSquaredKernel”. 
+See <a class="reference external" href="https://george.readthedocs.io/en/latest/user/kernels/">https://george.readthedocs.io/en/latest/user/kernels/</a> for more details.
+Options:</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">'Kernel'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'Sum'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'Product'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'ConstantKernel'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'CosineKernel'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'DotProductKernel'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'EmptyKernel'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'ExpKernel'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'ExpSine2Kernel'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'ExpSquaredKernel'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'LinearKernel'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'LocalGaussianKernel'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'Matern32Kernel'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'Matern52Kernel'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'MyLocalGaussianKernel'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'PolynomialKernel'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'RationalQuadraticKernel'</span></code></p>
+</div></blockquote>
+</p>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.init_samples">
 <span class="sig-name descname"><span class="pre">init_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">train_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntrain</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ntest</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.init_samples"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.init_samples" title="Permalink to this definition">¶</a></dt>
@@ -208,11 +297,33 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.init_test">
 <span class="sig-name descname"><span class="pre">init_test</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nsample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sobol'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.init_test"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.init_test" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nsample</strong> – <em>(int, optional)</em> 
+Number of samples. Defaults to <code class="docutils literal notranslate"><span class="pre">nsample</span> <span class="pre">=</span> <span class="pre">50</span> <span class="pre">*</span> <span class="pre">self.ndim</span></code></p></li>
+<li><p><strong>sampler</strong> – <em>(str, optional)</em> 
+Sampling method. Defaults to <code class="docutils literal notranslate"><span class="pre">'sobol'</span></code>. 
+See <code class="docutils literal notranslate"><span class="pre">utility.prior_sampler</span></code> for more details.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.init_train">
 <span class="sig-name descname"><span class="pre">init_train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nsample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'sobol'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.init_train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.init_train" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nsample</strong> – <em>(int, optional)</em> 
+Number of samples. Defaults to <code class="docutils literal notranslate"><span class="pre">nsample</span> <span class="pre">=</span> <span class="pre">50</span> <span class="pre">*</span> <span class="pre">self.ndim</span></code></p></li>
+<li><p><strong>sampler</strong> – <em>(str, optional)</em> 
+Sampling method. Defaults to <code class="docutils literal notranslate"><span class="pre">'sobol'</span></code>. 
+See <code class="docutils literal notranslate"><span class="pre">utility.prior_sampler</span></code> for more details.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.lnprob">
 <span class="sig-name descname"><span class="pre">lnprob</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.lnprob"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.lnprob" title="Permalink to this definition">¶</a></dt>
@@ -224,27 +335,64 @@
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.run_dynesty">
 <span class="sig-name descname"><span class="pre">run_dynesty</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ptform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_proc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ptform_comment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.run_dynesty"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.run_dynesty" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Use the <code class="docutils literal notranslate"><span class="pre">dynesty</span></code> nested-sampling MCMC package to sample the trained GP surrogate model.
+<a class="reference external" href="https://github.com/joshspeagle/dynesty">https://github.com/joshspeagle/dynesty</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ptform</strong> – <em>(function, optional)</em> 
+Log-prior transform function.
+Defaults to uniform prior using the function <code class="docutils literal notranslate"><span class="pre">utility.prior_transform_uniform</span></code> 
+with bounds <code class="docutils literal notranslate"><span class="pre">self.bounds</span></code>.</p></li>
+<li><p><strong>sampler_kwargs</strong> – <em>(dict, optional)</em></p></li>
+<li><p><strong>run_kwargs</strong> – <em>(dict, optional)</em></p></li>
+<li><p><strong>multi_proc</strong> – <em>(bool, optional)</em></p></li>
+<li><p><strong>ptform_comment</strong> – <em>(str, optional)</em></p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.run_emcee">
 <span class="sig-name descname"><span class="pre">run_emcee</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lnprior</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nwalkers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nsteps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt_init</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multi_proc</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lnprior_comment</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.run_emcee"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.run_emcee" title="Permalink to this definition">¶</a></dt>
-<dd><p>Outputs:</p>
-<dl class="simple">
-<dt>print   autocorrelation time</dt><dd><p>acceptance fraction
-summary stats</p>
-</dd>
-<dt>plot    walkers</dt><dd><p>corner</p>
+<dd><p>Use the <code class="docutils literal notranslate"><span class="pre">emcee</span></code> affine-invariant MCMC package to sample the trained GP surrogate model.
+<a class="reference external" href="https://github.com/dfm/emcee">https://github.com/dfm/emcee</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lnprior</strong> – <em>(function, optional)</em> 
+Log-prior function.
+Defaults to uniform prior using the function <code class="docutils literal notranslate"><span class="pre">utility.lnprior_uniform</span></code> 
+with bounds <code class="docutils literal notranslate"><span class="pre">self.bounds</span></code>.</p></li>
+<li><p><strong>nwalkers</strong> – <em>(int, optional)</em> 
+Number of MCMC walkers. Defaults to <code class="docutils literal notranslate"><span class="pre">self.nwalkers</span> <span class="pre">=</span> <span class="pre">10</span> <span class="pre">*</span> <span class="pre">self.ndim</span></code>.</p></li>
+<li><p><strong>nsteps</strong> – <em>(int, optional)</em> 
+Number of steps per walker. Defaults to <code class="docutils literal notranslate"><span class="pre">nsteps=int(5e4)</span></code>.</p></li>
+<li><p><strong>sampler_kwargs</strong> – <em>(dict, optional)</em></p></li>
+<li><p><strong>run_kwargs</strong> – <em>(dict, optional)</em></p></li>
+<li><p><strong>opt_init</strong> – <em>(bool, optional)</em></p></li>
+<li><p><strong>multi_proc</strong> – <em>(bool, optional)</em></p></li>
+<li><p><strong>lnprior_comment</strong> – <em>(str, optional)</em></p></li>
+</ul>
 </dd>
 </dl>
-<p>cache   pickle object with mcmc results</p>
 </dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.save">
 <span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.save"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pickle <code class="docutils literal notranslate"><span class="pre">SurrogateModel</span></code> object and write summary to a text file</p>
+</dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="alabi.core.SurrogateModel.scale_data">
+<span class="sig-name descname"><span class="pre">scale_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.scale_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.scale_data" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.train_gp_default">
 <span class="sig-name descname"><span class="pre">train_gp_default</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.train_gp_default"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.train_gp_default" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="alabi.core.SurrogateModel.unscale_data">
+<span class="sig-name descname"><span class="pre">unscale_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta_</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.unscale_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.unscale_data" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 </dd></dl>
 </section>
@@ -259,13 +407,18 @@ hyperparameters.</p>
 <dt class="sig sig-object py" id="alabi.gp_utils.default_hyper_prior">
 <span class="sig-prename descclassname"><span class="pre">alabi.gp_utils.</span></span><span class="sig-name descname"><span class="pre">default_hyper_prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hp_rng</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sigma_level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/gp_utils.html#default_hyper_prior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.gp_utils.default_hyper_prior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Default prior function for GP hyperparameters. This prior also keeps the
-hyperparameters within a reasonable huge range, [-20, 20]. Note that george
+hyperparameters within a reasonable huge range <code class="docutils literal notranslate"><span class="pre">[-20,</span> <span class="pre">20]</span></code>. Note that george
 operates on the <em>log</em> hyperparameters, except for the mean function.</p>
-<dl class="simple">
-<dt>p<span class="classifier">array/iterable</span></dt><dd><p>Array of GP hyperparameters</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>p</strong> – <em>(array, required)</em> 
+Array of GP hyperparameters</p>
+</dd>
+<dt class="field-even">Returns lnprior</dt>
+<dd class="field-even"><p><em>(float)</em> 
+log prior value</p>
 </dd>
 </dl>
-<p>prior : float</p>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="alabi.gp_utils.optimize_gp">
@@ -344,6 +497,8 @@ you maximize to find the next theta under the BAPE formalism.  Note here we
 use the negative of the utility function so minimizing this is the same as
 maximizing the actual utility function.  Also, we log the BAPE utility
 function as the log is monotonic so the minima are equivalent.</p>
+<div class="math-wrapper"><div class="math notranslate nohighlight">
+\[u(x_*) = e^{2\mu(x_*) + \sigma^2(x_*)} \left(e^{\sigma^2(x_*)} - 1 \right)\]</div></div>
 <p>See Kandasamy et al. (2015) for derivation/explaination.</p>
 <dl class="simple">
 <dt>theta<span class="classifier">array</span></dt><dd><p>parameters to evaluate</p>
@@ -385,54 +540,40 @@ to 0.01</p>
 </dl>
 </dd></dl>
 <dl class="py function">
-<dt class="sig sig-object py" id="alabi.utility.klNumerical">
-<span class="sig-prename descclassname"><span class="pre">alabi.utility.</span></span><span class="sig-name descname"><span class="pre">klNumerical</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/utility.html#klNumerical"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.utility.klNumerical" title="Permalink to this definition">¶</a></dt>
-<dd><p>Estimate the KL-Divergence between pdfs p and q via Monte Carlo intergration
-using x, samples from p.</p>
-<p>KL ~ 1/n * sum_{i=1,n}(log (p(x_i)/q(x_i)))</p>
-<p>For our purposes, q is the current estimate of the pdf while p is the
-previous estimate.  This method is the only feasible method for large
-dimensions.</p>
-<p>See Hershey and Olsen, “Approximating the Kullback Leibler
-Divergence Between Gaussian Mixture Models” for more info</p>
-<p>Note that this method can result in D_kl &lt; 0 but it’s the only method with
-guaranteed convergence properties as the number of samples (len(x)) grows.
-Also, this method is shown to have the lowest error, on average
-(see Hershey and Olsen).</p>
-<dl class="simple">
-<dt>x<span class="classifier">array</span></dt><dd><p>Samples drawn from p</p>
-</dd>
-<dt>p<span class="classifier">function</span></dt><dd><p>Callable previous estimate of the density</p>
-</dd>
-<dt>q<span class="classifier">function</span></dt><dd><p>Callable current estimate of the density</p>
-</dd>
-</dl>
-<dl class="simple">
-<dt>kl<span class="classifier">float</span></dt><dd><p>KL divergence</p>
-</dd>
-</dl>
-</dd></dl>
-<dl class="py function">
 <dt class="sig sig-object py" id="alabi.utility.lnprior_uniform">
 <span class="sig-prename descclassname"><span class="pre">alabi.utility.</span></span><span class="sig-name descname"><span class="pre">lnprior_uniform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/utility.html#lnprior_uniform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.utility.lnprior_uniform" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-<dl class="py function">
-<dt class="sig sig-object py" id="alabi.utility.logsubexp">
-<span class="sig-prename descclassname"><span class="pre">alabi.utility.</span></span><span class="sig-name descname"><span class="pre">logsubexp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x2</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/utility.html#logsubexp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.utility.logsubexp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Numerically stable way to compute log(exp(x1) - exp(x2))</p>
-<p>logsubexp(x1, x2) -&gt; log(exp(x1) - exp(x2))</p>
-<p>x1 : float
-x2 : float</p>
-<p>logsubexp(x1, x2)</p>
-</dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="alabi.utility.minimize_objective">
 <span class="sig-prename descclassname"><span class="pre">alabi.utility.</span></span><span class="sig-name descname"><span class="pre">minimize_objective</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nopt</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'nelder-mead'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t0</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">options</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/utility.html#minimize_objective"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.utility.minimize_objective" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="alabi.utility.prior_sampler">
-<span class="sig-prename descclassname"><span class="pre">alabi.utility.</span></span><span class="sig-name descname"><span class="pre">prior_sampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nsample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'uniform'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/utility.html#prior_sampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.utility.prior_sampler" title="Permalink to this definition">¶</a></dt>
-<dd><p><a class="reference external" href="https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html">https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html</a></p>
+<span class="sig-prename descclassname"><span class="pre">alabi.utility.</span></span><span class="sig-name descname"><span class="pre">prior_sampler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nsample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sampler</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'uniform'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/utility.html#prior_sampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.utility.prior_sampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hypercube sampling function which draws <code class="docutils literal notranslate"><span class="pre">nsample</span></code> within given <code class="docutils literal notranslate"><span class="pre">bounds</span></code>. 
+Wrapper around <code class="docutils literal notranslate"><span class="pre">scikit-optimize</span></code> sampling methods. For more info see:
+<a class="reference external" href="https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html">https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html</a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bounds</strong> – <em>(array, required)</em> 
+Array of <code class="docutils literal notranslate"><span class="pre">(min,max)</span></code> bounds for each dimension of the prior.</p></li>
+<li><p><strong>nsample</strong> – <em>(int, optional)</em> 
+Defaults to <code class="docutils literal notranslate"><span class="pre">nsample=1</span></code>.</p></li>
+<li><p><strong>sampler</strong> – <p><em>(str, optional)</em> 
+Defaults to <code class="docutils literal notranslate"><span class="pre">'uniform'</span></code>. Options:</p>
+<blockquote>
+<div><p><code class="docutils literal notranslate"><span class="pre">'uniform'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'sobol'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'lhs'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'halton'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'hammersly'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'grid'</span></code></p>
+</div></blockquote>
+</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 <dl class="py function">
 <dt class="sig sig-object py" id="alabi.utility.prior_transform_uniform">
@@ -486,24 +627,13 @@ x2 : float</p>
 <dd></dd></dl>
 </section>
 </section>
-<section id="module-alabi">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-alabi" title="Permalink to this headline">¶</a></h2>
-</section>
 </section>
 
       </article>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="setup.html">
-              <div class="page-info">
-                <div class="context">
-                  <span>Next</span>
-                </div>
-                <div class="title">setup module</div>
-              </div>
-              <svg><use href="#svg-arrow-right"></use></svg>
-            </a>
+          
           <a class="prev-page" href="modules.html">
               <svg><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
@@ -546,7 +676,6 @@ x2 : float</p>
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">alabi package</a><ul>
-<li><a class="reference internal" href="#submodules">Submodules</a></li>
 <li><a class="reference internal" href="#module-alabi.benchmarks">alabi.benchmarks module</a><ul>
 <li><a class="reference internal" href="#benchmarks-py"><code class="xref py py-mod docutils literal notranslate"><span class="pre">benchmarks.py</span></code></a></li>
 </ul>
@@ -556,7 +685,7 @@ x2 : float</p>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-alabi.core">alabi.core module</a><ul>
-<li><a class="reference internal" href="#core-py-alabi"><code class="xref py py-mod docutils literal notranslate"><span class="pre">core.py</span></code> - alabi</a></li>
+<li><a class="reference internal" href="#core-py"><code class="xref py py-mod docutils literal notranslate"><span class="pre">core.py</span></code></a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#module-alabi.gp_utils">alabi.gp_utils module</a><ul>
@@ -575,7 +704,6 @@ x2 : float</p>
 <li><a class="reference internal" href="#visualization-py"><code class="xref py py-mod docutils literal notranslate"><span class="pre">visualization.py</span></code></a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#module-alabi">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -595,5 +723,9 @@ x2 : float</p>
     <script src="_static/clipboard.min.js"></script>
     <script src="_static/copybutton.js"></script>
     <script src="_static/tabs.js"></script>
+    <script src="_static/togglebutton.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
     </body>
 </html>

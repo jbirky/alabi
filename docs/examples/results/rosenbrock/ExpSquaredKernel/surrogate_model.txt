@@ -1,0 +1,55 @@
+==================================================================
+GP summary 
+==================================================================
+
+Configuration: 
+-------------- 
+Kernel: ExpSquaredKernel 
+Function bounds: [(-5, 5), (-5, 5)] 
+GP white noise: None 
+Active learning algorithm : bape 
+
+Number of total training samples: 150 
+Number of initial training samples: 50 
+Number of active training samples: 100 
+Number of test samples: 50 
+
+Results: 
+-------- 
+GP final hyperparameters: 
+   [mean:value] 	-1.4285555081915942 
+   [kernel:k1:log_constant] 	11.974832220353308 
+   [kernel:k2:metric:log_M_0_0] 	0.28389110292099495 
+   [kernel:k2:metric:log_M_1_1] 	6.953601851332223 
+
+Active learning train runtime (s): 27.0 
+
+Final test error: 8.128303113409325e-08 
+
+==================================================================
+emcee summary 
+==================================================================
+
+Configuration: 
+-------------- 
+Prior: Default uniform prior. 
+Prior function: ut.lnprior_uniform
+	with bounds [(-5, 5), (-5, 5)] 
+
+Number of walkers: 20 
+Number of steps per walker: 50000.0 
+
+Results: 
+-------- 
+Mean acceptance fraction: 0.536 
+Mean autocorrelation time: 109.003 steps 
+Burn: 298 
+Thin: 34 
+Total burned, thinned, flattened samples: 29220 
+
+emcee runtime (s): 312.0 
+
+Summary statistics: 
+$\theta_0$ = 0.04385030138947118 +/- 1.2894604365656461 
+$\theta_1$ = 1.6088354592534668 +/- 1.59302807400553 
+

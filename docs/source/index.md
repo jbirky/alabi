@@ -1,8 +1,13 @@
 ```{toctree}
-:caption: Getting Started
+:caption: User Guide
 :hidden:
 
-basic
+quickstart
+basic_usage/training
+basic_usage/bayes_opt
+basic_usage/mcmc
+auto_examples/index
+troubleshooting
 ```
 
 ```{toctree}
@@ -18,6 +23,7 @@ modules
 
 GitHub Repository <https://github.com/jbirky/alabi>
 License <https://github.com/jbirky/alabi/LICENSE>
+Issues <https://github.com/jbirky/alabi/issues>
 ```
 
 <!-- ------------------------------------------------------------------------ -->
@@ -26,17 +32,8 @@ License <https://github.com/jbirky/alabi/LICENSE>
 
 Active Learning Accelerated Bayesian Inference (ALABI)
 
-```{important}
-Package and documentation currently under construction!
-```
-
-
-## Installation 
-
-```
-git clone https://github.com/jbirky/alabi
-cd alabi
-python setup.py install
+```{warning}
+Package and documentation are currently under construction!
 ```
 
 <!-- sphinx-apidoc -o source ../../alabi -->

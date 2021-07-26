@@ -1,0 +1,48 @@
+==================================================================
+GP summary 
+==================================================================
+
+Configuration: 
+-------------- 
+Kernel: ExpSquaredKernel 
+Function bounds: [(0, 1), (0, 1)] 
+GP white noise: None 
+Active learning algorithm : bape 
+
+Number of total training samples: 400 
+Number of initial training samples: 200 
+Number of active training samples: 200 
+Number of test samples: 200 
+
+Results: 
+-------- 
+GP final hyperparameters: 
+   [mean:value] 	-0.003373632787609902 
+   [kernel:k1:log_constant] 	-0.7594717075312817 
+   [kernel:k2:metric:log_M_0_0] 	-5.60375934867447 
+   [kernel:k2:metric:log_M_1_1] 	-5.571920660946491 
+
+Active learning train runtime (s): 99.0 
+
+Final test error: 0.0007634655812635403 
+
+==================================================================
+dynesty summary 
+==================================================================
+
+Configuration: 
+-------------- 
+Prior: Default uniform prior transform. 
+Prior function: ut.prior_transform_uniform
+	with bounds [(0, 1), (0, 1)] 
+
+Results: 
+-------- 
+Total weighted samples: 19528 
+
+Dynesty runtime (s): 262.0 
+
+Summary statistics: 
+$\theta_0$ = 0.4846671756899187 +/- 0.2901952970115361 
+$\theta_1$ = 0.49705553583327905 +/- 0.29721520214003194 
+

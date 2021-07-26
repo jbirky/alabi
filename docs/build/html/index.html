@@ -3,14 +3,19 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Basic Usage" href="basic.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Quickstart" href="quickstart.html" />
 
-    <meta name="generator" content="sphinx-4.1.1, furo 2021.07.05.beta38"/>
+    <meta name="generator" content="sphinx-4.0.2, furo 2021.07.05.beta38"/>
         <title>Home - alabi</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
     <link rel="stylesheet" type="text/css" href="_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="_static/gallery.css" />
+    <link rel="stylesheet" type="text/css" href="_static/gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="_static/gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="_static/gallery-rendered-html.css" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css" />
     
 
@@ -19,8 +24,13 @@
   :root {
     --color-code-background: #f8f8f8;
   --color-code-foreground: black;
-  --font-stack: Roboto, sans-serif;
+  --font-stack: Roboto Light, sans-serif;
   --font-stack--monospace: Courier, monospace;
+  --color-background-secondary: #eff1f6;
+  --color-inline-code-background: #eff1f6;
+  --color-sidebar-item-background--hover: white;
+  --color-brand-primary: #004080;
+  --color-brand-content: #0059b3;
   
   }
   @media (prefers-color-scheme: dark) {
@@ -35,8 +45,13 @@
   .override-light {
     --color-code-background: #f8f8f8;
   --color-code-foreground: black;
-  --font-stack: Roboto, sans-serif;
+  --font-stack: Roboto Light, sans-serif;
   --font-stack--monospace: Courier, monospace;
+  --color-background-secondary: #eff1f6;
+  --color-inline-code-background: #eff1f6;
+  --color-sidebar-item-background--hover: white;
+  --color-brand-primary: #004080;
+  --color-brand-content: #0059b3;
   
   }
   .override-dark {
@@ -96,7 +111,7 @@
       <a href="#"><div class="brand">alabi</div></a>
     </div>
     <div class="header-right">
-      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
     </div>
@@ -114,21 +129,31 @@
   <input type="hidden" name="check_keywords" value="yes">
   <input type="hidden" name="area" value="default">
 </form><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+  <p class="caption"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="basic.html">Basic Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basic_usage/training.html">GP Training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basic_usage/bayes_opt.html">Bayesian Optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="basic_usage/mcmc.html">MCMC</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="auto_examples/index.html">Example Gallery</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label for="toctree-checkbox-1"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="auto_examples/run_eggbox.html">Eggbox (2D)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="auto_examples/run_rosenbrock.html">Rosenbrock (2D)</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">API</span></p>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="troubleshooting.html">Troubleshooting</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="modules.html">alabi</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label for="toctree-checkbox-1"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="modules.html">alabi</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label for="toctree-checkbox-2"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="alabi.html">alabi package</a></li>
 </ul>
 </li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<p class="caption"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi">GitHub Repository</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi/LICENSE">License</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi/issues">Issues</a></li>
 </ul>
 
 </div>
@@ -140,7 +165,7 @@
   <main class="main">
     <div class="content">
       <article role="main">
-        <label class="toc-overlay-icon toc-content-icon" for="__toc">
+        <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
           <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
         </label>
         <div class="toctree-wrapper compound">
@@ -153,31 +178,23 @@
 <section class="tex2jax_ignore mathjax_ignore" id="about">
 <h1>About<a class="headerlink" href="#about" title="Permalink to this headline">¶</a></h1>
 <p>Active Learning Accelerated Bayesian Inference (ALABI)</p>
-<div class="admonition important">
-<p class="admonition-title">Important</p>
-<p>Package and documentation currently under construction!</p>
-</div>
-<section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">jbirky</span><span class="o">/</span><span class="n">alabi</span>
-<span class="n">cd</span> <span class="n">alabi</span>
-<span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">install</span>
-</pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Package and documentation are currently under construction!</p>
 </div>
 <!-- sphinx-apidoc -o source ../../alabi -->
 <!-- sphinx-build -b html source build; make html --></section>
-</section>
 
       </article>
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="basic.html">
+          <a class="next-page" href="quickstart.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">Basic Usage</div>
+                <div class="title">Quickstart</div>
               </div>
               <svg><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -200,27 +217,8 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer">
+    <aside class="toc-drawer no-toc">
       
-      
-      <div class="toc-sticky toc-scroll">
-        <div class="toc-title-container">
-          <span class="toc-title">
-            Contents
-          </span>
-        </div>
-        <div class="toc-tree-container">
-          <div class="toc-tree">
-            <ul>
-<li><a class="reference internal" href="#">About</a><ul>
-<li><a class="reference internal" href="#installation">Installation</a></li>
-</ul>
-</li>
-</ul>
-
-          </div>
-        </div>
-      </div>
       
       
     </aside>
@@ -233,5 +231,7 @@
     <script src="_static/clipboard.min.js"></script>
     <script src="_static/copybutton.js"></script>
     <script src="_static/tabs.js"></script>
+    <script src="_static/togglebutton.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     </body>
 </html>

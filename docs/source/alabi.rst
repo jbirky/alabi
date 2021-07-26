@@ -1,9 +1,6 @@
 alabi package
 =============
 
-Submodules
-----------
-
 alabi.benchmarks module
 -----------------------
 
@@ -56,14 +53,6 @@ alabi.visualization module
 --------------------------
 
 .. automodule:: alabi.visualization
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Module contents
----------------
-
-.. automodule:: alabi
    :members:
    :undoc-members:
    :show-inheritance:

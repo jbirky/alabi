@@ -1,18 +1,13 @@
 # Configuration file for the Sphinx documentation builder.
 #
-# This file only contains a selection of the most common options. For a full
-# list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
+# https://github.com/pradyunsg/furo/blob/main/src/furo/assets/styles/variables/_index.scss
 
 # -- Path setup --------------------------------------------------------------
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../../alabi'))
 
 
 # -- Project information -----------------------------------------------------
@@ -24,6 +19,8 @@ author = 'Jessica Birky'
 # The full version, including alpha/beta/rc tags
 release = '0.0.1'
 
+html_theme = "furo"
+html_title = "alabi"
 
 # -- General configuration ---------------------------------------------------
 
@@ -41,33 +38,40 @@ extensions = [
     "myst_parser",
     "sphinx_copybutton",
     "sphinx_inline_tabs",
+    "sphinx_togglebutton",
+    "sphinx_gallery.gen_gallery",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
-
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = "furo"
-html_title = "alabi"
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 
 html_theme_options = {
     "light_css_variables": {
-        "font-stack": "Roboto, sans-serif",
+        "font-stack": "Roboto Light, sans-serif",
         "font-stack--monospace": "Courier, monospace",
+        "color-background-secondary": "#eff1f6", # sidebar color
+        "color-inline-code-background": "#eff1f6", # inline code
+        "color-sidebar-item-background--hover": "white", # sidebar highlight
+        # "color-brand-primary": "#b32d00", # dark red, sidebar
+        # "color-brand-content": "#b32d00", # dark red, main page
+        "color-brand-primary": "#004080", # dark blue
+        "color-brand-content": "#0059b3", # dark blue
+        # "color-brand-primary": "#006600", # dark green
+        # "color-brand-content": "#006600", # dark green
     },
+}
+
+# Build example gallery
+sphinx_gallery_conf = {
+     'examples_dirs': '../examples',   # path to your example scripts
+     'gallery_dirs': 'auto_examples',  # path to where to save gallery generated output
+     'filename_pattern': '/plot_',
+     'ignore_pattern': r'__init__\.py',
+     'download_all_examples': False,
 }

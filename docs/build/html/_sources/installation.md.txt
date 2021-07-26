@@ -1,14 +1,7 @@
----
-hide-toc: true
----
+# Installation 
 
-### Installation 
-
-```
+```bash
 git clone https://github.com/jbirky/alabi
-```
-
-```
 cd alabi
-python setup.py
+python setup.py install
 ```

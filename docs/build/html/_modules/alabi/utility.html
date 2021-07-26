@@ -4,12 +4,17 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
 
-    <meta name="generator" content="sphinx-4.1.1, furo 2021.07.05.beta38"/>
+    <meta name="generator" content="sphinx-4.0.2, furo 2021.07.05.beta38"/>
         <title>alabi.utility - alabi</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/gallery-rendered-html.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css" />
     
 
@@ -18,8 +23,13 @@
   :root {
     --color-code-background: #f8f8f8;
   --color-code-foreground: black;
-  --font-stack: Roboto, sans-serif;
+  --font-stack: Roboto Light, sans-serif;
   --font-stack--monospace: Courier, monospace;
+  --color-background-secondary: #eff1f6;
+  --color-inline-code-background: #eff1f6;
+  --color-sidebar-item-background--hover: white;
+  --color-brand-primary: #004080;
+  --color-brand-content: #0059b3;
   
   }
   @media (prefers-color-scheme: dark) {
@@ -34,8 +44,13 @@
   .override-light {
     --color-code-background: #f8f8f8;
   --color-code-foreground: black;
-  --font-stack: Roboto, sans-serif;
+  --font-stack: Roboto Light, sans-serif;
   --font-stack--monospace: Courier, monospace;
+  --color-background-secondary: #eff1f6;
+  --color-inline-code-background: #eff1f6;
+  --color-sidebar-item-background--hover: white;
+  --color-brand-primary: #004080;
+  --color-brand-content: #0059b3;
   
   }
   .override-dark {
@@ -113,21 +128,29 @@
   <input type="hidden" name="check_keywords" value="yes">
   <input type="hidden" name="area" value="default">
 </form><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+  <p class="caption"><span class="caption-text">User Guide</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../basic.html">Basic Usage</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../auto_examples/index.html">Example Gallery</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label for="toctree-checkbox-1"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/plot_0_sin.html">Plotting sin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/plot_rosenbrock.html">Rosenbrock</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">API</span></p>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../modules.html">alabi</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label for="toctree-checkbox-1"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../modules.html">alabi</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label for="toctree-checkbox-2"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../alabi.html">alabi package</a></li>
 </ul>
 </li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<p class="caption"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi">GitHub Repository</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi/LICENSE">License</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi/issues">Issues</a></li>
 </ul>
 
 </div>
@@ -162,12 +185,10 @@
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">import</span> <span class="nn">tqdm</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"logsubexp"</span><span class="p">,</span> 
-           <span class="s2">"agp_utility"</span><span class="p">,</span> 
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"agp_utility"</span><span class="p">,</span> 
            <span class="s2">"bape_utility"</span><span class="p">,</span> 
            <span class="s2">"jones_utility"</span><span class="p">,</span>
            <span class="s2">"minimize_objective"</span><span class="p">,</span> 
-           <span class="s2">"klNumerical"</span><span class="p">,</span> 
            <span class="s2">"prior_sampler"</span><span class="p">,</span> 
            <span class="s2">"eval_fn"</span><span class="p">,</span> 
            <span class="s2">"lnprior_uniform"</span><span class="p">,</span>
@@ -178,9 +199,26 @@
 <span class="c1"># Define sampling functions</span>
 <span class="c1">#===========================================================</span>
 
-<div class="viewcode-block" id="prior_sampler"><a class="viewcode-back" href="../../alabi.html#alabi.utility.prior_sampler">[docs]</a><span class="k">def</span> <span class="nf">prior_sampler</span><span class="p">(</span><span class="n">nsample</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s1">'uniform'</span><span class="p">):</span>
+<div class="viewcode-block" id="prior_sampler"><a class="viewcode-back" href="../../alabi.html#alabi.utility.prior_sampler">[docs]</a><span class="k">def</span> <span class="nf">prior_sampler</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nsample</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s1">'uniform'</span><span class="p">):</span>
     <span class="sd">"""</span>
+<span class="sd">    Hypercube sampling function which draws ``nsample`` within given ``bounds``. </span>
+<span class="sd">    Wrapper around ``scikit-optimize`` sampling methods. For more info see:</span>
 <span class="sd">    https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html</span>
+
+<span class="sd">    :param bounds: *(array, required)* </span>
+<span class="sd">        Array of ``(min,max)`` bounds for each dimension of the prior.</span>
+
+<span class="sd">    :param nsample: *(int, optional)* </span>
+<span class="sd">        Defaults to ``nsample=1``.</span>
+
+<span class="sd">    :param sampler: *(str, optional)* </span>
+<span class="sd">        Defaults to ``'uniform'``. Options:</span>
+<span class="sd">            ``'uniform'``,</span>
+<span class="sd">            ``'sobol'``,</span>
+<span class="sd">            ``'lhs'``,</span>
+<span class="sd">            ``'halton'``,</span>
+<span class="sd">            ``'hammersly'``,</span>
+<span class="sd">            ``'grid'``</span>
 <span class="sd">    """</span>
 
     <span class="n">ndim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span>
@@ -266,50 +304,7 @@
 <span class="c1"># Define math functions</span>
 <span class="c1">#===========================================================</span>
 
-
-<div class="viewcode-block" id="klNumerical"><a class="viewcode-back" href="../../alabi.html#alabi.utility.klNumerical">[docs]</a><span class="k">def</span> <span class="nf">klNumerical</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
-    <span class="sd">"""</span>
-<span class="sd">    Estimate the KL-Divergence between pdfs p and q via Monte Carlo intergration</span>
-<span class="sd">    using x, samples from p.</span>
-
-<span class="sd">    KL ~ 1/n * sum_{i=1,n}(log (p(x_i)/q(x_i)))</span>
-
-<span class="sd">    For our purposes, q is the current estimate of the pdf while p is the</span>
-<span class="sd">    previous estimate.  This method is the only feasible method for large</span>
-<span class="sd">    dimensions.</span>
-
-<span class="sd">    See Hershey and Olsen, "Approximating the Kullback Leibler</span>
-<span class="sd">    Divergence Between Gaussian Mixture Models" for more info</span>
-
-<span class="sd">    Note that this method can result in D_kl &lt; 0 but it's the only method with</span>
-<span class="sd">    guaranteed convergence properties as the number of samples (len(x)) grows.</span>
-<span class="sd">    Also, this method is shown to have the lowest error, on average</span>
-<span class="sd">    (see Hershey and Olsen).</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    x : array</span>
-<span class="sd">        Samples drawn from p</span>
-<span class="sd">    p : function</span>
-<span class="sd">        Callable previous estimate of the density</span>
-<span class="sd">    q : function</span>
-<span class="sd">        Callable current estimate of the density</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    kl : float</span>
-<span class="sd">        KL divergence</span>
-<span class="sd">    """</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">p</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">/</span><span class="n">q</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
-        <span class="n">err_msg</span> <span class="o">=</span> <span class="s2">"ERROR: inf/NaN encountered.  q(x) = 0 likely occured."</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">res</span></div>
-
-
-<div class="viewcode-block" id="logsubexp"><a class="viewcode-back" href="../../alabi.html#alabi.utility.logsubexp">[docs]</a><span class="k">def</span> <span class="nf">logsubexp</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">logsubexp</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Numerically stable way to compute log(exp(x1) - exp(x2))</span>
 
@@ -328,7 +323,7 @@
     <span class="k">if</span> <span class="n">x1</span> <span class="o">&lt;=</span> <span class="n">x2</span><span class="p">:</span>
         <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">x1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span><span class="p">))</span></div>
+        <span class="k">return</span> <span class="n">x1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span><span class="p">))</span>
 
 
 <span class="c1">#===========================================================</span>
@@ -382,6 +377,10 @@
 <span class="sd">    maximizing the actual utility function.  Also, we log the BAPE utility</span>
 <span class="sd">    function as the log is monotonic so the minima are equivalent.</span>
 
+<span class="sd">    .. math::</span>
+
+<span class="sd">        u(x_*) = e^{2\\mu(x_*) + \\sigma^2(x_*)} \\left(e^{\\sigma^2(x_*)} - 1 \\right)</span>
+
 <span class="sd">    See Kandasamy et al. (2015) for derivation/explaination.</span>
 
 <span class="sd">    Parameters</span>
@@ -412,8 +411,8 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
 
     <span class="k">try</span><span class="p">:</span>
-        <span class="c1"># util = -((2.0 * mu + var) + logsubexp(var, 0.0))</span>
-        <span class="n">util</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">mu</span> <span class="o">+</span> <span class="n">var</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">util</span> <span class="o">=</span> <span class="o">-</span><span class="p">((</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">var</span><span class="p">)</span> <span class="o">+</span> <span class="n">logsubexp</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+        <span class="c1"># util = -(np.exp(2*mu + var) * (np.exp(var) - 1))</span>
     <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">"Invalid util value.  Negative variance or inf mu?"</span><span class="p">)</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"util: </span><span class="si">%e</span><span class="s2">. mu: </span><span class="si">%e</span><span class="s2">. var: </span><span class="si">%e</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">util</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">var</span><span class="p">))</span>
@@ -483,8 +482,8 @@
     <span class="c1"># Initialize options</span>
     <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"nelder-mead"</span> <span class="ow">and</span> <span class="n">options</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">options</span><span class="p">[</span><span class="s2">"adaptive"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-    <span class="n">options</span><span class="p">[</span><span class="s2">"maxiter"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">20</span>
-    <span class="n">options</span><span class="p">[</span><span class="s2">"disp"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="c1"># options["maxiter"] = 20</span>
+    <span class="c1"># options["disp"] = True</span>
 
     <span class="n">bound_methods</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"nelder-mead"</span><span class="p">,</span> <span class="s2">"l-bfgs"</span><span class="p">,</span> <span class="s2">"tnc"</span><span class="p">,</span> <span class="s2">"slsqp"</span><span class="p">,</span> <span class="s2">"powell"</span><span class="p">,</span> <span class="s2">"trust-constr"</span><span class="p">]</span>
     <span class="c1"># scipy &gt;= 1.5 should be installed to use bounds in optimization</span>
@@ -536,11 +535,15 @@
                 <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">lnprior_uniform</span><span class="p">(</span><span class="n">x_opt</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)):</span>
                     <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x_opt</span><span class="p">)</span>
                     <span class="n">objective</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f_opt</span><span class="p">)</span>
+
                     <span class="k">break</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="nb">print</span><span class="p">(</span><span class="s1">'prior fail'</span><span class="p">,</span> <span class="n">x_opt</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">'Utility function optimization prior fail'</span><span class="p">,</span> <span class="n">x_opt</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s1">'infinite fail'</span><span class="p">,</span> <span class="n">x_opt</span><span class="p">,</span> <span class="n">f_opt</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">'Utility function optimization infinite fail'</span><span class="p">,</span> <span class="n">x_opt</span><span class="p">,</span> <span class="n">f_opt</span><span class="p">)</span>
+
+            <span class="c1"># Try a new initialization point</span>
+            <span class="n">t0</span> <span class="o">=</span> <span class="n">prior_sampler</span><span class="p">(</span><span class="n">nsample</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
             
             <span class="n">test_iter</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="c1"># end loop</span>
@@ -585,5 +588,7 @@
     <script src="../../_static/clipboard.min.js"></script>
     <script src="../../_static/copybutton.js"></script>
     <script src="../../_static/tabs.js"></script>
+    <script src="../../_static/togglebutton.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     </body>
 </html>
