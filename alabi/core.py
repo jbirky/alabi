@@ -389,7 +389,7 @@ class SurrogateModel(object):
         return ypred
 
 
-    def find_next_point(self, nopt=5):
+    def find_next_point(self, nopt=3):
         """
         Find next set of ``(theta, y)`` training points by maximizing the
         active learning utility function.
@@ -648,40 +648,39 @@ class SurrogateModel(object):
 
         # Run the sampler!
         emcee_t0 = time.time()
-        self.sampler = emcee.EnsembleSampler(self.nwalkers, 
+        sampler = emcee.EnsembleSampler(self.nwalkers, 
                                              self.ndim, 
                                              self.lnprob, 
                                              pool=pool,
                                              **sampler_kwargs)
 
-        self.sampler.run_mcmc(p0, self.nsteps, progress=True, **run_kwargs)
+        sampler.run_mcmc(p0, self.nsteps, progress=True, **run_kwargs)
 
         # record emcee runtime
         self.emcee_runtime = time.time() - emcee_t0
 
         # burn, thin, and flatten samples
-        self.iburn, self.ithin = mcmc_utils.estimateBurnin(self.sampler, verbose=self.verbose)
-        self.emcee_samples = self.sampler.get_chain(discard=self.iburn, flat=True, thin=self.ithin) 
+        self.iburn, self.ithin = mcmc_utils.estimateBurnin(sampler, verbose=self.verbose)
+        self.emcee_samples = sampler.get_chain(discard=self.iburn, flat=True, thin=self.ithin) 
 
+        # get acceptance fraction and autocorrelation time
+        self.acc_frac = np.mean(sampler.acceptance_fraction)
+        self.autcorr_time = np.mean(sampler.get_autocorr_time())
         if self.verbose:
-            # get acceptance fraction and autocorrelation time
-            acc_frac = np.mean(self.sampler.acceptance_fraction)
-            autcorr_time = np.mean(self.sampler.get_autocorr_time())
-
             print(f"Total samples: {self.emcee_samples.shape[0]}")
-            print("Mean acceptance fraction: {0:.3f}".format(acc_frac))
-            print("Mean autocorrelation time: {0:.3f} steps".format(autcorr_time))
+            print("Mean acceptance fraction: {0:.3f}".format(self.acc_frac))
+            print("Mean autocorrelation time: {0:.3f} steps".format(self.autcorr_time))
 
         # record that emcee has been run
         self.emcee_run = True
+
+        # close pool
+        pool.close()
 
         if self.cache:
             self.save()
 
             np.savez(f"{self.savedir}/emcee_samples_final.npz", samples=self.emcee_samples)
-
-        # close pool
-        pool.close()
 
     
     def run_dynesty(self, ptform=None, sampler_kwargs={}, run_kwargs={},
@@ -711,6 +710,7 @@ class SurrogateModel(object):
         # set up multiprocessing pool
         if multi_proc == True:
             pool = mp.Pool(self.ncore)
+            pool.size = self.ncore
         else:
             pool = None
 
@@ -740,16 +740,14 @@ class SurrogateModel(object):
         dynesty_t0 = time.time()
 
         # initialize our nested sampler
-        self.dsampler = DynamicNestedSampler(self.evaluate, 
-                                             self.ptform, 
-                                             self.ndim,
-                                            #  pool=pool,
-                                            #  queue_size=self.ncore,
-                                            #  rstate=np.random.RandomState(),
-                                             **sampler_kwargs)
+        dsampler = DynamicNestedSampler(self.evaluate, 
+                                        self.ptform, 
+                                        self.ndim,
+                                        pool=pool,
+                                        **sampler_kwargs)
 
-        self.dsampler.run_nested(**run_kwargs)
-        self.res = self.dsampler.results
+        dsampler.run_nested(**run_kwargs)
+        self.res = dsampler.results
 
         # record dynesty runtime
         self.dynesty_runtime = time.time() - dynesty_t0
@@ -763,13 +761,13 @@ class SurrogateModel(object):
         # record that dynesty has been run
         self.dynesty_run = True
 
+        # close pool
+        pool.close()
+
         if self.cache:
             self.save()
 
             np.savez(f"{self.savedir}/dynesty_samples_final.npz", samples=self.dynesty_samples)
-
-        # close pool
-        pool.close()
 
 
     def find_map(self, theta0=None, lnprior=None, method="nelder-mead", nRestarts=15, options=None):

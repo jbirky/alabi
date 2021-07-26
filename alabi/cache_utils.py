@@ -7,9 +7,29 @@ import numpy as np
 import pickle
 import os
 
-__all__ = ["write_report_gp",
+__all__ = ["load_model_cache",
+           "write_report_gp",
            "write_report_emcee",
            "write_report_dynesty"]
+
+
+def load_model_cache(file):
+
+    with open(file, "rb") as f:
+        sm = pickle.load(f)
+
+    # if hasattr(sm, "dsampler"):
+    #     import multiprocessing as mp
+    #     pool = mp.Pool(sm.ncore)
+    #     pool.size = sm.ncore
+
+    #     import dynesty
+    #     tmp = dynesty.DynamicNestedSampler(sm.evaluate, sm.ptform, sm.ndim, pool=pool)
+    #     sm.dsampler.rstate = tmp.rstate
+    #     sm.dsampler.pool = tmp.pool
+    #     sm.dsampler.M = tmp.pool.map
+
+    return sm
 
 
 def write_report_gp(self, file):
@@ -54,10 +74,6 @@ def write_report_gp(self, file):
 
 def write_report_emcee(self, file):
 
-    # get acceptance fraction and autocorrelation time
-    acc_frac = np.mean(self.sampler.acceptance_fraction)
-    autcorr_time = np.mean(self.sampler.get_autocorr_time())
-
     # compute summary statistics 
     means = np.mean(self.emcee_samples, axis=0)
     stds = np.std(self.emcee_samples, axis=0)
@@ -75,8 +91,8 @@ def write_report_emcee(self, file):
 
     lines += f"Results: \n"
     lines += f"-------- \n"
-    lines += "Mean acceptance fraction: {0:.3f} \n".format(acc_frac)
-    lines += "Mean autocorrelation time: {0:.3f} steps \n".format(autcorr_time)
+    lines += "Mean acceptance fraction: {0:.3f} \n".format(self.acc_frac)
+    lines += "Mean autocorrelation time: {0:.3f} steps \n".format(self.autcorr_time)
     lines += f"Burn: {self.iburn} \n"
     lines += f"Thin: {self.ithin} \n"
     lines += f"Total burned, thinned, flattened samples: {self.emcee_samples.shape[0]} \n\n"
