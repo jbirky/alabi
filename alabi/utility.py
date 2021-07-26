@@ -24,7 +24,9 @@ __all__ = ["agp_utility",
            "prior_sampler", 
            "eval_fn", 
            "lnprior_uniform",
-           "prior_transform_uniform"]
+           "prior_transform_uniform",
+           "lnprior_normal",
+           "prior_transform_normal"]
 
 
 #===========================================================
@@ -131,6 +133,32 @@ def prior_transform_uniform(theta, bounds):
         pt[i] = (b[1] - b[0]) * theta[i] + b[0]
 
     return pt
+
+
+def lnprior_normal(x, bounds, data):
+
+    lnp = lnprior_uniform(x, bounds)
+
+    for ii in range(len(x)):
+        if data[ii][0] is not None:
+            lnp += norm.logpdf(x[ii], data[ii][0], data[ii][1])
+
+    return lnp
+
+
+def prior_transform_normal(x, bounds, data):
+
+    pt = np.zeros(len(bounds))
+    for i, b in enumerate(bounds):
+        if data[i][0] is None:
+            # uniform prior transform
+            pt[i] = (b[1] - b[0]) * x[i] + b[0]
+        else:
+            # gaussian prior transform
+            pt[i] = scipy.stats.norm.ppf(x[i], data[i][0], data[i][1])
+    
+    return pt
+
 
 #===========================================================
 # Define math functions
