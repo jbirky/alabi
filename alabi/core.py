@@ -384,7 +384,7 @@ class SurrogateModel(object):
         ypred_ = self.gp.predict(self.y_, theta_xs_, return_cov=False)[0]
 
         # inverse scale the output
-        ypred = self.scaler_y.inverse_transform(ypred_.reshape(1,-1))
+        ypred = self.scaler_y.inverse_transform(ypred_.reshape(1,-1)).flatten()[0]
 
         return ypred
 
