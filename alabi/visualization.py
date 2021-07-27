@@ -203,7 +203,7 @@ def plot_corner_kde(sm):
 def plot_emcee_walkers(sm):
 
     fig, axes = plt.subplots(sm.ndim, figsize=(12, 3*sm.ndim), sharex=True)
-    samples = sm.sampler.get_chain()
+    samples = sm.emcee_samples_full
     for i in range(sm.ndim):
         ax = axes[i]
         ax.plot(samples[:, :, i], "k", alpha=0.3)

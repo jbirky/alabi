@@ -649,10 +649,10 @@ class SurrogateModel(object):
         # Run the sampler!
         emcee_t0 = time.time()
         sampler = emcee.EnsembleSampler(self.nwalkers, 
-                                             self.ndim, 
-                                             self.lnprob, 
-                                             pool=pool,
-                                             **sampler_kwargs)
+                                        self.ndim, 
+                                        self.lnprob, 
+                                        pool=pool,
+                                        **sampler_kwargs)
 
         sampler.run_mcmc(p0, self.nsteps, progress=True, **run_kwargs)
 
@@ -661,6 +661,7 @@ class SurrogateModel(object):
 
         # burn, thin, and flatten samples
         self.iburn, self.ithin = mcmc_utils.estimateBurnin(sampler, verbose=self.verbose)
+        self.emcee_samples_full = sampler.get_chain()
         self.emcee_samples = sampler.get_chain(discard=self.iburn, flat=True, thin=self.ithin) 
 
         # get acceptance fraction and autocorrelation time
