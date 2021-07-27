@@ -18,17 +18,6 @@ def load_model_cache(file):
     with open(file, "rb") as f:
         sm = pickle.load(f)
 
-    # if hasattr(sm, "dsampler"):
-    #     import multiprocessing as mp
-    #     pool = mp.Pool(sm.ncore)
-    #     pool.size = sm.ncore
-
-    #     import dynesty
-    #     tmp = dynesty.DynamicNestedSampler(sm.evaluate, sm.ptform, sm.ndim, pool=pool)
-    #     sm.dsampler.rstate = tmp.rstate
-    #     sm.dsampler.pool = tmp.pool
-    #     sm.dsampler.M = tmp.pool.map
-
     return sm
 
 
