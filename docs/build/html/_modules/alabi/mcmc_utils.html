@@ -4,11 +4,17 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
 
-    <meta name="generator" content="sphinx-3.5.4, furo 2021.07.05.beta38"/>
+    <meta name="generator" content="sphinx-4.0.2, furo 2021.07.05.beta38"/>
         <title>alabi.mcmc_utils - alabi</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/tabs.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/gallery-rendered-html.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css" />
     
 
@@ -22,8 +28,8 @@
   --color-background-secondary: #eff1f6;
   --color-inline-code-background: #eff1f6;
   --color-sidebar-item-background--hover: white;
-  --color-brand-primary: #006600;
-  --color-brand-content: #006600;
+  --color-brand-primary: #004080;
+  --color-brand-content: #0059b3;
   
   }
   @media (prefers-color-scheme: dark) {
@@ -43,8 +49,8 @@
   --color-background-secondary: #eff1f6;
   --color-inline-code-background: #eff1f6;
   --color-sidebar-item-background--hover: white;
-  --color-brand-primary: #006600;
-  --color-brand-content: #006600;
+  --color-brand-primary: #004080;
+  --color-brand-content: #0059b3;
   
   }
   .override-dark {
@@ -122,14 +128,23 @@
   <input type="hidden" name="check_keywords" value="yes">
   <input type="hidden" name="area" value="default">
 </form><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption"><span class="caption-text">Getting Started</span></p>
+  <p class="caption"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../basic.html">Basic Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_usage/surrogate.html">Surrogate Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_usage/training.html">GP Training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_usage/bayes_opt.html">Bayesian Optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_usage/mcmc.html">MCMC</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../auto_examples/index.html">Example Gallery</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label for="toctree-checkbox-1"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/run_eggbox.html">Eggbox (2D)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/run_rosenbrock.html">Rosenbrock (2D)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../modules.html">alabi</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label for="toctree-checkbox-1"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../modules.html">alabi</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label for="toctree-checkbox-2"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../alabi.html">alabi package</a></li>
 </ul>
 </li>
@@ -176,28 +191,24 @@
 <span class="sd">    follows the example outlined here:</span>
 <span class="sd">    https://emcee.readthedocs.io/en/stable/tutorials/autocorr/</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    sampler : emcee.EnsembleSampler</span>
+<span class="sd">    :param sampler: (*emcee.EnsembleSampler, optional*)</span>
 <span class="sd">        emcee MCMC sampler object/backend handler, given a complete chain</span>
-<span class="sd">    estBurnin : bool, optional</span>
+<span class="sd">    :param estBurnin: (*bool, optional*)</span>
 <span class="sd">        Estimate burn-in time using integrated autocorrelation time</span>
 <span class="sd">        heuristic.  Defaults to True. In general, we recommend users</span>
 <span class="sd">        inspect the chains and calculate the burnin after the fact to ensure</span>
 <span class="sd">        convergence, but this function works pretty well.</span>
-<span class="sd">    thinChains : bool, optional</span>
+<span class="sd">    :param thinChains: (*bool, optional*)</span>
 <span class="sd">        Whether or not to thin chains.  Useful if running long chains.</span>
 <span class="sd">        Defaults to True.  If true, estimates a thin cadence</span>
 <span class="sd">        via int(0.5*np.min(tau)) where tau is the intergrated autocorrelation</span>
 <span class="sd">        time.</span>
-<span class="sd">    verbose : bool, optional</span>
+<span class="sd">    :param verbose: (*bool, optional*)</span>
 <span class="sd">        Output all the diagnostics? Defaults to False.</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    iburn : int</span>
+<span class="sd">    :returns iburn: (*int*)</span>
 <span class="sd">        burn-in index estimate.  If estBurnin == False, returns 0.</span>
-<span class="sd">    ithin : int</span>
+<span class="sd">    :returns ithin: (*int*)</span>
 <span class="sd">        thin cadence estimate.  If thinChains == False, returns 1.</span>
 <span class="sd">    """</span>
 
@@ -257,7 +268,8 @@
       
     </aside>
   </main>
-</div><script src="../../_static/jquery.js"></script>
+</div><script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
     <script src="../../_static/scripts/main.js"></script>
@@ -265,6 +277,6 @@
     <script src="../../_static/copybutton.js"></script>
     <script src="../../_static/tabs.js"></script>
     <script src="../../_static/togglebutton.js"></script>
-    <script >var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     </body>
 </html>

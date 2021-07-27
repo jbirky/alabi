@@ -11,7 +11,7 @@ python setup.py install
 ## Dependencies
 
 ```{note} 
-To be added
+See https://github.com/jbirky/alabi/network/dependencies
 ````
 
 ## Basic Example

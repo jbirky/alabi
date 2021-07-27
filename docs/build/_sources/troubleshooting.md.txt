@@ -9,5 +9,5 @@ File an issue: https://github.com/jbirky/alabi/issues
 ```{admonition} Known Issues
 :class: tip
 
-Tips on solving known issues
+Tips on solving known issues. To be added
 ```

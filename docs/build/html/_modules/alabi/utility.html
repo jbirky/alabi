@@ -131,10 +131,13 @@
   <p class="caption"><span class="caption-text">User Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../basic.html">Basic Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_usage/surrogate.html">Surrogate Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_usage/training.html">GP Training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_usage/bayes_opt.html">Bayesian Optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_usage/mcmc.html">MCMC</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../../auto_examples/index.html">Example Gallery</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label for="toctree-checkbox-1"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/plot_0_sin.html">Plotting sin</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/plot_rosenbrock.html">Rosenbrock</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/run_eggbox.html">Eggbox (2D)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/run_rosenbrock.html">Rosenbrock (2D)</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting</a></li>
@@ -192,7 +195,9 @@
            <span class="s2">"prior_sampler"</span><span class="p">,</span> 
            <span class="s2">"eval_fn"</span><span class="p">,</span> 
            <span class="s2">"lnprior_uniform"</span><span class="p">,</span>
-           <span class="s2">"prior_transform_uniform"</span><span class="p">]</span>
+           <span class="s2">"prior_transform_uniform"</span><span class="p">,</span>
+           <span class="s2">"lnprior_normal"</span><span class="p">,</span>
+           <span class="s2">"prior_transform_normal"</span><span class="p">]</span>
 
 
 <span class="c1">#===========================================================</span>
@@ -205,13 +210,13 @@
 <span class="sd">    Wrapper around ``scikit-optimize`` sampling methods. For more info see:</span>
 <span class="sd">    https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html</span>
 
-<span class="sd">    :param bounds: *(array, required)* </span>
+<span class="sd">    :param bounds: (*array, required*)</span>
 <span class="sd">        Array of ``(min,max)`` bounds for each dimension of the prior.</span>
 
-<span class="sd">    :param nsample: *(int, optional)* </span>
+<span class="sd">    :param nsample: (*int, optional*)</span>
 <span class="sd">        Defaults to ``nsample=1``.</span>
 
-<span class="sd">    :param sampler: *(str, optional)* </span>
+<span class="sd">    :param sampler: (*str, optional*)</span>
 <span class="sd">        Defaults to ``'uniform'``. Options:</span>
 <span class="sd">            ``'uniform'``,</span>
 <span class="sd">            ``'sobol'``,</span>
@@ -300,6 +305,32 @@
 
     <span class="k">return</span> <span class="n">pt</span></div>
 
+
+<div class="viewcode-block" id="lnprior_normal"><a class="viewcode-back" href="../../alabi.html#alabi.utility.lnprior_normal">[docs]</a><span class="k">def</span> <span class="nf">lnprior_normal</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+
+    <span class="n">lnp</span> <span class="o">=</span> <span class="n">lnprior_uniform</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">lnp</span> <span class="o">+=</span> <span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">ii</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">lnp</span></div>
+
+
+<div class="viewcode-block" id="prior_transform_normal"><a class="viewcode-back" href="../../alabi.html#alabi.utility.prior_transform_normal">[docs]</a><span class="k">def</span> <span class="nf">prior_transform_normal</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+
+    <span class="n">pt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bounds</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># uniform prior transform</span>
+            <span class="n">pt</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># gaussian prior transform</span>
+            <span class="n">pt</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+    
+    <span class="k">return</span> <span class="n">pt</span></div>
+
+
 <span class="c1">#===========================================================</span>
 <span class="c1"># Define math functions</span>
 <span class="c1">#===========================================================</span>
@@ -310,14 +341,10 @@
 
 <span class="sd">    logsubexp(x1, x2) -&gt; log(exp(x1) - exp(x2))</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    x1 : float</span>
-<span class="sd">    x2 : float</span>
+<span class="sd">    :param x1: (*float*)</span>
+<span class="sd">    :param x2: (*float*)</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    logsubexp(x1, x2)</span>
+<span class="sd">    :returns logsubexp(x1, x2): (*float*)</span>
 <span class="sd">    """</span>
 
     <span class="k">if</span> <span class="n">x1</span> <span class="o">&lt;=</span> <span class="n">x2</span><span class="p">:</span>
@@ -338,19 +365,19 @@
 <span class="sd">    the AGP formalism. Note here we use the negative of the utility function so</span>
 <span class="sd">    minimizing this is the same as maximizing the actual utility function.</span>
 
+<span class="sd">    .. math::</span>
+
+<span class="sd">        u(x_*) = \\mu(x_*) + \\frac{1}{2} \\ln(2\\pi e \\sigma(x_*)^2) + \\log p</span>
+
 <span class="sd">    See Wang &amp; Li (2017) for derivation/explaination.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    theta : array</span>
+<span class="sd">    :param x: (*array, required*)</span>
 <span class="sd">        parameters to evaluate</span>
-<span class="sd">    y : array</span>
+<span class="sd">    :param y: (*array, required*)</span>
 <span class="sd">        y values to condition the gp prediction on.</span>
-<span class="sd">    gp : george GP object</span>
+<span class="sd">    :param gp: (*george GP object, required*)</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    util : float</span>
+<span class="sd">    :param util: (*float*)</span>
 <span class="sd">        utility of theta under the gp</span>
 <span class="sd">    """</span>
 
@@ -383,17 +410,13 @@
 
 <span class="sd">    See Kandasamy et al. (2015) for derivation/explaination.</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    theta : array</span>
+<span class="sd">    :param x: (*array, required*)</span>
 <span class="sd">        parameters to evaluate</span>
-<span class="sd">    y : array</span>
+<span class="sd">    :param y: (*array, required*)</span>
 <span class="sd">        y values to condition the gp prediction on.</span>
-<span class="sd">    gp : george GP object</span>
+<span class="sd">    :param gp: (*george GP object, required*)</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    util : float</span>
+<span class="sd">    :param util: (*float*)</span>
 <span class="sd">        utility of theta under the gp</span>
 <span class="sd">    """</span>
     <span class="c1"># If guess isn't allowed by prior, we don't care what the value of the</span>
@@ -426,23 +449,23 @@
 <div class="viewcode-block" id="jones_utility"><a class="viewcode-back" href="../../alabi.html#alabi.utility.jones_utility">[docs]</a><span class="k">def</span> <span class="nf">jones_utility</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">zeta</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Jones utility function - Expected Improvement derived in Jones et al. (1998)</span>
-<span class="sd">    EI(x) = E(max(f(theta) - f(thetaBest),0)) where f(thetaBest) is the best</span>
-<span class="sd">    value of the function so far and thetaBest is the best design point</span>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    theta : array</span>
+<span class="sd">    .. math::</span>
+<span class="sd">        \\mu(x_*) = E(max(f(\\theta) - f(\\theta_{best}),0)) </span>
+<span class="sd">        </span>
+<span class="sd">    where f(theta_best) is the best value of the function so far and </span>
+<span class="sd">    theta_best is the best design point</span>
+
+<span class="sd">    :param x: (*array, required*)</span>
 <span class="sd">        parameters to evaluate</span>
-<span class="sd">    y : array</span>
+<span class="sd">    :param y: (*array, required*)</span>
 <span class="sd">        y values to condition the gp prediction on.</span>
-<span class="sd">    gp : george GP object</span>
-<span class="sd">    zeta : float, optional</span>
+<span class="sd">    :param gp: (*george GP object, required*)</span>
+<span class="sd">    :param zeta: (*float, optional*)</span>
 <span class="sd">        Exploration parameter. Larger zeta leads to more exploration. Defaults</span>
 <span class="sd">        to 0.01</span>
 
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    util : float</span>
+<span class="sd">    :param util: (*float*)</span>
 <span class="sd">        utility of theta under the gp</span>
 <span class="sd">    """</span>
 
@@ -478,6 +501,9 @@
 
 <div class="viewcode-block" id="minimize_objective"><a class="viewcode-back" href="../../alabi.html#alabi.utility.minimize_objective">[docs]</a><span class="k">def</span> <span class="nf">minimize_objective</span><span class="p">(</span><span class="n">obj_fn</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nopt</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"nelder-mead"</span><span class="p">,</span>
                        <span class="n">t0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="p">{},</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Optimize the active learning objective function</span>
+<span class="sd">    """</span>
 
     <span class="c1"># Initialize options</span>
     <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"nelder-mead"</span> <span class="ow">and</span> <span class="n">options</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>

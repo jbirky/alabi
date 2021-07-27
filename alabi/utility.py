@@ -39,13 +39,13 @@ def prior_sampler(bounds=None, nsample=1, sampler='uniform'):
     Wrapper around ``scikit-optimize`` sampling methods. For more info see:
     https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html
 
-    :param bounds: *(array, required)* 
+    :param bounds: (*array, required*)
         Array of ``(min,max)`` bounds for each dimension of the prior.
 
-    :param nsample: *(int, optional)* 
+    :param nsample: (*int, optional*)
         Defaults to ``nsample=1``.
 
-    :param sampler: *(str, optional)* 
+    :param sampler: (*str, optional*)
         Defaults to ``'uniform'``. Options:
             ``'uniform'``,
             ``'sobol'``,
@@ -170,14 +170,10 @@ def logsubexp(x1, x2):
 
     logsubexp(x1, x2) -> log(exp(x1) - exp(x2))
 
-    Parameters
-    ----------
-    x1 : float
-    x2 : float
+    :param x1: (*float*)
+    :param x2: (*float*)
 
-    Returns
-    -------
-    logsubexp(x1, x2)
+    :returns logsubexp(x1, x2): (*float*)
     """
 
     if x1 <= x2:
@@ -198,19 +194,19 @@ def agp_utility(theta, y, gp):
     the AGP formalism. Note here we use the negative of the utility function so
     minimizing this is the same as maximizing the actual utility function.
 
+    .. math::
+
+        u(x_*) = \\mu(x_*) + \\frac{1}{2} \\ln(2\\pi e \\sigma(x_*)^2) + \\log p
+
     See Wang & Li (2017) for derivation/explaination.
 
-    Parameters
-    ----------
-    theta : array
+    :param x: (*array, required*)
         parameters to evaluate
-    y : array
+    :param y: (*array, required*)
         y values to condition the gp prediction on.
-    gp : george GP object
+    :param gp: (*george GP object, required*)
 
-    Returns
-    -------
-    util : float
+    :param util: (*float*)
         utility of theta under the gp
     """
 
@@ -243,17 +239,13 @@ def bape_utility(theta, y, gp, bounds):
 
     See Kandasamy et al. (2015) for derivation/explaination.
 
-    Parameters
-    ----------
-    theta : array
+    :param x: (*array, required*)
         parameters to evaluate
-    y : array
+    :param y: (*array, required*)
         y values to condition the gp prediction on.
-    gp : george GP object
+    :param gp: (*george GP object, required*)
 
-    Returns
-    -------
-    util : float
+    :param util: (*float*)
         utility of theta under the gp
     """
     # If guess isn't allowed by prior, we don't care what the value of the
@@ -286,23 +278,23 @@ def bape_utility(theta, y, gp, bounds):
 def jones_utility(theta, y, gp, zeta=0.01):
     """
     Jones utility function - Expected Improvement derived in Jones et al. (1998)
-    EI(x) = E(max(f(theta) - f(thetaBest),0)) where f(thetaBest) is the best
-    value of the function so far and thetaBest is the best design point
 
-    Parameters
-    ----------
-    theta : array
+    .. math::
+        EI(x_*) = E(max(f(\\theta) - f(\\theta_{best}),0)) 
+        
+    where f(theta_best) is the best value of the function so far and 
+    theta_best is the best design point
+
+    :param x: (*array, required*)
         parameters to evaluate
-    y : array
+    :param y: (*array, required*)
         y values to condition the gp prediction on.
-    gp : george GP object
-    zeta : float, optional
+    :param gp: (*george GP object, required*)
+    :param zeta: (*float, optional*)
         Exploration parameter. Larger zeta leads to more exploration. Defaults
         to 0.01
 
-    Returns
-    -------
-    util : float
+    :param util: (*float*)
         utility of theta under the gp
     """
 
@@ -338,6 +330,9 @@ def jones_utility(theta, y, gp, zeta=0.01):
 
 def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
                        t0=None, args=None, options={}, max_iter=100):
+    """
+    Optimize the active learning objective function
+    """
 
     # Initialize options
     if str(method).lower() == "nelder-mead" and options is None:

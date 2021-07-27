@@ -26,7 +26,7 @@ Rosenbrock (2D)
 Initialize training function
 ----------------------------
 
-.. GENERATED FROM PYTHON SOURCE LINES 9-20
+.. GENERATED FROM PYTHON SOURCE LINES 9-21
 
 .. code-block:: default
 
@@ -40,21 +40,22 @@ Initialize training function
 
     vis.plot_true_fit_2D(eval(benchmark)["fn"], eval(benchmark)["bounds"], 
                          savedir=f"results/{benchmark}")
+    # sphinx_gallery_thumbnail_path = '../../examples/results/rosenbrock/ExpSquaredKernel/dynesty_posterior.png
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 21-25
+.. GENERATED FROM PYTHON SOURCE LINES 22-26
 
 .. admonition:: results/rosenbrock/true_function_2D.png
    :class: dropdown, tip
 
-   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/true_function_2D.png
+   .. image:: ../../examples/results/rosenbrock/true_function_2D.png
 
-.. GENERATED FROM PYTHON SOURCE LINES 28-30
+.. GENERATED FROM PYTHON SOURCE LINES 29-31
 
 Initialize GP surrogate model
 ----------------------------
 
-.. GENERATED FROM PYTHON SOURCE LINES 30-35
+.. GENERATED FROM PYTHON SOURCE LINES 31-36
 
 .. code-block:: default
 
@@ -64,12 +65,12 @@ Initialize GP surrogate model
                         savedir=f"results/{benchmark}/{kernel}")
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 36-38
+.. GENERATED FROM PYTHON SOURCE LINES 37-39
 
 Train GP surrogate model
 ----------------------------
 
-.. GENERATED FROM PYTHON SOURCE LINES 38-44
+.. GENERATED FROM PYTHON SOURCE LINES 39-45
 
 .. code-block:: default
 
@@ -80,12 +81,12 @@ Train GP surrogate model
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 45-47
+.. GENERATED FROM PYTHON SOURCE LINES 46-48
 
 Plot GP diagnostics
 ----------------------------
 
-.. GENERATED FROM PYTHON SOURCE LINES 47-50
+.. GENERATED FROM PYTHON SOURCE LINES 48-51
 
 .. code-block:: default
 
@@ -93,40 +94,40 @@ Plot GP diagnostics
     sm.plot(plots=["gp_error", "gp_hyperparam", "gp_timing", "gp_fit_2D"])
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 51-55
+.. GENERATED FROM PYTHON SOURCE LINES 52-56
 
 .. admonition:: results/rosenbrock/ExpSquaredKernel/gp_error_vs_iteration.png
    :class: dropdown, tip
 
-   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/ExpSquaredKernel/gp_error_vs_iteration.png
+   .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/gp_error_vs_iteration.png
 
-.. GENERATED FROM PYTHON SOURCE LINES 57-61
+.. GENERATED FROM PYTHON SOURCE LINES 58-62
 
 .. admonition:: results/rosenbrock/ExpSquaredKernel/gp_hyperparameters_vs_iteration.png
    :class: dropdown, tip
 
-   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/ExpSquaredKernel/gp_hyperparameters_vs_iteration.png
+   .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/gp_hyperparameters_vs_iteration.png
 
-.. GENERATED FROM PYTHON SOURCE LINES 63-67
+.. GENERATED FROM PYTHON SOURCE LINES 64-68
 
 .. admonition:: results/rosenbrock/ExpSquaredKernel/gp_train_time_vs_iteration.png
    :class: dropdown, tip
 
-   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/ExpSquaredKernel/gp_train_time_vs_iteration.png
+   .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/gp_train_time_vs_iteration.png
 
-.. GENERATED FROM PYTHON SOURCE LINES 69-73
+.. GENERATED FROM PYTHON SOURCE LINES 70-74
 
 .. admonition:: results/rosenbrock/ExpSquaredKernel/gp_fit_2D.png
    :class: dropdown, tip
 
-   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/ExpSquaredKernel/gp_fit_2D.png
+   .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/gp_fit_2D.png
 
-.. GENERATED FROM PYTHON SOURCE LINES 76-78
+.. GENERATED FROM PYTHON SOURCE LINES 77-79
 
 Run MCMC using ``emcee``
 ----------------------------
 
-.. GENERATED FROM PYTHON SOURCE LINES 78-83
+.. GENERATED FROM PYTHON SOURCE LINES 79-84
 
 .. code-block:: default
 
@@ -136,19 +137,19 @@ Run MCMC using ``emcee``
 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 84-88
+.. GENERATED FROM PYTHON SOURCE LINES 85-89
 
 .. admonition:: results/rosenbrock/ExpSquaredKernel/emcee_posterior.png
    :class: dropdown, tip
 
-   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/ExpSquaredKernel/emcee_posterior.png
+   .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/emcee_posterior.png
 
-.. GENERATED FROM PYTHON SOURCE LINES 91-93
+.. GENERATED FROM PYTHON SOURCE LINES 92-94
 
 Run MCMC using ``dynesty``
 ----------------------------
 
-.. GENERATED FROM PYTHON SOURCE LINES 93-97
+.. GENERATED FROM PYTHON SOURCE LINES 94-98
 
 .. code-block:: default
 
@@ -157,12 +158,12 @@ Run MCMC using ``dynesty``
     sm.plot(plots=["dynesty_all"])
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 98-102
+.. GENERATED FROM PYTHON SOURCE LINES 99-102
 
 .. admonition:: results/rosenbrock/ExpSquaredKernel/dynesty_posterior.png
    :class: dropdown, tip
 
-   .. image:: https://github.com/jbirky/alabi/tree/main/docs/examples/results/rosenbrock/ExpSquaredKernel/dynesty_posterior.png
+   .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/dynesty_posterior.png
 
 
 .. rst-class:: sphx-glr-timing

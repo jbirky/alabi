@@ -32,21 +32,21 @@ class SurrogateModel(object):
     Class used to estimate approximate Bayesian posterior distributions or perform Bayesian 
     optimization using a Gaussian process surrogate model
 
-    :param fn: *(function, required)*
+    :param fn: (*function, required*)
         Python function which takes input array ``theta`` and returns output array ``y=fn(theta)``. 
         For bayesian inference problems ``fn`` would be your log-likelihood function.
 
-    :param bounds: *(array, required)*
+    :param bounds: (*array, required*)
         Prior bounds. List of min and max values for each dimension of ``theta``.
         Example: ``bounds = [(0,1), (2,3), ...]``
 
-    :param labels: *(array, optional)*
-    :param cache: *(bool, optional)*
-    :param savedir: *(str, optional)*
-    :param savedir: *(str, optional)*
-    :param model_name: *(str, optional)*
-    :param verbose: *(bool, optional)*
-    :param ncore: *(int, optional)*
+    :param labels: (*array, optional*)
+    :param cache: (*bool, optional*)
+    :param savedir: (*str, optional*)
+    :param savedir: (*str, optional*)
+    :param model_name: (*str, optional*)
+    :param verbose: (*bool, optional*)
+    :param ncore: (*int, optional*)
     """
 
     def __init__(self, fn=None, bounds=None, labels=None, 
@@ -127,10 +127,10 @@ class SurrogateModel(object):
 
     def init_train(self, nsample=None, sampler='sobol'):
         """
-        :param nsample: *(int, optional)* 
+        :param nsample: (*int, optional*) 
             Number of samples. Defaults to ``nsample = 50 * self.ndim``
 
-        :param sampler: *(str, optional)* 
+        :param sampler: (*str, optional*) 
             Sampling method. Defaults to ``'sobol'``. 
             See ``utility.prior_sampler`` for more details.
         """
@@ -155,10 +155,10 @@ class SurrogateModel(object):
 
     def init_test(self, nsample=None, sampler='sobol'):
         """
-        :param nsample: *(int, optional)* 
+        :param nsample: (*int, optional*) 
             Number of samples. Defaults to ``nsample = 50 * self.ndim``
 
-        :param sampler: *(str, optional)* 
+        :param sampler: (*str, optional*) 
             Sampling method. Defaults to ``'sobol'``. 
             See ``utility.prior_sampler`` for more details.
         """
@@ -198,6 +198,25 @@ class SurrogateModel(object):
 
     def init_samples(self, train_file=None, test_file=None,
                      ntrain=None, ntest=None, sampler=None):
+        """
+        Draw set of initial training samples and test samples. 
+        To load cached samples from a numpy zip file from a previous run, 
+        you can specify the file using ``train_file`` or ``test_file``. 
+        Otherwise to run new samples, you can specify the number of 
+        training and test samples using ``ntrain`` and ``ntest``.
+
+        :param train_file: (*str, optional*) 
+            Path to cached training samples. E.g. ``train_file='results/initial_training_sample.npz'``
+
+        :param test_file: (*str, optional*)
+            Path to cached training samples. E.g. ``test_file='results/initial_test_sample.npz'``
+
+        :param ntrain: (*int, optional*)
+            Number of training samples to compute.
+
+        :param ntest: (*int, optional*)
+            Number of test samples to compute.
+        """
 
         if train_file is not None:
             sims = np.load(f"{self.savedir}/{train_file}")
@@ -244,7 +263,7 @@ class SurrogateModel(object):
         """
         Initialize the Gaussian Process with specified kernel.
 
-        :param kernel: *(str/george kernel obj, optional)* 
+        :param kernel: (*str/george kernel obj, optional*) 
             ``george`` kernel object. Defaults to "ExpSquaredKernel". 
             See https://george.readthedocs.io/en/latest/user/kernels/ for more details.
             Options:
@@ -369,9 +388,9 @@ class SurrogateModel(object):
         """
         Evaluate predictive mean of the GP at point ``theta_xs``
 
-        :param theta_xs: *(array, required)* Point to evaluate GP mean at.
+        :param theta_xs: (*array, required*) Point to evaluate GP mean at.
 
-        :returns ypred: *(float)* GP mean evaluated at ``theta_xs``.
+        :returns ypred: (*float*) GP mean evaluated at ``theta_xs``.
         """
 
         # reshape data array
@@ -394,7 +413,7 @@ class SurrogateModel(object):
         Find next set of ``(theta, y)`` training points by maximizing the
         active learning utility function.
 
-        :param nopt: *(int, optional)* 
+        :param nopt: (*int, optional*) 
             Number of times to restart the objective function optimization. 
             Defaults to 1. Increase to avoid converging to local maxima.
         """
@@ -419,6 +438,13 @@ class SurrogateModel(object):
 
 
     def active_train(self, niter=100, algorithm="bape", gp_opt_freq=10): 
+        """
+        :param niter: (*int, optional*)
+
+        :param algorithm: (*str, optional*) 
+
+        :param gp_opt_freq: (*int, optional*)
+        """
 
         # Set algorithm
         self.algorithm = str(algorithm).lower()
@@ -558,6 +584,18 @@ class SurrogateModel(object):
 
 
     def lnprob(self, theta):
+        """
+        Log probability function used for ``emcee``, which sums the prior with the surrogate model likelihood
+
+        .. math::
+
+            \\ln P(\\theta | x) \\propto \\ln P(x | \\theta) + \\ln P(\\theta)
+
+        where \\ln P(x | \\theta) is the surrogate likelihood function and \\ln P(\\theta) is the prior function.
+
+        :param theta: (*array, required*) 
+            Array of model input parameters to evaluate model probability at.
+        """
 
         if not hasattr(self, 'gp'):
             raise NameError("GP has not been trained")
@@ -576,26 +614,26 @@ class SurrogateModel(object):
         Use the ``emcee`` affine-invariant MCMC package to sample the trained GP surrogate model.
         https://github.com/dfm/emcee
 
-        :param lnprior: *(function, optional)* 
+        :param lnprior: (*function, optional*) 
             Log-prior function.
             Defaults to uniform prior using the function ``utility.lnprior_uniform`` 
             with bounds ``self.bounds``.
 
-        :param nwalkers: *(int, optional)* 
+        :param nwalkers: (*int, optional*) 
             Number of MCMC walkers. Defaults to ``self.nwalkers = 10 * self.ndim``.
 
-        :param nsteps: *(int, optional)* 
+        :param nsteps: (*int, optional*) 
             Number of steps per walker. Defaults to ``nsteps=int(5e4)``.
 
-        :param sampler_kwargs: *(dict, optional)* 
+        :param sampler_kwargs: (*dict, optional*) 
 
-        :param run_kwargs: *(dict, optional)* 
+        :param run_kwargs: (*dict, optional*) 
 
-        :param opt_init: *(bool, optional)* 
+        :param opt_init: (*bool, optional*) 
 
-        :param multi_proc: *(bool, optional)* 
+        :param multi_proc: (*bool, optional*) 
 
-        :param lnprior_comment: *(str, optional)* 
+        :param lnprior_comment: (*str, optional*) 
         """
 
         import emcee
@@ -690,18 +728,18 @@ class SurrogateModel(object):
         Use the ``dynesty`` nested-sampling MCMC package to sample the trained GP surrogate model.
         https://github.com/joshspeagle/dynesty
 
-        :param ptform: *(function, optional)* 
+        :param ptform: (*function, optional*) 
             Log-prior transform function.
             Defaults to uniform prior using the function ``utility.prior_transform_uniform`` 
             with bounds ``self.bounds``.
 
-        :param sampler_kwargs: *(dict, optional)* 
+        :param sampler_kwargs: (*dict, optional*) 
 
-        :param run_kwargs: *(dict, optional)* 
+        :param run_kwargs: (*dict, optional*) 
 
-        :param multi_proc: *(bool, optional)* 
+        :param multi_proc: (*bool, optional*) 
 
-        :param ptform_comment: *(str, optional)* 
+        :param ptform_comment: (*str, optional*) 
         """
 
         import dynesty
@@ -777,6 +815,27 @@ class SurrogateModel(object):
 
 
     def plot(self, plots=None, save=True):
+        """
+        Plot diagnostics for training sample, GP fit, MCMC, etc.
+
+        :param plots: 
+            List of plots to generate. Will return an exception if ``SurrogateModel`` 
+            has not run the function which creates the data used for the plot. Options:
+                ``'gp_error'``
+                ``'gp_hyperparam'``
+                ``'gp_timing'``
+                ``'gp_train_corner'``
+                ``'gp_train_iteration'``
+                ``'gp_fit_2D'``
+                ``'emcee_corner'``
+                ``'emcee_walkers'``
+                ``'dynesty_corner'``
+                ``'dynesty_corner_kde'``
+                ``'dynesty_traceplot'``
+                ``'dynesty_runplot'``
+                ``'mcmc_comparison'``
+        :type plots: array, required
+        """
 
         # ================================
         # GP training plots

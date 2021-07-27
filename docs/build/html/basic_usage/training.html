@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
-<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Bayesian Optimization" href="bayes_opt.html" /><link rel="prev" title="Quickstart" href="../quickstart.html" />
+<link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="Bayesian Optimization" href="bayes_opt.html" /><link rel="prev" title="Surrogate Model" href="surrogate.html" />
 
     <meta name="generator" content="sphinx-4.0.2, furo 2021.07.05.beta38"/>
         <title>GP Training - alabi</title>
@@ -111,7 +111,7 @@
       <a href="../index.html"><div class="brand">alabi</div></a>
     </div>
     <div class="header-right">
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
     </div>
@@ -132,11 +132,13 @@
   <p class="caption"><span class="caption-text">User Guide</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="surrogate.html">Surrogate Model</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">GP Training</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bayes_opt.html">Bayesian Optimization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mcmc.html">MCMC</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../auto_examples/index.html">Example Gallery</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label for="toctree-checkbox-1"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../auto_examples/run_rosenbrock.html">Rosenbrock</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../auto_examples/run_eggbox.html">Eggbox (2D)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../auto_examples/run_rosenbrock.html">Rosenbrock (2D)</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../troubleshooting.html">Troubleshooting</a></li>
@@ -164,15 +166,89 @@
   <main class="main">
     <div class="content">
       <article role="main">
-        <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+        <label class="toc-overlay-icon toc-content-icon" for="__toc">
           <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
         </label>
         <section class="tex2jax_ignore mathjax_ignore" id="gp-training">
 <h1>GP Training<a class="headerlink" href="#gp-training" title="Permalink to this headline">¶</a></h1>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Page under construction</p>
+</div>
+<section id="initializing-training-samples">
+<h2>Initializing Training Samples<a class="headerlink" href="#initializing-training-samples" title="Permalink to this headline">¶</a></h2>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>To be added</p>
+<ul class="simple">
+<li><p>‘test’ samples are used to assess GP fit</p></li>
+<li><p>for numerical stability training data are scaled (theta_min, theta_max) -&gt; (0,1) and (y_mean, y_std) -&gt; (0,1)</p></li>
+<li><p>by default this function will run in parallel utilizing all cores unless otherwise specified</p></li>
+<li><p>by default this function will choose samples using the ‘sobol’ hypercube sampling method</p></li>
+</ul>
 </div>
+</section>
+<section id="initializing-the-gp">
+<h2>Initializing the GP<a class="headerlink" href="#initializing-the-gp" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Choosing a Kernel</p>
+</div>
+</section>
+<section id="active-learning-training">
+<h2>Active Learning Training<a class="headerlink" href="#active-learning-training" title="Permalink to this headline">¶</a></h2>
+<p>Algorithms:</p>
+<ul class="simple">
+<li><p>BAPE - Kandasamy et al. (2017)</p></li>
+<li><p>AGP - Wang &amp; Li (2017)</p></li>
+<li><p>Jones - Jones et al. (1998)</p></li>
+</ul>
+</section>
+<section id="evaluating-gp-perfomance">
+<h2>Evaluating GP Perfomance<a class="headerlink" href="#evaluating-gp-perfomance" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Diagnostic plots and how to interpret</p>
+</div>
+</section>
+<section id="caching-results">
+<h2>Caching Results<a class="headerlink" href="#caching-results" title="Permalink to this headline">¶</a></h2>
+<p>By default the model will cache the <code class="docutils literal notranslate"><span class="pre">SurrogateModel</span></code> object to a pickle file called <code class="docutils literal notranslate"><span class="pre">surrogate_model.pkl</span></code> and will output a summary text file <code class="docutils literal notranslate"><span class="pre">surrogate_model.txt</span></code> looking something like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">==================================================================</span>
+<span class="n">GP</span> <span class="n">summary</span> 
+<span class="o">==================================================================</span>
+
+<span class="n">Configuration</span><span class="p">:</span> 
+<span class="o">--------------</span> 
+<span class="n">Kernel</span><span class="p">:</span> <span class="n">ExpSquaredKernel</span> 
+<span class="n">Function</span> <span class="n">bounds</span><span class="p">:</span> <span class="p">[(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">)]</span> 
+<span class="n">GP</span> <span class="n">white</span> <span class="n">noise</span><span class="p">:</span> <span class="kc">None</span> 
+<span class="n">Active</span> <span class="n">learning</span> <span class="n">algorithm</span> <span class="p">:</span> <span class="n">bape</span> 
+
+<span class="n">Number</span> <span class="n">of</span> <span class="n">total</span> <span class="n">training</span> <span class="n">samples</span><span class="p">:</span> <span class="mi">150</span> 
+<span class="n">Number</span> <span class="n">of</span> <span class="n">initial</span> <span class="n">training</span> <span class="n">samples</span><span class="p">:</span> <span class="mi">50</span> 
+<span class="n">Number</span> <span class="n">of</span> <span class="n">active</span> <span class="n">training</span> <span class="n">samples</span><span class="p">:</span> <span class="mi">100</span> 
+<span class="n">Number</span> <span class="n">of</span> <span class="n">test</span> <span class="n">samples</span><span class="p">:</span> <span class="mi">50</span> 
+
+<span class="n">Results</span><span class="p">:</span> 
+<span class="o">--------</span> 
+<span class="n">GP</span> <span class="n">final</span> <span class="n">hyperparameters</span><span class="p">:</span> 
+   <span class="p">[</span><span class="n">mean</span><span class="p">:</span><span class="n">value</span><span class="p">]</span> 	<span class="o">-</span><span class="mf">1.4285555081915942</span> 
+   <span class="p">[</span><span class="n">kernel</span><span class="p">:</span><span class="n">k1</span><span class="p">:</span><span class="n">log_constant</span><span class="p">]</span> 	<span class="mf">11.974832220353308</span> 
+   <span class="p">[</span><span class="n">kernel</span><span class="p">:</span><span class="n">k2</span><span class="p">:</span><span class="n">metric</span><span class="p">:</span><span class="n">log_M_0_0</span><span class="p">]</span> 	<span class="mf">0.28389110292099495</span> 
+   <span class="p">[</span><span class="n">kernel</span><span class="p">:</span><span class="n">k2</span><span class="p">:</span><span class="n">metric</span><span class="p">:</span><span class="n">log_M_1_1</span><span class="p">]</span> 	<span class="mf">6.953601851332223</span> 
+
+<span class="n">Active</span> <span class="n">learning</span> <span class="n">train</span> <span class="n">runtime</span> <span class="p">(</span><span class="n">s</span><span class="p">):</span> <span class="mf">27.0</span> 
+
+<span class="n">Final</span> <span class="n">test</span> <span class="n">error</span><span class="p">:</span> <span class="mf">8.128303113409325e-08</span> 
+</pre></div>
+</div>
+<p>To reload the surrogate model object again to a script you can use:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">alabi.cache_utils</span> <span class="kn">import</span> <span class="n">load_model_cache</span>
+
+<span class="n">sm</span> <span class="o">=</span> <span class="n">load_model_cache</span><span class="p">(</span><span class="sa">f</span><span class="s2">"surrogate_model.pkl"</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
 </section>
 
       </article>
@@ -188,14 +264,14 @@
               </div>
               <svg><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="../quickstart.html">
+          <a class="prev-page" href="surrogate.html">
               <svg><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Quickstart</div>
+                <div class="title">Surrogate Model</div>
                 
               </div>
             </a>
@@ -217,8 +293,31 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            Contents
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">GP Training</a><ul>
+<li><a class="reference internal" href="#initializing-training-samples">Initializing Training Samples</a></li>
+<li><a class="reference internal" href="#initializing-the-gp">Initializing the GP</a></li>
+<li><a class="reference internal" href="#active-learning-training">Active Learning Training</a></li>
+<li><a class="reference internal" href="#evaluating-gp-perfomance">Evaluating GP Perfomance</a></li>
+<li><a class="reference internal" href="#caching-results">Caching Results</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>

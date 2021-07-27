@@ -189,7 +189,7 @@ def plot_corner(sm, samples, sampler=""):
 
     fig = corner.corner(samples, quantiles=[0.16, 0.5, 0.84], show_titles=True,
                         scale_hist=True, plot_contours=True, labels=sm.labels,
-                        title_kwargs={"fontsize": 15}, label_kwargs={"fontsize": 15})
+                        title_kwargs={"fontsize": 20}, label_kwargs={"fontsize": 20})
     fig.savefig(f"{sm.savedir}/{sampler}posterior.png", bbox_inches="tight")
 
 

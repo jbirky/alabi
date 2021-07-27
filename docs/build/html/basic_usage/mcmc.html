@@ -111,7 +111,7 @@
       <a href="../index.html"><div class="brand">alabi</div></a>
     </div>
     <div class="header-right">
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
     </div>
@@ -132,11 +132,13 @@
   <p class="caption"><span class="caption-text">User Guide</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="surrogate.html">Surrogate Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="training.html">GP Training</a></li>
 <li class="toctree-l1"><a class="reference internal" href="bayes_opt.html">Bayesian Optimization</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">MCMC</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="../auto_examples/index.html">Example Gallery</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label for="toctree-checkbox-1"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../auto_examples/run_rosenbrock.html">Rosenbrock</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../auto_examples/run_eggbox.html">Eggbox (2D)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../auto_examples/run_rosenbrock.html">Rosenbrock (2D)</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../troubleshooting.html">Troubleshooting</a></li>
@@ -164,15 +166,97 @@
   <main class="main">
     <div class="content">
       <article role="main">
-        <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+        <label class="toc-overlay-icon toc-content-icon" for="__toc">
           <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
         </label>
         <section class="tex2jax_ignore mathjax_ignore" id="mcmc">
 <h1>MCMC<a class="headerlink" href="#mcmc" title="Permalink to this headline">¶</a></h1>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Page under construction</p>
+</div>
+<p>First, we can load the surrogate model trained in the <a class="reference external" href="https://jbirky.github.io/alabi/build/basic_usage/training.html">GP Training tutorial</a> that was cached using <code class="docutils literal notranslate"><span class="pre">pickle</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">alabi.cache_utils</span> <span class="kn">import</span> <span class="n">load_model_cache</span>
+
+<span class="n">sm</span> <span class="o">=</span> <span class="n">load_model_cache</span><span class="p">(</span><span class="sa">f</span><span class="s2">"surrogate_model.pkl"</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="emcee">
+<h2><code class="docutils literal notranslate"><span class="pre">emcee</span></code><a class="headerlink" href="#emcee" title="Permalink to this headline">¶</a></h2>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>To be added</p>
+<p>Describe <code class="docutils literal notranslate"><span class="pre">emcee</span></code></p>
 </div>
+<section id="running-mcmc-default">
+<h3>Running MCMC: Default<a class="headerlink" href="#running-mcmc-default" title="Permalink to this headline">¶</a></h3>
+<p>To run <code class="docutils literal notranslate"><span class="pre">emcee</span></code> with a uniform prior and default settings you can simply use:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sm</span><span class="o">.</span><span class="n">run_emcee</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="configuring-prior-function">
+<h3>Configuring Prior Function<a class="headerlink" href="#configuring-prior-function" title="Permalink to this headline">¶</a></h3>
+<p>By default, if no <code class="docutils literal notranslate"><span class="pre">lnprior</span></code> is specified <code class="docutils literal notranslate"><span class="pre">sm.run_emcee()</span></code> will use a uniform prior using the bounds specified in the <code class="docutils literal notranslate"><span class="pre">SurrogateModel</span></code> initialization.</p>
+<section id="non-uniform-prior-example">
+<h4>Non-uniform prior example<a class="headerlink" href="#non-uniform-prior-example" title="Permalink to this headline">¶</a></h4>
+<p>Gaussian prior example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">lnprior</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">prior_data</span><span class="p">):</span>
+
+    <span class="n">lnp</span> <span class="o">=</span> <span class="n">alabi</span><span class="o">.</span><span class="n">utility</span><span class="o">.</span><span class="n">lnprior_uniform</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">lnp</span> <span class="o">+=</span> <span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">ii</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">ii</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">lnp</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="running-mcmc-custom">
+<h3>Running MCMC: Custom<a class="headerlink" href="#running-mcmc-custom" title="Permalink to this headline">¶</a></h3>
+<!-- ================================================================== -->
+</section>
+</section>
+<section id="dynesty">
+<h2><code class="docutils literal notranslate"><span class="pre">dynesty</span></code><a class="headerlink" href="#dynesty" title="Permalink to this headline">¶</a></h2>
+<section id="id1">
+<h3>Running MCMC: Default<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>To run <code class="docutils literal notranslate"><span class="pre">dynesty</span></code> with a uniform prior and default settings you can simply use:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sm</span><span class="o">.</span><span class="n">run_dynesty</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Describe <code class="docutils literal notranslate"><span class="pre">dynesty</span></code></p>
+</div>
+<section id="id2">
+<h3>Configuring Prior Function<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>By default, if no <code class="docutils literal notranslate"><span class="pre">ptform</span></code> is specified  <code class="docutils literal notranslate"><span class="pre">sm.run_dynesty()</span></code> will use a uniform prior using the bounds specified in the <code class="docutils literal notranslate"><span class="pre">SurrogateModel</span></code> initialization.</p>
+<section id="id3">
+<h4>Non-uniform prior example<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h4>
+<p>Gaussian prior example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">prior_transform</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">prior_data</span><span class="p">):</span>
+
+    <span class="n">pt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bounds</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># uniform prior transform</span>
+            <span class="n">pt</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># gaussian prior transform</span>
+            <span class="n">pt</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+    
+    <span class="k">return</span> <span class="n">pt</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id4">
+<h3>Running MCMC: Custom<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+</section>
+</section>
 </section>
 
       </article>
@@ -217,8 +301,44 @@
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            Contents
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">MCMC</a><ul>
+<li><a class="reference internal" href="#emcee"><code class="docutils literal notranslate"><span class="pre">emcee</span></code></a><ul>
+<li><a class="reference internal" href="#running-mcmc-default">Running MCMC: Default</a></li>
+<li><a class="reference internal" href="#configuring-prior-function">Configuring Prior Function</a><ul>
+<li><a class="reference internal" href="#non-uniform-prior-example">Non-uniform prior example</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#running-mcmc-custom">Running MCMC: Custom</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#dynesty"><code class="docutils literal notranslate"><span class="pre">dynesty</span></code></a><ul>
+<li><a class="reference internal" href="#id1">Running MCMC: Default</a></li>
+<li><a class="reference internal" href="#id2">Configuring Prior Function</a><ul>
+<li><a class="reference internal" href="#id3">Non-uniform prior example</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id4">Running MCMC: Custom</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>

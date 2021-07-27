@@ -1,5 +1,5 @@
 # Bayesian Optimization
 
-```{note} 
-To be added
+```{warning} 
+Not yet implemented
 ````

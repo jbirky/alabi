@@ -23,10 +23,10 @@ def default_hyper_prior(p, hp_rng=20, mu=None, sigma=None, sigma_level=3):
     hyperparameters within a reasonable huge range ``[-20, 20]``. Note that george
     operates on the *log* hyperparameters, except for the mean function.
 
-    :param p: *(array, required)* 
+    :param p: (*array, required*) 
         Array of GP hyperparameters
 
-    :returns lnprior: *(float)* 
+    :returns lnprior: (*float*) 
         log prior value 
     """
 

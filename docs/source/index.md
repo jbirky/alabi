@@ -3,6 +3,7 @@
 :hidden:
 
 quickstart
+basic_usage/surrogate
 basic_usage/training
 basic_usage/bayes_opt
 basic_usage/mcmc

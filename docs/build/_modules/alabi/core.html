@@ -131,6 +131,7 @@
   <p class="caption"><span class="caption-text">User Guide</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_usage/surrogate.html">Surrogate Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../basic_usage/training.html">GP Training</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../basic_usage/bayes_opt.html">Bayesian Optimization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../basic_usage/mcmc.html">MCMC</a></li>
@@ -202,21 +203,21 @@
 <span class="sd">    Class used to estimate approximate Bayesian posterior distributions or perform Bayesian </span>
 <span class="sd">    optimization using a Gaussian process surrogate model</span>
 
-<span class="sd">    :param fn: *(function, required)*</span>
+<span class="sd">    :param fn: (*function, required*)</span>
 <span class="sd">        Python function which takes input array ``theta`` and returns output array ``y=fn(theta)``. </span>
 <span class="sd">        For bayesian inference problems ``fn`` would be your log-likelihood function.</span>
 
-<span class="sd">    :param bounds: *(array, required)*</span>
+<span class="sd">    :param bounds: (*array, required*)</span>
 <span class="sd">        Prior bounds. List of min and max values for each dimension of ``theta``.</span>
 <span class="sd">        Example: ``bounds = [(0,1), (2,3), ...]``</span>
 
-<span class="sd">    :param labels: *(array, optional)*</span>
-<span class="sd">    :param cache: *(bool, optional)*</span>
-<span class="sd">    :param savedir: *(str, optional)*</span>
-<span class="sd">    :param savedir: *(str, optional)*</span>
-<span class="sd">    :param model_name: *(str, optional)*</span>
-<span class="sd">    :param verbose: *(bool, optional)*</span>
-<span class="sd">    :param ncore: *(int, optional)*</span>
+<span class="sd">    :param labels: (*array, optional*)</span>
+<span class="sd">    :param cache: (*bool, optional*)</span>
+<span class="sd">    :param savedir: (*str, optional*)</span>
+<span class="sd">    :param savedir: (*str, optional*)</span>
+<span class="sd">    :param model_name: (*str, optional*)</span>
+<span class="sd">    :param verbose: (*bool, optional*)</span>
+<span class="sd">    :param ncore: (*int, optional*)</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
@@ -297,10 +298,10 @@
 
 <div class="viewcode-block" id="SurrogateModel.init_train"><a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.init_train">[docs]</a>    <span class="k">def</span> <span class="nf">init_train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nsample</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s1">'sobol'</span><span class="p">):</span>
         <span class="sd">"""</span>
-<span class="sd">        :param nsample: *(int, optional)* </span>
+<span class="sd">        :param nsample: (*int, optional*) </span>
 <span class="sd">            Number of samples. Defaults to ``nsample = 50 * self.ndim``</span>
 
-<span class="sd">        :param sampler: *(str, optional)* </span>
+<span class="sd">        :param sampler: (*str, optional*) </span>
 <span class="sd">            Sampling method. Defaults to ``'sobol'``. </span>
 <span class="sd">            See ``utility.prior_sampler`` for more details.</span>
 <span class="sd">        """</span>
@@ -325,10 +326,10 @@
 
 <div class="viewcode-block" id="SurrogateModel.init_test"><a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.init_test">[docs]</a>    <span class="k">def</span> <span class="nf">init_test</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nsample</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s1">'sobol'</span><span class="p">):</span>
         <span class="sd">"""</span>
-<span class="sd">        :param nsample: *(int, optional)* </span>
+<span class="sd">        :param nsample: (*int, optional*) </span>
 <span class="sd">            Number of samples. Defaults to ``nsample = 50 * self.ndim``</span>
 
-<span class="sd">        :param sampler: *(str, optional)* </span>
+<span class="sd">        :param sampler: (*str, optional*) </span>
 <span class="sd">            Sampling method. Defaults to ``'sobol'``. </span>
 <span class="sd">            See ``utility.prior_sampler`` for more details.</span>
 <span class="sd">        """</span>
@@ -368,6 +369,25 @@
 
 <div class="viewcode-block" id="SurrogateModel.init_samples"><a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.init_samples">[docs]</a>    <span class="k">def</span> <span class="nf">init_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">test_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                      <span class="n">ntrain</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ntest</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Draw set of initial training samples and test samples. </span>
+<span class="sd">        To load cached samples from a numpy zip file from a previous run, </span>
+<span class="sd">        you can specify the file using ``train_file`` or ``test_file``. </span>
+<span class="sd">        Otherwise to run new samples, you can specify the number of </span>
+<span class="sd">        training and test samples using ``ntrain`` and ``ntest``.</span>
+
+<span class="sd">        :param train_file: (*str, optional*) </span>
+<span class="sd">            Path to cached training samples. E.g. ``train_file='results/initial_training_sample.npz'``</span>
+
+<span class="sd">        :param test_file: (*str, optional*)</span>
+<span class="sd">            Path to cached training samples. E.g. ``test_file='results/initial_test_sample.npz'``</span>
+
+<span class="sd">        :param ntrain: (*int, optional*)</span>
+<span class="sd">            Number of training samples to compute.</span>
+
+<span class="sd">        :param ntest: (*int, optional*)</span>
+<span class="sd">            Number of test samples to compute.</span>
+<span class="sd">        """</span>
 
         <span class="k">if</span> <span class="n">train_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">sims</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{self.savedir}</span><span class="s2">/</span><span class="si">{train_file}</span><span class="s2">"</span><span class="p">)</span>
@@ -414,7 +434,7 @@
         <span class="sd">"""</span>
 <span class="sd">        Initialize the Gaussian Process with specified kernel.</span>
 
-<span class="sd">        :param kernel: *(str/george kernel obj, optional)* </span>
+<span class="sd">        :param kernel: (*str/george kernel obj, optional*) </span>
 <span class="sd">            ``george`` kernel object. Defaults to "ExpSquaredKernel". </span>
 <span class="sd">            See https://george.readthedocs.io/en/latest/user/kernels/ for more details.</span>
 <span class="sd">            Options:</span>
@@ -539,9 +559,9 @@
         <span class="sd">"""</span>
 <span class="sd">        Evaluate predictive mean of the GP at point ``theta_xs``</span>
 
-<span class="sd">        :param theta_xs: *(array, required)* Point to evaluate GP mean at.</span>
+<span class="sd">        :param theta_xs: (*array, required*) Point to evaluate GP mean at.</span>
 
-<span class="sd">        :returns ypred: *(float)* GP mean evaluated at ``theta_xs``.</span>
+<span class="sd">        :returns ypred: (*float*) GP mean evaluated at ``theta_xs``.</span>
 <span class="sd">        """</span>
 
         <span class="c1"># reshape data array</span>
@@ -559,12 +579,12 @@
         <span class="k">return</span> <span class="n">ypred</span></div>
 
 
-<div class="viewcode-block" id="SurrogateModel.find_next_point"><a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.find_next_point">[docs]</a>    <span class="k">def</span> <span class="nf">find_next_point</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nopt</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<div class="viewcode-block" id="SurrogateModel.find_next_point"><a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.find_next_point">[docs]</a>    <span class="k">def</span> <span class="nf">find_next_point</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nopt</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
         <span class="sd">"""</span>
 <span class="sd">        Find next set of ``(theta, y)`` training points by maximizing the</span>
 <span class="sd">        active learning utility function.</span>
 
-<span class="sd">        :param nopt: *(int, optional)* </span>
+<span class="sd">        :param nopt: (*int, optional*) </span>
 <span class="sd">            Number of times to restart the objective function optimization. </span>
 <span class="sd">            Defaults to 1. Increase to avoid converging to local maxima.</span>
 <span class="sd">        """</span>
@@ -589,6 +609,13 @@
 
 
 <div class="viewcode-block" id="SurrogateModel.active_train"><a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.active_train">[docs]</a>    <span class="k">def</span> <span class="nf">active_train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">niter</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s2">"bape"</span><span class="p">,</span> <span class="n">gp_opt_freq</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span> 
+        <span class="sd">"""</span>
+<span class="sd">        :param niter: (*int, optional*)</span>
+
+<span class="sd">        :param algorithm: (*str, optional*) </span>
+
+<span class="sd">        :param gp_opt_freq: (*int, optional*)</span>
+<span class="sd">        """</span>
 
         <span class="c1"># Set algorithm</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
@@ -728,6 +755,18 @@
 
 
 <div class="viewcode-block" id="SurrogateModel.lnprob"><a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.lnprob">[docs]</a>    <span class="k">def</span> <span class="nf">lnprob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Log probability function used for ``emcee``, which sums the prior with the surrogate model likelihood</span>
+
+<span class="sd">        .. math::</span>
+
+<span class="sd">            \\ln P(\\theta | x) \\propto \\ln P(x | \\theta) + \\ln P(\\theta)</span>
+
+<span class="sd">        where \\ln P(x | \\theta) is the surrogate likelihood function and \\ln P(\\theta) is the prior function.</span>
+
+<span class="sd">        :param theta: (*array, required*) </span>
+<span class="sd">            Array of model input parameters to evaluate model probability at.</span>
+<span class="sd">        """</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">'gp'</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">NameError</span><span class="p">(</span><span class="s2">"GP has not been trained"</span><span class="p">)</span>
@@ -746,26 +785,26 @@
 <span class="sd">        Use the ``emcee`` affine-invariant MCMC package to sample the trained GP surrogate model.</span>
 <span class="sd">        https://github.com/dfm/emcee</span>
 
-<span class="sd">        :param lnprior: *(function, optional)* </span>
+<span class="sd">        :param lnprior: (*function, optional*) </span>
 <span class="sd">            Log-prior function.</span>
 <span class="sd">            Defaults to uniform prior using the function ``utility.lnprior_uniform`` </span>
 <span class="sd">            with bounds ``self.bounds``.</span>
 
-<span class="sd">        :param nwalkers: *(int, optional)* </span>
+<span class="sd">        :param nwalkers: (*int, optional*) </span>
 <span class="sd">            Number of MCMC walkers. Defaults to ``self.nwalkers = 10 * self.ndim``.</span>
 
-<span class="sd">        :param nsteps: *(int, optional)* </span>
+<span class="sd">        :param nsteps: (*int, optional*) </span>
 <span class="sd">            Number of steps per walker. Defaults to ``nsteps=int(5e4)``.</span>
 
-<span class="sd">        :param sampler_kwargs: *(dict, optional)* </span>
+<span class="sd">        :param sampler_kwargs: (*dict, optional*) </span>
 
-<span class="sd">        :param run_kwargs: *(dict, optional)* </span>
+<span class="sd">        :param run_kwargs: (*dict, optional*) </span>
 
-<span class="sd">        :param opt_init: *(bool, optional)* </span>
+<span class="sd">        :param opt_init: (*bool, optional*) </span>
 
-<span class="sd">        :param multi_proc: *(bool, optional)* </span>
+<span class="sd">        :param multi_proc: (*bool, optional*) </span>
 
-<span class="sd">        :param lnprior_comment: *(str, optional)* </span>
+<span class="sd">        :param lnprior_comment: (*str, optional*) </span>
 <span class="sd">        """</span>
 
         <span class="kn">import</span> <span class="nn">emcee</span>
@@ -818,40 +857,40 @@
 
         <span class="c1"># Run the sampler!</span>
         <span class="n">emcee_t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="n">emcee</span><span class="o">.</span><span class="n">EnsembleSampler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nwalkers</span><span class="p">,</span> 
-                                             <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span><span class="p">,</span> 
-                                             <span class="bp">self</span><span class="o">.</span><span class="n">lnprob</span><span class="p">,</span> 
-                                             <span class="n">pool</span><span class="o">=</span><span class="n">pool</span><span class="p">,</span>
-                                             <span class="o">**</span><span class="n">sampler_kwargs</span><span class="p">)</span>
+        <span class="n">sampler</span> <span class="o">=</span> <span class="n">emcee</span><span class="o">.</span><span class="n">EnsembleSampler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nwalkers</span><span class="p">,</span> 
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span><span class="p">,</span> 
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">lnprob</span><span class="p">,</span> 
+                                        <span class="n">pool</span><span class="o">=</span><span class="n">pool</span><span class="p">,</span>
+                                        <span class="o">**</span><span class="n">sampler_kwargs</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">run_mcmc</span><span class="p">(</span><span class="n">p0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nsteps</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">run_kwargs</span><span class="p">)</span>
+        <span class="n">sampler</span><span class="o">.</span><span class="n">run_mcmc</span><span class="p">(</span><span class="n">p0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nsteps</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">run_kwargs</span><span class="p">)</span>
 
         <span class="c1"># record emcee runtime</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">emcee_runtime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">emcee_t0</span>
 
         <span class="c1"># burn, thin, and flatten samples</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">iburn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ithin</span> <span class="o">=</span> <span class="n">mcmc_utils</span><span class="o">.</span><span class="n">estimateBurnin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">emcee_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">get_chain</span><span class="p">(</span><span class="n">discard</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">iburn</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">thin</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ithin</span><span class="p">)</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">iburn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ithin</span> <span class="o">=</span> <span class="n">mcmc_utils</span><span class="o">.</span><span class="n">estimateBurnin</span><span class="p">(</span><span class="n">sampler</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emcee_samples_full</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">get_chain</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emcee_samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">get_chain</span><span class="p">(</span><span class="n">discard</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">iburn</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">thin</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ithin</span><span class="p">)</span> 
 
+        <span class="c1"># get acceptance fraction and autocorrelation time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acc_frac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sampler</span><span class="o">.</span><span class="n">acceptance_fraction</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">autcorr_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sampler</span><span class="o">.</span><span class="n">get_autocorr_time</span><span class="p">())</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
-            <span class="c1"># get acceptance fraction and autocorrelation time</span>
-            <span class="n">acc_frac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">acceptance_fraction</span><span class="p">)</span>
-            <span class="n">autcorr_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">get_autocorr_time</span><span class="p">())</span>
-
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total samples: </span><span class="si">{self.emcee_samples.shape[0]}</span><span class="s2">"</span><span class="p">)</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">"Mean acceptance fraction: </span><span class="si">{0:.3f}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">acc_frac</span><span class="p">))</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">"Mean autocorrelation time: </span><span class="si">{0:.3f}</span><span class="s2"> steps"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">autcorr_time</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Mean acceptance fraction: </span><span class="si">{0:.3f}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acc_frac</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"Mean autocorrelation time: </span><span class="si">{0:.3f}</span><span class="s2"> steps"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">autcorr_time</span><span class="p">))</span>
 
         <span class="c1"># record that emcee has been run</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">emcee_run</span> <span class="o">=</span> <span class="kc">True</span>
 
+        <span class="c1"># close pool</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
-            <span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{self.savedir}</span><span class="s2">/emcee_samples_final.npz"</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">emcee_samples</span><span class="p">)</span>
-
-        <span class="c1"># close pool</span>
-        <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+            <span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{self.savedir}</span><span class="s2">/emcee_samples_final.npz"</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">emcee_samples</span><span class="p">)</span></div>
 
     
 <div class="viewcode-block" id="SurrogateModel.run_dynesty"><a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.run_dynesty">[docs]</a>    <span class="k">def</span> <span class="nf">run_dynesty</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ptform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sampler_kwargs</span><span class="o">=</span><span class="p">{},</span> <span class="n">run_kwargs</span><span class="o">=</span><span class="p">{},</span>
@@ -860,18 +899,18 @@
 <span class="sd">        Use the ``dynesty`` nested-sampling MCMC package to sample the trained GP surrogate model.</span>
 <span class="sd">        https://github.com/joshspeagle/dynesty</span>
 
-<span class="sd">        :param ptform: *(function, optional)* </span>
+<span class="sd">        :param ptform: (*function, optional*) </span>
 <span class="sd">            Log-prior transform function.</span>
 <span class="sd">            Defaults to uniform prior using the function ``utility.prior_transform_uniform`` </span>
 <span class="sd">            with bounds ``self.bounds``.</span>
 
-<span class="sd">        :param sampler_kwargs: *(dict, optional)* </span>
+<span class="sd">        :param sampler_kwargs: (*dict, optional*) </span>
 
-<span class="sd">        :param run_kwargs: *(dict, optional)* </span>
+<span class="sd">        :param run_kwargs: (*dict, optional*) </span>
 
-<span class="sd">        :param multi_proc: *(bool, optional)* </span>
+<span class="sd">        :param multi_proc: (*bool, optional*) </span>
 
-<span class="sd">        :param ptform_comment: *(str, optional)* </span>
+<span class="sd">        :param ptform_comment: (*str, optional*) </span>
 <span class="sd">        """</span>
 
         <span class="kn">import</span> <span class="nn">dynesty</span>
@@ -881,6 +920,7 @@
         <span class="c1"># set up multiprocessing pool</span>
         <span class="k">if</span> <span class="n">multi_proc</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
             <span class="n">pool</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ncore</span><span class="p">)</span>
+            <span class="n">pool</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncore</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">pool</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -910,16 +950,14 @@
         <span class="n">dynesty_t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
         <span class="c1"># initialize our nested sampler</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">dsampler</span> <span class="o">=</span> <span class="n">DynamicNestedSampler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">,</span> 
-                                             <span class="bp">self</span><span class="o">.</span><span class="n">ptform</span><span class="p">,</span> 
-                                             <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span><span class="p">,</span>
-                                            <span class="c1">#  pool=pool,</span>
-                                            <span class="c1">#  queue_size=self.ncore,</span>
-                                            <span class="c1">#  rstate=np.random.RandomState(),</span>
-                                             <span class="o">**</span><span class="n">sampler_kwargs</span><span class="p">)</span>
+        <span class="n">dsampler</span> <span class="o">=</span> <span class="n">DynamicNestedSampler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">,</span> 
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">ptform</span><span class="p">,</span> 
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span><span class="p">,</span>
+                                        <span class="n">pool</span><span class="o">=</span><span class="n">pool</span><span class="p">,</span>
+                                        <span class="o">**</span><span class="n">sampler_kwargs</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">dsampler</span><span class="o">.</span><span class="n">run_nested</span><span class="p">(</span><span class="o">**</span><span class="n">run_kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dsampler</span><span class="o">.</span><span class="n">results</span>
+        <span class="n">dsampler</span><span class="o">.</span><span class="n">run_nested</span><span class="p">(</span><span class="o">**</span><span class="n">run_kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">res</span> <span class="o">=</span> <span class="n">dsampler</span><span class="o">.</span><span class="n">results</span>
 
         <span class="c1"># record dynesty runtime</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dynesty_runtime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">dynesty_t0</span>
@@ -933,13 +971,13 @@
         <span class="c1"># record that dynesty has been run</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dynesty_run</span> <span class="o">=</span> <span class="kc">True</span>
 
+        <span class="c1"># close pool</span>
+        <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
 
-            <span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{self.savedir}</span><span class="s2">/dynesty_samples_final.npz"</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dynesty_samples</span><span class="p">)</span>
-
-        <span class="c1"># close pool</span>
-        <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+            <span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{self.savedir}</span><span class="s2">/dynesty_samples_final.npz"</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dynesty_samples</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="SurrogateModel.find_map"><a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.find_map">[docs]</a>    <span class="k">def</span> <span class="nf">find_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lnprior</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"nelder-mead"</span><span class="p">,</span> <span class="n">nRestarts</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -948,6 +986,27 @@
 
 
 <div class="viewcode-block" id="SurrogateModel.plot"><a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.plot">[docs]</a>    <span class="k">def</span> <span class="nf">plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plots</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Plot diagnostics for training sample, GP fit, MCMC, etc.</span>
+
+<span class="sd">        :param plots: </span>
+<span class="sd">            List of plots to generate. Will return an exception if ``SurrogateModel`` </span>
+<span class="sd">            has not run the function which creates the data used for the plot. Options:</span>
+<span class="sd">                ``'gp_error'``</span>
+<span class="sd">                ``'gp_hyperparam'``</span>
+<span class="sd">                ``'gp_timing'``</span>
+<span class="sd">                ``'gp_train_corner'``</span>
+<span class="sd">                ``'gp_train_iteration'``</span>
+<span class="sd">                ``'gp_fit_2D'``</span>
+<span class="sd">                ``'emcee_corner'``</span>
+<span class="sd">                ``'emcee_walkers'``</span>
+<span class="sd">                ``'dynesty_corner'``</span>
+<span class="sd">                ``'dynesty_corner_kde'``</span>
+<span class="sd">                ``'dynesty_traceplot'``</span>
+<span class="sd">                ``'dynesty_runplot'``</span>
+<span class="sd">                ``'mcmc_comparison'``</span>
+<span class="sd">        :type plots: array, required</span>
+<span class="sd">        """</span>
 
         <span class="c1"># ================================</span>
         <span class="c1"># GP training plots</span>
@@ -990,6 +1049,13 @@
                 <span class="n">vis</span><span class="o">.</span><span class="n">plot_corner_scatter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">NameError</span><span class="p">(</span><span class="s2">"Must run init_train and/or active_train before plotting gp_train_corner."</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s2">"gp_train_iteration"</span> <span class="ow">in</span> <span class="n">plots</span><span class="p">:</span>  
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"theta"</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">"y"</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">"Plotting training sample corner plot..."</span><span class="p">)</span>
+                <span class="n">vis</span><span class="o">.</span><span class="n">plot_train_sample_vs_iteration</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NameError</span><span class="p">(</span><span class="s2">"Must run init_train and/or active_train before plotting gp_train_iteration."</span><span class="p">)</span>
 
         <span class="c1"># GP training time vs iteration</span>
         <span class="k">if</span> <span class="s2">"gp_fit_2D"</span> <span class="ow">in</span> <span class="n">plots</span><span class="p">:</span>

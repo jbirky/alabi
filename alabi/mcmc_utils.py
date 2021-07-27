@@ -20,28 +20,24 @@ def estimateBurnin(sampler, estBurnin=True, thinChains=True, verbose=False):
     follows the example outlined here:
     https://emcee.readthedocs.io/en/stable/tutorials/autocorr/
 
-    Parameters
-    ----------
-    sampler : emcee.EnsembleSampler
+    :param sampler: (*emcee.EnsembleSampler, optional*)
         emcee MCMC sampler object/backend handler, given a complete chain
-    estBurnin : bool, optional
+    :param estBurnin: (*bool, optional*)
         Estimate burn-in time using integrated autocorrelation time
         heuristic.  Defaults to True. In general, we recommend users
         inspect the chains and calculate the burnin after the fact to ensure
         convergence, but this function works pretty well.
-    thinChains : bool, optional
+    :param thinChains: (*bool, optional*)
         Whether or not to thin chains.  Useful if running long chains.
         Defaults to True.  If true, estimates a thin cadence
         via int(0.5*np.min(tau)) where tau is the intergrated autocorrelation
         time.
-    verbose : bool, optional
+    :param verbose: (*bool, optional*)
         Output all the diagnostics? Defaults to False.
 
-    Returns
-    -------
-    iburn : int
+    :returns iburn: (*int*)
         burn-in index estimate.  If estBurnin == False, returns 0.
-    ithin : int
+    :returns ithin: (*int*)
         thin cadence estimate.  If thinChains == False, returns 1.
     """
 

@@ -4,12 +4,17 @@
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
 
-    <meta name="generator" content="sphinx-4.1.1, furo 2021.07.05.beta38"/>
+    <meta name="generator" content="sphinx-4.0.2, furo 2021.07.05.beta38"/>
         <title>alabi.gp_utils - alabi</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/tabs.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/gallery-rendered-html.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css" />
     
 
@@ -23,8 +28,8 @@
   --color-background-secondary: #eff1f6;
   --color-inline-code-background: #eff1f6;
   --color-sidebar-item-background--hover: white;
-  --color-brand-primary: #006600;
-  --color-brand-content: #006600;
+  --color-brand-primary: #004080;
+  --color-brand-content: #0059b3;
   
   }
   @media (prefers-color-scheme: dark) {
@@ -44,8 +49,8 @@
   --color-background-secondary: #eff1f6;
   --color-inline-code-background: #eff1f6;
   --color-sidebar-item-background--hover: white;
-  --color-brand-primary: #006600;
-  --color-brand-content: #006600;
+  --color-brand-primary: #004080;
+  --color-brand-content: #0059b3;
   
   }
   .override-dark {
@@ -123,18 +128,28 @@
   <input type="hidden" name="check_keywords" value="yes">
   <input type="hidden" name="area" value="default">
 </form><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+  <p class="caption"><span class="caption-text">User Guide</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../basic.html">Basic Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_usage/surrogate.html">Surrogate Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_usage/training.html">GP Training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_usage/bayes_opt.html">Bayesian Optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../basic_usage/mcmc.html">MCMC</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../auto_examples/index.html">Example Gallery</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label for="toctree-checkbox-1"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/run_eggbox.html">Eggbox (2D)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/run_rosenbrock.html">Rosenbrock (2D)</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">API</span></p>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../troubleshooting.html">Troubleshooting</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../modules.html">alabi</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label for="toctree-checkbox-1"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../modules.html">alabi</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label for="toctree-checkbox-2"><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../alabi.html">alabi package</a></li>
 </ul>
 </li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<p class="caption"><span class="caption-text">Development</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi">GitHub Repository</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi/LICENSE">License</a></li>
@@ -179,10 +194,10 @@
 <span class="sd">    hyperparameters within a reasonable huge range ``[-20, 20]``. Note that george</span>
 <span class="sd">    operates on the *log* hyperparameters, except for the mean function.</span>
 
-<span class="sd">    :param p: *(array, required)* </span>
+<span class="sd">    :param p: (*array, required*) </span>
 <span class="sd">        Array of GP hyperparameters</span>
 
-<span class="sd">    :returns lnprior: *(float)* </span>
+<span class="sd">    :returns lnprior: (*float*) </span>
 <span class="sd">        log prior value </span>
 <span class="sd">    """</span>
 
@@ -371,5 +386,7 @@
     <script src="../../_static/clipboard.min.js"></script>
     <script src="../../_static/copybutton.js"></script>
     <script src="../../_static/tabs.js"></script>
+    <script src="../../_static/togglebutton.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     </body>
 </html>
