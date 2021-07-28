@@ -176,26 +176,6 @@ class SurrogateModel(object):
             np.savez(f"{self.savedir}/initial_test_sample.npz", theta=self.theta_test, y=self.y_test)
 
 
-    def scale_data(self, theta, y):
-
-        theta_ = self.scaler_t.transform(theta)
-
-        yT = y.reshape(1,-1).T
-        y_ = self.scaler_y.transform(yT).flatten()
-
-        return theta_, y_
-
-
-    def unscale_data(self, theta_, y_):
-
-        theta = self.scaler_t.inverse_transform(theta_)
-
-        yT_ = y_.reshape(1,-1).T
-        y = self.scaler_y.inverse_transform(yT_).flatten()
-
-        return theta, y
-
-
     def init_samples(self, train_file=None, test_file=None,
                      ntrain=None, ntest=None, sampler=None):
         """
@@ -249,12 +229,6 @@ class SurrogateModel(object):
         self.scaler_y = StandardScaler()
         yT = self.y.reshape(1,-1).T
         self.scaler_y.fit(yT)
-
-        # Save the scaled training data to arrays
-        self.theta_, self.y_ = self.scale_data(self.theta, self.y)
-
-        # Save the scaled test data to arrays
-        self.theta_test_, self.y_test_ = self.scale_data(self.theta_test, self.y_test)
 
         
     def init_gp(self, kernel=None, fit_amp=True, fit_mean=True, 
@@ -367,13 +341,13 @@ class SurrogateModel(object):
         self.white_noise = white_noise
         
         warnings.simplefilter("ignore")
-        self.gp = gp_utils.fit_gp(self.theta_, self.y_, self.kernel, 
+        self.gp = gp_utils.fit_gp(self.theta, self.y, self.kernel, 
                                   fit_amp=fit_amp, fit_mean=fit_mean,
                                   fit_white_noise=fit_white_noise,
                                   white_noise=self.white_noise)
 
         t0 = time.time()
-        self.gp = gp_utils.optimize_gp(self.gp, self.theta_, self.y_,
+        self.gp = gp_utils.optimize_gp(self.gp, self.theta, self.y,
                                        gp_hyper_prior=self.gp_hyper_prior)
         tf = time.time()
 
@@ -393,17 +367,10 @@ class SurrogateModel(object):
         :returns ypred: (*float*) GP mean evaluated at ``theta_xs``.
         """
 
-        # reshape data array
         theta_xs = np.asarray(theta_xs).reshape(1,-1)
 
-        # scale the data
-        theta_xs_ = self.scaler_t.transform(theta_xs)
-
         # apply the GP
-        ypred_ = self.gp.predict(self.y_, theta_xs_, return_cov=False)[0]
-
-        # inverse scale the output
-        ypred = self.scaler_y.inverse_transform(ypred_.reshape(1,-1)).flatten()[0]
+        ypred = self.gp.predict(self.y, theta_xs, return_cov=False)[0]
 
         return ypred
 
@@ -418,23 +385,16 @@ class SurrogateModel(object):
             Defaults to 1. Increase to avoid converging to local maxima.
         """
 
-        thetaN_, _ = ut.minimize_objective(self.utility, self.y_, self.gp,
-                                            bounds=self.bounds_,
+        thetaN, _ = ut.minimize_objective(self.utility, self.y, self.gp,
+                                            bounds=self.bounds,
                                             nopt=nopt,
                                             # t0=self.theta_[np.argmax(self.y_)],
-                                            t0=None,
-                                            args=(self.y_, self.gp, self.bounds_))
-
-        # unscale theta
-        thetaN = self.scaler_t.inverse_transform(thetaN_.reshape(1,-1)).flatten()
+                                            args=(self.y, self.gp, self.bounds))
 
         # evaluate function at the optimized theta
         yN = self.fn(thetaN)
 
-        # scale y
-        yN_ = self.scaler_y.transform(yN.reshape(1,-1)).flatten()
-
-        return thetaN_, yN_, thetaN, yN
+        return thetaN, yN
 
 
     def active_train(self, niter=100, algorithm="bape", gp_opt_freq=10): 
@@ -483,20 +443,17 @@ class SurrogateModel(object):
             while True:
                 # Find next training point!
                 opt_obj_t0 = time.time()
-                thetaN_, yN_, thetaN, yN = self.find_next_point()
+                thetaN, yN = self.find_next_point()
                 opt_obj_tf = time.time()
 
                 # add theta and y to training sample
-                theta_prop_ = np.append(self.theta_, [thetaN_], axis=0)
-                y_prop_ = np.append(self.y_, yN_)
-
                 theta_prop = np.append(self.theta, [thetaN], axis=0)
                 y_prop = np.append(self.y, yN)
 
                 try:
                     fit_gp_t0 = time.time()
                     # Fit GP. Make sure to feed in previous iteration hyperparameters!
-                    gp = gp_utils.fit_gp(theta_prop_, y_prop_, self.kernel,
+                    gp = gp_utils.fit_gp(theta_prop, y_prop, self.kernel,
                                          hyperparameters=self.gp.get_parameter_vector())
                     fit_gp_tf = time.time()
                     break
@@ -509,9 +466,6 @@ class SurrogateModel(object):
                         print(msg)
 
             # If proposed (theta, y) did not cause fitting issues, save to surrogate model obj
-            self.theta_ = theta_prop_
-            self.y_ = y_prop_
-
             self.theta = theta_prop
             self.y = y_prop
 
@@ -521,13 +475,17 @@ class SurrogateModel(object):
             self.train_runtime = time.time() - train_t0 
 
             # evaluate gp training error (scaled)
-            ypred_ = self.gp.predict(self.y_, self.theta_, return_cov=False, return_var=False)
-            training_error = np.mean((self.y_ - ypred_)**2)
+            ypred = self.gp.predict(self.y, self.theta, return_cov=False, return_var=False)
+            ypred_ = self.scaler_y.transform(ypred.reshape(1,-1).T).flatten()
+            y_ = self.scaler_y.transform(self.y.reshape(1,-1).T).flatten()
+            training_error = np.mean((y_ - ypred_)**2)
 
             # evaluate gp test error (scaled)
             if hasattr(self, 'theta_test') and hasattr(self, 'y_test'):
-                ytest_ = self.gp.predict(self.y_, self.theta_test_, return_cov=False, return_var=False)
-                test_error = np.mean((self.y_test_ - ytest_)**2)
+                ytest = self.gp.predict(self.y, self.theta_test, return_cov=False, return_var=False)
+                ytest_ = self.scaler_y.transform(ytest.reshape(1,-1).T).flatten()
+                y_test_ = self.scaler_y.transform(self.y_test.reshape(1,-1).T).flatten()
+                test_error = np.mean((y_test_ - ytest_)**2)
             else:
                 test_error = np.nan
 
@@ -546,7 +504,7 @@ class SurrogateModel(object):
             # Optimize GP?
             if ii % self.gp_opt_freq == 0:
                 t0 = time.time()
-                gp = gp_utils.optimize_gp(gp, self.theta_, self.y_,
+                gp = gp_utils.optimize_gp(gp, self.theta, self.y,
                                           gp_hyper_prior=self.gp_hyper_prior)
                 tf = time.time()
                 if self.verbose:

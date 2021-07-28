@@ -270,6 +270,7 @@ def bape_utility(theta, y, gp, bounds):
         print("Invalid util value.  Negative variance or inf mu?")
         raise ValueError("util: %e. mu: %e. var: %e" % (util, mu, var))
 
+    # print(theta, util)
     # print(mu, var, logsubexp(var, 0.0), util)
     # print('theta:', theta, 'util', util)
 
