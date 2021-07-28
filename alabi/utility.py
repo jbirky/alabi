@@ -20,6 +20,7 @@ import tqdm
 __all__ = ["agp_utility", 
            "bape_utility", 
            "jones_utility",
+           "assign_utility",
            "minimize_objective", 
            "prior_sampler", 
            "eval_fn", 
@@ -259,8 +260,8 @@ def bape_utility(theta, y, gp, bounds):
     else:
         raise RuntimeError("ERROR: Need to compute GP before using it!")
 
-    if var <= 0:
-        return np.inf
+    # if var <= 0:
+    #     return np.inf
 
     try:
         util = -((2.0 * mu + var) + logsubexp(var, 0.0))
@@ -326,6 +327,25 @@ def jones_utility(theta, y, gp, zeta=0.01):
         raise ValueError("util: %e. mu: %e. var: %e" % (util, mu, var))
 
     return util
+
+
+def assign_utility(algorithm):
+
+    # Assign utility function
+    if algorithm == "bape":
+        utility = bape_utility
+    elif algorithm == "agp":
+        utility = agp_utility
+    elif algorithm == "alternate":
+        # If alternate, AGP on even, BAPE on odd
+        utility = agp_utility
+    elif algorithm == "jones":
+        utility = jones_utility
+    else:
+        errMsg = "Unknown algorithm. Valid options: bape, agp, jones, or alternate."
+        raise ValueError(errMsg)
+
+    return utility
 
 
 def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",

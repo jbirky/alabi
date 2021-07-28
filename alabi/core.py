@@ -448,23 +448,10 @@ class SurrogateModel(object):
 
         # Set algorithm
         self.algorithm = str(algorithm).lower()
+        self.utility = ut.assign_utility(self.algorithm)
 
         # GP hyperparameter optimization frequency
         self.gp_opt_freq = gp_opt_freq
-
-        # Assign utility function
-        if self.algorithm == "bape":
-            self.utility = ut.bape_utility
-        elif self.algorithm == "agp":
-            self.utility = ut.agp_utility
-        elif self.algorithm == "alternate":
-            # If alternate, AGP on even, BAPE on odd
-            self.utility = ut.agp_utility
-        elif self.algorithm == "jones":
-            self.utility = ut.jones_utility
-        else:
-            errMsg = "Unknown algorithm. Valid options: bape, agp, jones, or alternate."
-            raise ValueError(errMsg)
 
         if hasattr(self, 'training_results') == False:
             self.training_results = {"iteration" : [], 
