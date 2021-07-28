@@ -163,9 +163,9 @@ def plot_gp_fit_2D(sm, ngrid=60, title="GP fit"):
     im = plt.contourf(X, Y, Z, 20, cmap='Blues_r')
     plt.colorbar(im)
     plt.scatter(sm.theta.T[0], sm.theta.T[1], color='red', edgecolor='none', 
-                s=12, label='initial training')
-    plt.scatter(sm.theta0.T[0], sm.theta0.T[1], color='#1cc202', edgecolor='none', 
                 s=12, label=f'{sm.algorithm} training')
+    plt.scatter(sm.theta0.T[0], sm.theta0.T[1], color='#1cc202', edgecolor='none', 
+                s=12, label='initial training')
     plt.title(title, fontsize=22)
     plt.legend(loc='best')
     plt.tight_layout()
