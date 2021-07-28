@@ -38,10 +38,11 @@ def plot_error_vs_iteration(sm, log=False, title="GP fit"):
     plt.plot(sm.training_results["iteration"], sm.training_results["test_error"], 
                 label='test error')
     plt.xlabel('iteration', fontsize=18)
-    plt.ylabel('MSE', fontsize=18)
+    plt.ylabel('Scaled MSE', fontsize=18)
     plt.legend(loc='best', fontsize=14)
     plt.minorticks_on()
     plt.title(title, fontsize=22)
+    plt.tight_layout()
     if log:
         plt.yscale('log')
         plt.savefig(f"{sm.savedir}/gp_error_vs_iteration_log.png")
@@ -68,6 +69,7 @@ def plot_hyperparam_vs_iteration(sm, title="GP fit"):
     plt.minorticks_on()
     plt.legend(loc='best')
     plt.title(title, fontsize=22)
+    plt.tight_layout()
     plt.savefig(f"{sm.savedir}/gp_hyperparameters_vs_iteration.png")
     plt.close()
 
@@ -83,6 +85,7 @@ def plot_train_time_vs_iteration(sm, title="GP fit"):
     plt.legend(loc='best', fontsize=14)
     plt.title(title, fontsize=22)
     plt.minorticks_on()
+    plt.tight_layout()
     plt.savefig(f"{sm.savedir}/gp_train_time_vs_iteration.png")
     plt.close()
 
@@ -95,6 +98,7 @@ def plot_train_sample_vs_iteration(sm):
     plt.xlabel('iteration', fontsize=18)
     plt.ylabel(r'$-\ln P$', fontsize=18)
     plt.minorticks_on()
+    plt.tight_layout()
     plt.savefig(f"{sm.savedir}/gp_train_sample_vs_iteration.png")
     plt.close()
 
@@ -138,6 +142,7 @@ def plot_gp_fit_1D(sm, title="GP fit"):
     plt.scatter(sm.theta_test, sm.y_test, color='g')
     plt.xlim(sm.bounds[0])
     plt.title(title, fontsize=22)
+    plt.tight_layout()
     plt.savefig(f"{sm.savedir}/gp_fit_1D.png")
     plt.close()
 
@@ -157,8 +162,13 @@ def plot_gp_fit_2D(sm, ngrid=60, title="GP fit"):
         
     im = plt.contourf(X, Y, Z, 20, cmap='Blues_r')
     plt.colorbar(im)
-    plt.scatter(sm.theta.T[0], sm.theta.T[1], color='r', s=5)
+    plt.scatter(sm.theta.T[0], sm.theta.T[1], color='red', edgecolor='none', 
+                s=12, label='initial training')
+    plt.scatter(sm.theta0.T[0], sm.theta0.T[1], color='#1cc202', edgecolor='none', 
+                s=12, label=f'{sm.algorithm} training')
     plt.title(title, fontsize=22)
+    plt.legend(loc='best')
+    plt.tight_layout()
     plt.savefig(f"{sm.savedir}/gp_fit_2D.png")
     plt.close()
 
@@ -181,6 +191,7 @@ def plot_true_fit_2D(fn, bounds, savedir, ngrid=60):
     plt.title("True function", fontsize=22)
     if not os.path.exists(savedir):
         os.makedirs(savedir)
+    plt.tight_layout()
     plt.savefig(f"{savedir}/true_function_2D.png")
     plt.close()
 
