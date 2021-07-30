@@ -5,13 +5,15 @@
 
 import numpy as np
 from scipy.optimize import rosen
+from scipy.interpolate import interp2d
 import math
 
 __all__ = ["test1d",
            "rosenbrock",
            "gaussian_shells",
            "eggbox", 
-           "multimodal"]
+           "multimodal",
+           "logo"]
 
 
 # ================================
@@ -95,3 +97,25 @@ multimodal_bounds = [(0,5), (0,5)]
 
 multimodal = {"fn": multimodal_fn,
               "bounds": multimodal_bounds}
+
+
+# ================================
+# Logo (2D)
+# ================================
+
+def logo_fn(theta):
+    data = np.loadtxt('../benchmark/logo.txt')
+
+    x = np.arange(data.shape[1])
+    y = np.arange(data.shape[0])
+    X, Y = np.meshgrid(x, y)
+    Z = data[::-1,::]
+
+    f = interp2d(x, y, Z, kind='linear')
+
+    return f(theta[0], theta[1])[0]
+
+logo_bounds = [(0,355), (0,132)]
+
+logo = {"fn": logo_fn,
+        "bounds": logo_bounds}
