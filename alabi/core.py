@@ -68,9 +68,6 @@ class SurrogateModel(object):
         # Determine dimensionality 
         self.ndim = len(self.bounds)
 
-        # Unit cube scaled bounds
-        self.bounds_ = [(0,1) for i in range(self.ndim)]
-
         # Cache surrogate model as pickle
         self.cache = cache 
 
@@ -550,7 +547,9 @@ class SurrogateModel(object):
 
         theta = np.asarray(theta).reshape(1,-1)
 
-        return self.evaluate(theta) + self.lnprior(theta)
+        lnp = self.evaluate(theta) + self.lnprior(theta)
+
+        return lnp
 
 
     def run_emcee(self, lnprior=None, nwalkers=None, nsteps=int(5e4), sampler_kwargs={}, run_kwargs={},
@@ -631,25 +630,25 @@ class SurrogateModel(object):
 
         # Run the sampler!
         emcee_t0 = time.time()
-        sampler = emcee.EnsembleSampler(self.nwalkers, 
+        self.sampler = emcee.EnsembleSampler(self.nwalkers, 
                                         self.ndim, 
                                         self.lnprob, 
                                         pool=pool,
                                         **sampler_kwargs)
 
-        sampler.run_mcmc(p0, self.nsteps, progress=True, **run_kwargs)
+        self.sampler.run_mcmc(p0, self.nsteps, progress=True, **run_kwargs)
 
         # record emcee runtime
         self.emcee_runtime = time.time() - emcee_t0
 
         # burn, thin, and flatten samples
-        self.iburn, self.ithin = mcmc_utils.estimateBurnin(sampler, verbose=self.verbose)
-        self.emcee_samples_full = sampler.get_chain()
-        self.emcee_samples = sampler.get_chain(discard=self.iburn, flat=True, thin=self.ithin) 
+        self.iburn, self.ithin = mcmc_utils.estimateBurnin(self.sampler, verbose=self.verbose)
+        self.emcee_samples_full = self.sampler.get_chain()
+        self.emcee_samples = self.sampler.get_chain(discard=self.iburn, flat=True, thin=self.ithin) 
 
         # get acceptance fraction and autocorrelation time
-        self.acc_frac = np.mean(sampler.acceptance_fraction)
-        self.autcorr_time = np.mean(sampler.get_autocorr_time())
+        self.acc_frac = np.mean(self.sampler.acceptance_fraction)
+        self.autcorr_time = np.mean(self.sampler.get_autocorr_time())
         if self.verbose:
             print(f"Total samples: {self.emcee_samples.shape[0]}")
             print("Mean acceptance fraction: {0:.3f}".format(self.acc_frac))
@@ -659,7 +658,8 @@ class SurrogateModel(object):
         self.emcee_run = True
 
         # close pool
-        pool.close()
+        if pool is not None:
+            pool.close()
 
         if self.cache:
             self.save()
@@ -668,7 +668,7 @@ class SurrogateModel(object):
 
     
     def run_dynesty(self, ptform=None, sampler_kwargs={}, run_kwargs={},
-                     multi_proc=True, ptform_comment=None):
+                     multi_proc=False, ptform_comment=None):
         """
         Use the ``dynesty`` nested-sampling MCMC package to sample the trained GP surrogate model.
         https://github.com/joshspeagle/dynesty
@@ -746,7 +746,8 @@ class SurrogateModel(object):
         self.dynesty_run = True
 
         # close pool
-        pool.close()
+        if pool is not None:
+            pool.close()
 
         if self.cache:
             self.save()
