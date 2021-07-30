@@ -239,9 +239,6 @@
         <span class="c1"># Determine dimensionality </span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span>
 
-        <span class="c1"># Unit cube scaled bounds</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">bounds_</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ndim</span><span class="p">)]</span>
-
         <span class="c1"># Cache surrogate model as pickle</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cache</span> <span class="o">=</span> <span class="n">cache</span> 
 
@@ -347,26 +344,6 @@
             <span class="n">np</span><span class="o">.</span><span class="n">savez</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{self.savedir}</span><span class="s2">/initial_test_sample.npz"</span><span class="p">,</span> <span class="n">theta</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">theta_test</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">y_test</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="SurrogateModel.scale_data"><a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.scale_data">[docs]</a>    <span class="k">def</span> <span class="nf">scale_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-
-        <span class="n">theta_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_t</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
-
-        <span class="n">yT</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
-        <span class="n">y_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">yT</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
-
-        <span class="k">return</span> <span class="n">theta_</span><span class="p">,</span> <span class="n">y_</span></div>
-
-
-<div class="viewcode-block" id="SurrogateModel.unscale_data"><a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.unscale_data">[docs]</a>    <span class="k">def</span> <span class="nf">unscale_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta_</span><span class="p">,</span> <span class="n">y_</span><span class="p">):</span>
-
-        <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_t</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">theta_</span><span class="p">)</span>
-
-        <span class="n">yT_</span> <span class="o">=</span> <span class="n">y_</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
-        <span class="n">y</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">yT_</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
-
-        <span class="k">return</span> <span class="n">theta</span><span class="p">,</span> <span class="n">y</span></div>
-
-
 <div class="viewcode-block" id="SurrogateModel.init_samples"><a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.init_samples">[docs]</a>    <span class="k">def</span> <span class="nf">init_samples</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">test_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                      <span class="n">ntrain</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ntest</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">"""</span>
@@ -419,13 +396,7 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">()</span>
         <span class="n">yT</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">yT</span><span class="p">)</span>
-
-        <span class="c1"># Save the scaled training data to arrays</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
-
-        <span class="c1"># Save the scaled test data to arrays</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">theta_test_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_test_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta_test</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_test</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">yT</span><span class="p">)</span></div>
 
         
 <div class="viewcode-block" id="SurrogateModel.init_gp"><a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.init_gp">[docs]</a>    <span class="k">def</span> <span class="nf">init_gp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kernel</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fit_amp</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fit_mean</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> 
@@ -538,13 +509,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">white_noise</span> <span class="o">=</span> <span class="n">white_noise</span>
         
         <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">"ignore"</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gp</span> <span class="o">=</span> <span class="n">gp_utils</span><span class="o">.</span><span class="n">fit_gp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="p">,</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">gp</span> <span class="o">=</span> <span class="n">gp_utils</span><span class="o">.</span><span class="n">fit_gp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="p">,</span> 
                                   <span class="n">fit_amp</span><span class="o">=</span><span class="n">fit_amp</span><span class="p">,</span> <span class="n">fit_mean</span><span class="o">=</span><span class="n">fit_mean</span><span class="p">,</span>
                                   <span class="n">fit_white_noise</span><span class="o">=</span><span class="n">fit_white_noise</span><span class="p">,</span>
                                   <span class="n">white_noise</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">white_noise</span><span class="p">)</span>
 
         <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">gp</span> <span class="o">=</span> <span class="n">gp_utils</span><span class="o">.</span><span class="n">optimize_gp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gp</span> <span class="o">=</span> <span class="n">gp_utils</span><span class="o">.</span><span class="n">optimize_gp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
                                        <span class="n">gp_hyper_prior</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gp_hyper_prior</span><span class="p">)</span>
         <span class="n">tf</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
@@ -564,17 +535,10 @@
 <span class="sd">        :returns ypred: (*float*) GP mean evaluated at ``theta_xs``.</span>
 <span class="sd">        """</span>
 
-        <span class="c1"># reshape data array</span>
         <span class="n">theta_xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta_xs</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="c1"># scale the data</span>
-        <span class="n">theta_xs_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_t</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">theta_xs</span><span class="p">)</span>
-
         <span class="c1"># apply the GP</span>
-        <span class="n">ypred_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_</span><span class="p">,</span> <span class="n">theta_xs_</span><span class="p">,</span> <span class="n">return_cov</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-
-        <span class="c1"># inverse scale the output</span>
-        <span class="n">ypred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">ypred_</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">ypred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">theta_xs</span><span class="p">,</span> <span class="n">return_cov</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="n">ypred</span></div>
 
@@ -589,23 +553,16 @@
 <span class="sd">            Defaults to 1. Increase to avoid converging to local maxima.</span>
 <span class="sd">        """</span>
 
-        <span class="n">thetaN_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">minimize_objective</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">utility</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gp</span><span class="p">,</span>
-                                            <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds_</span><span class="p">,</span>
+        <span class="n">thetaN</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">minimize_objective</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">utility</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gp</span><span class="p">,</span>
+                                            <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
                                             <span class="n">nopt</span><span class="o">=</span><span class="n">nopt</span><span class="p">,</span>
                                             <span class="c1"># t0=self.theta_[np.argmax(self.y_)],</span>
-                                            <span class="n">t0</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                                            <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds_</span><span class="p">))</span>
-
-        <span class="c1"># unscale theta</span>
-        <span class="n">thetaN</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_t</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">thetaN_</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+                                            <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">))</span>
 
         <span class="c1"># evaluate function at the optimized theta</span>
         <span class="n">yN</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fn</span><span class="p">(</span><span class="n">thetaN</span><span class="p">)</span>
 
-        <span class="c1"># scale y</span>
-        <span class="n">yN_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">yN</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
-
-        <span class="k">return</span> <span class="n">thetaN_</span><span class="p">,</span> <span class="n">yN_</span><span class="p">,</span> <span class="n">thetaN</span><span class="p">,</span> <span class="n">yN</span></div>
+        <span class="k">return</span> <span class="n">thetaN</span><span class="p">,</span> <span class="n">yN</span></div>
 
 
 <div class="viewcode-block" id="SurrogateModel.active_train"><a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.active_train">[docs]</a>    <span class="k">def</span> <span class="nf">active_train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">niter</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s2">"bape"</span><span class="p">,</span> <span class="n">gp_opt_freq</span><span class="o">=</span><span class="mi">10</span><span class="p">):</span> 
@@ -619,23 +576,10 @@
 
         <span class="c1"># Set algorithm</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">algorithm</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">utility</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">assign_utility</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span><span class="p">)</span>
 
         <span class="c1"># GP hyperparameter optimization frequency</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gp_opt_freq</span> <span class="o">=</span> <span class="n">gp_opt_freq</span>
-
-        <span class="c1"># Assign utility function</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">==</span> <span class="s2">"bape"</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">utility</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">bape_utility</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">==</span> <span class="s2">"agp"</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">utility</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">agp_utility</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">==</span> <span class="s2">"alternate"</span><span class="p">:</span>
-            <span class="c1"># If alternate, AGP on even, BAPE on odd</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">utility</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">agp_utility</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span> <span class="o">==</span> <span class="s2">"jones"</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">utility</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">jones_utility</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">errMsg</span> <span class="o">=</span> <span class="s2">"Unknown algorithm. Valid options: bape, agp, jones, or alternate."</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">errMsg</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">'training_results'</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">training_results</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"iteration"</span> <span class="p">:</span> <span class="p">[],</span> 
@@ -667,20 +611,17 @@
             <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
                 <span class="c1"># Find next training point!</span>
                 <span class="n">opt_obj_t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-                <span class="n">thetaN_</span><span class="p">,</span> <span class="n">yN_</span><span class="p">,</span> <span class="n">thetaN</span><span class="p">,</span> <span class="n">yN</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_next_point</span><span class="p">()</span>
+                <span class="n">thetaN</span><span class="p">,</span> <span class="n">yN</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_next_point</span><span class="p">()</span>
                 <span class="n">opt_obj_tf</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
                 <span class="c1"># add theta and y to training sample</span>
-                <span class="n">theta_prop_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta_</span><span class="p">,</span> <span class="p">[</span><span class="n">thetaN_</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-                <span class="n">y_prop_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_</span><span class="p">,</span> <span class="n">yN_</span><span class="p">)</span>
-
                 <span class="n">theta_prop</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="p">[</span><span class="n">thetaN</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
                 <span class="n">y_prop</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">yN</span><span class="p">)</span>
 
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">fit_gp_t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
                     <span class="c1"># Fit GP. Make sure to feed in previous iteration hyperparameters!</span>
-                    <span class="n">gp</span> <span class="o">=</span> <span class="n">gp_utils</span><span class="o">.</span><span class="n">fit_gp</span><span class="p">(</span><span class="n">theta_prop_</span><span class="p">,</span> <span class="n">y_prop_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="p">,</span>
+                    <span class="n">gp</span> <span class="o">=</span> <span class="n">gp_utils</span><span class="o">.</span><span class="n">fit_gp</span><span class="p">(</span><span class="n">theta_prop</span><span class="p">,</span> <span class="n">y_prop</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="p">,</span>
                                          <span class="n">hyperparameters</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gp</span><span class="o">.</span><span class="n">get_parameter_vector</span><span class="p">())</span>
                     <span class="n">fit_gp_tf</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
                     <span class="k">break</span>
@@ -693,9 +634,6 @@
                         <span class="nb">print</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
             <span class="c1"># If proposed (theta, y) did not cause fitting issues, save to surrogate model obj</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span> <span class="o">=</span> <span class="n">theta_prop_</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">y_</span> <span class="o">=</span> <span class="n">y_prop_</span>
-
             <span class="bp">self</span><span class="o">.</span><span class="n">theta</span> <span class="o">=</span> <span class="n">theta_prop</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">y_prop</span>
 
@@ -705,13 +643,17 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">train_runtime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">train_t0</span> 
 
             <span class="c1"># evaluate gp training error (scaled)</span>
-            <span class="n">ypred_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span><span class="p">,</span> <span class="n">return_cov</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">return_var</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-            <span class="n">training_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">y_</span> <span class="o">-</span> <span class="n">ypred_</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">ypred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">return_cov</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">return_var</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">ypred_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">ypred</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="n">y_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="n">training_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">y_</span> <span class="o">-</span> <span class="n">ypred_</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
 
             <span class="c1"># evaluate gp test error (scaled)</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">'theta_test'</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">'y_test'</span><span class="p">):</span>
-                <span class="n">ytest_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_test_</span><span class="p">,</span> <span class="n">return_cov</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">return_var</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-                <span class="n">test_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">y_test_</span> <span class="o">-</span> <span class="n">ytest_</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+                <span class="n">ytest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_test</span><span class="p">,</span> <span class="n">return_cov</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">return_var</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">ytest_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">ytest</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+                <span class="n">y_test_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scaler_y</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y_test</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+                <span class="n">test_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">y_test_</span> <span class="o">-</span> <span class="n">ytest_</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">test_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
 
@@ -730,7 +672,7 @@
             <span class="c1"># Optimize GP?</span>
             <span class="k">if</span> <span class="n">ii</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">gp_opt_freq</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-                <span class="n">gp</span> <span class="o">=</span> <span class="n">gp_utils</span><span class="o">.</span><span class="n">optimize_gp</span><span class="p">(</span><span class="n">gp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_</span><span class="p">,</span>
+                <span class="n">gp</span> <span class="o">=</span> <span class="n">gp_utils</span><span class="o">.</span><span class="n">optimize_gp</span><span class="p">(</span><span class="n">gp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
                                           <span class="n">gp_hyper_prior</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gp_hyper_prior</span><span class="p">)</span>
                 <span class="n">tf</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
@@ -776,7 +718,9 @@
 
         <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">lnprior</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span></div>
+        <span class="n">lnp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">lnprior</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">lnp</span></div>
 
 
 <div class="viewcode-block" id="SurrogateModel.run_emcee"><a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.run_emcee">[docs]</a>    <span class="k">def</span> <span class="nf">run_emcee</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lnprior</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nwalkers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nsteps</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">5e4</span><span class="p">),</span> <span class="n">sampler_kwargs</span><span class="o">=</span><span class="p">{},</span> <span class="n">run_kwargs</span><span class="o">=</span><span class="p">{},</span>
@@ -857,25 +801,25 @@
 
         <span class="c1"># Run the sampler!</span>
         <span class="n">emcee_t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
-        <span class="n">sampler</span> <span class="o">=</span> <span class="n">emcee</span><span class="o">.</span><span class="n">EnsembleSampler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nwalkers</span><span class="p">,</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span> <span class="o">=</span> <span class="n">emcee</span><span class="o">.</span><span class="n">EnsembleSampler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nwalkers</span><span class="p">,</span> 
                                         <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span><span class="p">,</span> 
                                         <span class="bp">self</span><span class="o">.</span><span class="n">lnprob</span><span class="p">,</span> 
                                         <span class="n">pool</span><span class="o">=</span><span class="n">pool</span><span class="p">,</span>
                                         <span class="o">**</span><span class="n">sampler_kwargs</span><span class="p">)</span>
 
-        <span class="n">sampler</span><span class="o">.</span><span class="n">run_mcmc</span><span class="p">(</span><span class="n">p0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nsteps</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">run_kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">run_mcmc</span><span class="p">(</span><span class="n">p0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nsteps</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">run_kwargs</span><span class="p">)</span>
 
         <span class="c1"># record emcee runtime</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">emcee_runtime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">emcee_t0</span>
 
         <span class="c1"># burn, thin, and flatten samples</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">iburn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ithin</span> <span class="o">=</span> <span class="n">mcmc_utils</span><span class="o">.</span><span class="n">estimateBurnin</span><span class="p">(</span><span class="n">sampler</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">emcee_samples_full</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">get_chain</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">emcee_samples</span> <span class="o">=</span> <span class="n">sampler</span><span class="o">.</span><span class="n">get_chain</span><span class="p">(</span><span class="n">discard</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">iburn</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">thin</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ithin</span><span class="p">)</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">iburn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ithin</span> <span class="o">=</span> <span class="n">mcmc_utils</span><span class="o">.</span><span class="n">estimateBurnin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emcee_samples_full</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">get_chain</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emcee_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">get_chain</span><span class="p">(</span><span class="n">discard</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">iburn</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">thin</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ithin</span><span class="p">)</span> 
 
         <span class="c1"># get acceptance fraction and autocorrelation time</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">acc_frac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sampler</span><span class="o">.</span><span class="n">acceptance_fraction</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">autcorr_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">sampler</span><span class="o">.</span><span class="n">get_autocorr_time</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">acc_frac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">acceptance_fraction</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">autcorr_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sampler</span><span class="o">.</span><span class="n">get_autocorr_time</span><span class="p">())</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total samples: </span><span class="si">{self.emcee_samples.shape[0]}</span><span class="s2">"</span><span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">"Mean acceptance fraction: </span><span class="si">{0:.3f}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acc_frac</span><span class="p">))</span>
@@ -885,7 +829,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">emcee_run</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="c1"># close pool</span>
-        <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">pool</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
@@ -894,7 +839,7 @@
 
     
 <div class="viewcode-block" id="SurrogateModel.run_dynesty"><a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.run_dynesty">[docs]</a>    <span class="k">def</span> <span class="nf">run_dynesty</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ptform</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sampler_kwargs</span><span class="o">=</span><span class="p">{},</span> <span class="n">run_kwargs</span><span class="o">=</span><span class="p">{},</span>
-                     <span class="n">multi_proc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ptform_comment</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                     <span class="n">multi_proc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">ptform_comment</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">"""</span>
 <span class="sd">        Use the ``dynesty`` nested-sampling MCMC package to sample the trained GP surrogate model.</span>
 <span class="sd">        https://github.com/joshspeagle/dynesty</span>
@@ -972,7 +917,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">dynesty_run</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="c1"># close pool</span>
-        <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">pool</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>

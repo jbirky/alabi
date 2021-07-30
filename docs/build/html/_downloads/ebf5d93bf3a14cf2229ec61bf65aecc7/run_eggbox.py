@@ -11,7 +11,7 @@ from alabi.core import SurrogateModel
 from alabi.benchmarks import eggbox
 import alabi.visualization as vis
 
-kernel = "ExpSquaredKernel"
+kernel = "Matern52Kernel"
 benchmark = "eggbox"
 
 vis.plot_true_fit_2D(eval(benchmark)["fn"], eval(benchmark)["bounds"], 
@@ -48,28 +48,28 @@ sm.active_train(niter=200, algorithm="bape", gp_opt_freq=20)
 sm.plot(plots=["gp_error", "gp_hyperparam", "gp_timing", "gp_fit_2D"])
 
 # %%
-# .. admonition:: results/eggbox/ExpSquaredKernel/gp_error_vs_iteration.png
+# .. admonition:: results/eggbox/Matern52Kernel/gp_error_vs_iteration.png
 #    :class: dropdown, tip
 # 
-#    .. image:: ../../examples/results/eggbox/ExpSquaredKernel/gp_error_vs_iteration.png
+#    .. image:: ../../examples/results/eggbox/Matern52Kernel/gp_error_vs_iteration.png
 
 # %%
-# .. admonition:: results/eggbox/ExpSquaredKernel/gp_hyperparameters_vs_iteration.png
+# .. admonition:: results/eggbox/Matern52Kernel/gp_hyperparameters_vs_iteration.png
 #    :class: dropdown, tip
 # 
-#    .. image:: ../../examples/results/eggbox/ExpSquaredKernel/gp_hyperparameters_vs_iteration.png
+#    .. image:: ../../examples/results/eggbox/Matern52Kernel/gp_hyperparameters_vs_iteration.png
 
 # %%
-# .. admonition:: results/eggbox/ExpSquaredKernel/gp_train_time_vs_iteration.png
+# .. admonition:: results/eggbox/Matern52Kernel/gp_train_time_vs_iteration.png
 #    :class: dropdown, tip
 # 
-#    .. image:: ../../examples/results/eggbox/ExpSquaredKernel/gp_train_time_vs_iteration.png
+#    .. image:: ../../examples/results/eggbox/Matern52Kernel/gp_train_time_vs_iteration.png
 
 # %%
-# .. admonition:: results/eggbox/ExpSquaredKernel/gp_fit_2D.png
+# .. admonition:: results/eggbox/Matern52Kernel/gp_fit_2D.png
 #    :class: dropdown, tip
 # 
-#    .. image:: ../../examples/results/eggbox/ExpSquaredKernel/gp_fit_2D.png
+#    .. image:: ../../examples/results/eggbox/Matern52Kernel/gp_fit_2D.png
 
 
 # %%
@@ -91,7 +91,7 @@ sm.run_dynesty()
 sm.plot(plots=["dynesty_all"])
 
 # %%
-# .. admonition:: results/eggbox/ExpSquaredKernel/dynesty_posterior_kde.png
+# .. admonition:: results/eggbox/Matern52Kernel/dynesty_posterior_kde.png
 #    :class: dropdown, tip
 # 
-#    .. image:: ../../examples/results/eggbox/ExpSquaredKernel/dynesty_posterior_kde.png
+#    .. image:: ../../examples/results/eggbox/Matern52Kernel/dynesty_posterior_kde.png

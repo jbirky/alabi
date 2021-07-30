@@ -191,6 +191,7 @@
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"agp_utility"</span><span class="p">,</span> 
            <span class="s2">"bape_utility"</span><span class="p">,</span> 
            <span class="s2">"jones_utility"</span><span class="p">,</span>
+           <span class="s2">"assign_utility"</span><span class="p">,</span>
            <span class="s2">"minimize_objective"</span><span class="p">,</span> 
            <span class="s2">"prior_sampler"</span><span class="p">,</span> 
            <span class="s2">"eval_fn"</span><span class="p">,</span> 
@@ -430,8 +431,8 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"ERROR: Need to compute GP before using it!"</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">var</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    <span class="c1"># if var &lt;= 0:</span>
+    <span class="c1">#     return np.inf</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">util</span> <span class="o">=</span> <span class="o">-</span><span class="p">((</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">var</span><span class="p">)</span> <span class="o">+</span> <span class="n">logsubexp</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
@@ -440,6 +441,7 @@
         <span class="nb">print</span><span class="p">(</span><span class="s2">"Invalid util value.  Negative variance or inf mu?"</span><span class="p">)</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"util: </span><span class="si">%e</span><span class="s2">. mu: </span><span class="si">%e</span><span class="s2">. var: </span><span class="si">%e</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">util</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">var</span><span class="p">))</span>
 
+    <span class="c1"># print(theta, util)</span>
     <span class="c1"># print(mu, var, logsubexp(var, 0.0), util)</span>
     <span class="c1"># print('theta:', theta, 'util', util)</span>
 
@@ -451,7 +453,7 @@
 <span class="sd">    Jones utility function - Expected Improvement derived in Jones et al. (1998)</span>
 
 <span class="sd">    .. math::</span>
-<span class="sd">        \\mu(x_*) = E(max(f(\\theta) - f(\\theta_{best}),0)) </span>
+<span class="sd">        EI(x_*) = E(max(f(\\theta) - f(\\theta_{best}),0)) </span>
 <span class="sd">        </span>
 <span class="sd">    where f(theta_best) is the best value of the function so far and </span>
 <span class="sd">    theta_best is the best design point</span>
@@ -497,6 +499,25 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"util: </span><span class="si">%e</span><span class="s2">. mu: </span><span class="si">%e</span><span class="s2">. var: </span><span class="si">%e</span><span class="s2">"</span> <span class="o">%</span> <span class="p">(</span><span class="n">util</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">var</span><span class="p">))</span>
 
     <span class="k">return</span> <span class="n">util</span></div>
+
+
+<div class="viewcode-block" id="assign_utility"><a class="viewcode-back" href="../../alabi.html#alabi.utility.assign_utility">[docs]</a><span class="k">def</span> <span class="nf">assign_utility</span><span class="p">(</span><span class="n">algorithm</span><span class="p">):</span>
+
+    <span class="c1"># Assign utility function</span>
+    <span class="k">if</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s2">"bape"</span><span class="p">:</span>
+        <span class="n">utility</span> <span class="o">=</span> <span class="n">bape_utility</span>
+    <span class="k">elif</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s2">"agp"</span><span class="p">:</span>
+        <span class="n">utility</span> <span class="o">=</span> <span class="n">agp_utility</span>
+    <span class="k">elif</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s2">"alternate"</span><span class="p">:</span>
+        <span class="c1"># If alternate, AGP on even, BAPE on odd</span>
+        <span class="n">utility</span> <span class="o">=</span> <span class="n">agp_utility</span>
+    <span class="k">elif</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s2">"jones"</span><span class="p">:</span>
+        <span class="n">utility</span> <span class="o">=</span> <span class="n">jones_utility</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">errMsg</span> <span class="o">=</span> <span class="s2">"Unknown algorithm. Valid options: bape, agp, jones, or alternate."</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">errMsg</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">utility</span></div>
 
 
 <div class="viewcode-block" id="minimize_objective"><a class="viewcode-back" href="../../alabi.html#alabi.utility.minimize_objective">[docs]</a><span class="k">def</span> <span class="nf">minimize_objective</span><span class="p">(</span><span class="n">obj_fn</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nopt</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">"nelder-mead"</span><span class="p">,</span>

@@ -17,14 +17,14 @@ Number of test samples: 50
 Results: 
 -------- 
 GP final hyperparameters: 
-   [mean:value] 	-1.4285555081915942 
-   [kernel:k1:log_constant] 	11.974832220353308 
-   [kernel:k2:metric:log_M_0_0] 	0.28389110292099495 
-   [kernel:k2:metric:log_M_1_1] 	6.953601851332223 
+   [mean:value] 	-351.57677812307185 
+   [kernel:k1:log_constant] 	19.96345250793646 
+   [kernel:k2:metric:log_M_0_0] 	4.108817144128704 
+   [kernel:k2:metric:log_M_1_1] 	10.685711577127162 
 
-Active learning train runtime (s): 27.0 
+Active learning train runtime (s): 32.0 
 
-Final test error: 8.128303113409325e-08 
+Final test error: 6.983188122301213e-11 
 
 ==================================================================
 emcee summary 
@@ -41,15 +41,35 @@ Number of steps per walker: 50000.0
 
 Results: 
 -------- 
-Mean acceptance fraction: 0.536 
-Mean autocorrelation time: 109.003 steps 
-Burn: 298 
-Thin: 34 
-Total burned, thinned, flattened samples: 29220 
+Mean acceptance fraction: 0.537 
+Mean autocorrelation time: 103.362 steps 
+Burn: 283 
+Thin: 32 
+Total burned, thinned, flattened samples: 31060 
 
-emcee runtime (s): 312.0 
+emcee runtime (s): 164.0 
 
 Summary statistics: 
-$\theta_0$ = 0.04385030138947118 +/- 1.2894604365656461 
-$\theta_1$ = 1.6088354592534668 +/- 1.59302807400553 
+$\theta_0$ = 0.026610668791184944 +/- 1.285364898591619 
+$\theta_1$ = 1.6045050611610934 +/- 1.5819167305791952 
+
+==================================================================
+dynesty summary 
+==================================================================
+
+Configuration: 
+-------------- 
+Prior: Default uniform prior transform. 
+Prior function: ut.prior_transform_uniform
+	with bounds [(-5, 5), (-5, 5)] 
+
+Results: 
+-------- 
+Total weighted samples: 19821 
+
+Dynesty runtime (s): 88.0 
+
+Summary statistics: 
+$\theta_0$ = 0.025619653671739965 +/- 1.2874494431271166 
+$\theta_1$ = 1.612686618670693 +/- 1.57376747276874 
 
