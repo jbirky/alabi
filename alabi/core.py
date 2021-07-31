@@ -667,7 +667,7 @@ class SurrogateModel(object):
             np.savez(f"{self.savedir}/emcee_samples_final.npz", samples=self.emcee_samples)
 
     
-    def run_dynesty(self, ptform=None, sampler_kwargs={}, run_kwargs={},
+    def run_dynesty(self, ptform=None, mode='dynamic', sampler_kwargs={}, run_kwargs={},
                      multi_proc=False, ptform_comment=None):
         """
         Use the ``dynesty`` nested-sampling MCMC package to sample the trained GP surrogate model.
@@ -688,6 +688,7 @@ class SurrogateModel(object):
         """
 
         import dynesty
+        from dynesty import NestedSampler
         from dynesty import DynamicNestedSampler
         from dynesty import utils as dyfunc
 
@@ -724,11 +725,23 @@ class SurrogateModel(object):
         dynesty_t0 = time.time()
 
         # initialize our nested sampler
-        dsampler = DynamicNestedSampler(self.evaluate, 
-                                        self.ptform, 
-                                        self.ndim,
-                                        pool=pool,
-                                        **sampler_kwargs)
+        if mode == 'dynamic':
+            dsampler = DynamicNestedSampler(self.evaluate, 
+                                            self.ptform, 
+                                            self.ndim,
+                                            pool=pool,
+                                            **sampler_kwargs)
+            print("Initialized dynesty DynamicNestedSampler.")
+        elif mode == 'static':
+            dsampler = NestedSampler(self.evaluate, 
+                                     self.ptform, 
+                                     self.ndim,
+                                     pool=pool,
+                                     **sampler_kwargs)
+            print("Initialized dynesty NestedSampler.")
+        else:
+            raise ValueError(f"mode {mode} is not a valid option. Choose 'dynamic' or 'static'.")
+
 
         dsampler.run_nested(**run_kwargs)
         self.res = dsampler.results
