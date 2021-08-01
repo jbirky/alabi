@@ -631,10 +631,10 @@ class SurrogateModel(object):
         # Run the sampler!
         emcee_t0 = time.time()
         self.sampler = emcee.EnsembleSampler(self.nwalkers, 
-                                        self.ndim, 
-                                        self.lnprob, 
-                                        pool=pool,
-                                        **sampler_kwargs)
+                                             self.ndim, 
+                                             self.lnprob, 
+                                             pool=pool,
+                                             **sampler_kwargs)
 
         self.sampler.run_mcmc(p0, self.nsteps, progress=True, **run_kwargs)
 
@@ -642,7 +642,7 @@ class SurrogateModel(object):
         self.emcee_runtime = time.time() - emcee_t0
 
         # burn, thin, and flatten samples
-        self.iburn, self.ithin = mcmc_utils.estimateBurnin(self.sampler, verbose=self.verbose)
+        self.iburn, self.ithin = mcmc_utils.estimate_burnin(self.sampler, verbose=self.verbose)
         self.emcee_samples_full = self.sampler.get_chain()
         self.emcee_samples = self.sampler.get_chain(discard=self.iburn, flat=True, thin=self.ithin) 
 
@@ -668,7 +668,7 @@ class SurrogateModel(object):
 
     
     def run_dynesty(self, ptform=None, mode='dynamic', sampler_kwargs={}, run_kwargs={},
-                     multi_proc=False, ptform_comment=None):
+                    multi_proc=False, ptform_comment=None):
         """
         Use the ``dynesty`` nested-sampling MCMC package to sample the trained GP surrogate model.
         https://github.com/joshspeagle/dynesty

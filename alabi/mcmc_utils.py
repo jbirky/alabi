@@ -5,14 +5,14 @@
 
 import numpy as np
 
-__all__ = ["estimateBurnin"]
+__all__ = ["estimate_burnin"]
 
 
 # ================================
 # emcee utils
 # ================================
 
-def estimateBurnin(sampler, estBurnin=True, thinChains=True, verbose=False):
+def estimate_burnin(sampler, est_burnin=True, thin_chains=True, verbose=False):
     """
     Estimate the integrated autocorrelation length on the MCMC chain associated
     with an emcee sampler object. With the integrated autocorrelation length,
@@ -22,12 +22,12 @@ def estimateBurnin(sampler, estBurnin=True, thinChains=True, verbose=False):
 
     :param sampler: (*emcee.EnsembleSampler, optional*)
         emcee MCMC sampler object/backend handler, given a complete chain
-    :param estBurnin: (*bool, optional*)
+    :param est_burnin: (*bool, optional*)
         Estimate burn-in time using integrated autocorrelation time
         heuristic.  Defaults to True. In general, we recommend users
         inspect the chains and calculate the burnin after the fact to ensure
         convergence, but this function works pretty well.
-    :param thinChains: (*bool, optional*)
+    :param thin_chains: (*bool, optional*)
         Whether or not to thin chains.  Useful if running long chains.
         Defaults to True.  If true, estimates a thin cadence
         via int(0.5*np.min(tau)) where tau is the intergrated autocorrelation
@@ -36,9 +36,9 @@ def estimateBurnin(sampler, estBurnin=True, thinChains=True, verbose=False):
         Output all the diagnostics? Defaults to False.
 
     :returns iburn: (*int*)
-        burn-in index estimate.  If estBurnin == False, returns 0.
+        burn-in index estimate.  If est_burnin == False, returns 0.
     :returns ithin: (*int*)
-        thin cadence estimate.  If thinChains == False, returns 1.
+        thin cadence estimate.  If thin_chains == False, returns 1.
     """
 
     # Set tol = 0 so it always returns an answer
@@ -55,13 +55,13 @@ def estimateBurnin(sampler, estBurnin=True, thinChains=True, verbose=False):
             tau = 1
 
     # Estimate burn-in?
-    if estBurnin:
+    if est_burnin:
         iburn = int(2.0*np.max(tau))
     else:
         iburn = 0
 
     # Thin chains?
-    if thinChains:
+    if thin_chains:
         ithin = np.max((int(0.5*np.min(tau)), 1))
     else:
         ithin = 1
