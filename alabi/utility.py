@@ -101,12 +101,15 @@ def eval_fn(fn, theta, ncore=mp.cpu_count()):
             y[ii] = fn(tt)
     else:
         with mp.Pool(ncore) as p:
-            y = np.array(p.map(fn, theta)).squeeze()
+            y = np.array(p.map(fn, theta))
 
     tf = time.time()
     print(f"Computed {len(theta)} function evaluations: {np.round(tf - t0)}s \n")
 
-    return y
+    try:
+        return y.squeeze()
+    except:
+        return y
 
 
 def lnprior_uniform(x, bounds):
@@ -115,7 +118,7 @@ def lnprior_uniform(x, bounds):
     if ndim == 1:
         x = np.array([x])
     else:
-        x = x.squeeze()
+        x = np.array(x).squeeze()
 
     lnp = 0
     for i in range(ndim):
