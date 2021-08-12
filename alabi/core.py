@@ -183,8 +183,8 @@ class SurrogateModel(object):
         self.y_test = sims["y"]
 
 
-    def init_samples(self, train_file=None, test_file=None,
-                     ntrain=None, ntest=None, sampler=None, reload=True):
+    def init_samples(self, train_file=None, test_file=None, reload=False,
+                     ntrain=None, ntest=None, sampler=None):
         """
         Draw set of initial training samples and test samples. 
         To load cached samples from a numpy zip file from a previous run, 
@@ -197,6 +197,10 @@ class SurrogateModel(object):
 
         :param test_file: (*str, optional*)
             Path to cached training samples. E.g. ``test_file='results/initial_test_sample.npz'``
+
+        :param reload: (*bool, optional*)
+            Attempt to load cached samples from default cache files? 
+            Will not be used if user specifies ``train_file`` or ``test_file``. Defaults to False.
 
         :param ntrain: (*int, optional*)
             Number of training samples to compute.
