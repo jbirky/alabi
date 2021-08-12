@@ -21,6 +21,7 @@ from dynesty import plotting as dyplot
 __all__ = ["plot_error_vs_iteration", 
            "plot_hyperparam_vs_iteration", 
            "plot_train_time_vs_iteration",
+           "plot_corner_lnp",
            "plot_corner_scatter",
            "plot_train_sample_vs_iteration",
            "plot_gp_fit_1D",
@@ -103,7 +104,7 @@ def plot_train_sample_vs_iteration(sm):
     plt.close()
 
 
-def plot_corner_scatter(sm):
+def plot_corner_lnp(sm):
 
     yy = -sm.y 
 
@@ -127,6 +128,25 @@ def plot_corner_scatter(sm):
     cb.set_ticks(cb_rng)
     cb.ax.tick_params(labelsize=18)
     fig.savefig(f"{sm.savedir}/gp_training_sample_corner.png")
+    plt.close()
+
+
+def plot_corner_scatter(sm):
+
+    yy = -sm.y 
+
+    fig = corner.corner(sm.theta[0:sm.ninit_train], labels=sm.labels, 
+            plot_datapoints=True, plot_density=False, plot_contours=False,
+            show_titles=True, title_kwargs={"fontsize": 18}, color='b',
+            label_kwargs={"fontsize": 22}, data_kwargs={'alpha':1.0})
+
+    fig = corner.corner(sm.theta[sm.ninit_train:], labels=sm.labels, 
+            plot_datapoints=True, plot_density=False, plot_contours=False,
+            show_titles=True, title_kwargs={"fontsize": 18}, color='r',
+            label_kwargs={"fontsize": 22}, data_kwargs={'alpha':1.0},
+            fig=fig)
+
+    fig.savefig(f"{sm.savedir}/gp_training_sample_scatter.png")
     plt.close()
 
 

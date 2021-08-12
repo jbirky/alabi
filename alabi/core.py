@@ -834,6 +834,13 @@ class SurrogateModel(object):
         if "gp_train_corner" in plots:  
             if hasattr(self, "theta") and hasattr(self, "y"):
                 print("Plotting training sample corner plot...")
+                vis.plot_corner_lnp(self)
+            else:
+                raise NameError("Must run init_train and/or active_train before plotting gp_train_corner.")
+
+        if "gp_train_scatter" in plots:  
+            if hasattr(self, "theta") and hasattr(self, "y"):
+                print("Plotting training sample corner plot...")
                 vis.plot_corner_scatter(self)
             else:
                 raise NameError("Must run init_train and/or active_train before plotting gp_train_corner.")
