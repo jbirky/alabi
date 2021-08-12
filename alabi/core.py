@@ -141,11 +141,6 @@ class SurrogateModel(object):
         self.theta = self.theta0
         self.y = self.y0
 
-        # record number of training samples
-        self.ninit_train = len(self.theta0)
-        self.ntrain = self.ninit_train
-        self.nactive = 0
-
         if self.cache:
             np.savez(f"{self.savedir}/initial_training_sample.npz", theta=self.theta, y=self.y)
 
@@ -166,15 +161,30 @@ class SurrogateModel(object):
         self.theta_test = ut.prior_sampler(nsample=nsample, bounds=self.bounds, sampler=sampler)
         self.y_test = ut.eval_fn(self.fn, self.theta_test, ncore=self.ncore)
 
-        # record number of test samples
-        self.ntest = len(self.theta_test)
-
         if self.cache:
             np.savez(f"{self.savedir}/initial_test_sample.npz", theta=self.theta_test, y=self.y_test)
 
 
+    def load_train(self, cache_file):
+
+        print(f"Loading training sample from {cache_file}...")
+        sims = np.load(cache_file)
+        self.theta0 = sims["theta"]
+        self.y0 = sims["y"]
+        self.theta = self.theta0
+        self.y = self.y0
+
+
+    def load_test(self, cache_file):
+
+        print(f"Loading test sample from {cache_file}...")
+        sims = np.load(cache_file)
+        self.theta_test = sims["theta"]
+        self.y_test = sims["y"]
+
+
     def init_samples(self, train_file=None, test_file=None,
-                     ntrain=None, ntest=None, sampler=None):
+                     ntrain=None, ntest=None, sampler=None, reload=True):
         """
         Draw set of initial training samples and test samples. 
         To load cached samples from a numpy zip file from a previous run, 
@@ -196,28 +206,38 @@ class SurrogateModel(object):
         """
 
         if train_file is not None:
-            sims = np.load(f"{self.savedir}/{train_file}")
-            self.theta0 = sims["theta"]
-            self.y0 = sims["y"]
-            self.theta = self.theta0
-            self.y = self.y0
-
-            # record number of training samples
-            self.ninit_train = len(self.theta0)
-            self.ntrain = self.ninit_train
-            self.nactive = 0
+            self.load_train(f"{self.savedir}/{train_file}")  
         else:
-            self.init_train(nsample=ntrain)
+            if reload == True:
+                try:
+                    cache_file = f"{self.savedir}/initial_training_sample.npz"
+                    self.load_train(cache_file)
+                except:
+                    print(f"Unable to reload {cache_file}. Computing new samples...")
+                    self.init_train(nsample=ntrain)
+            else:
+                self.init_train(nsample=ntrain)
 
         if test_file is not None:
-            sims = np.load(f"{self.savedir}/{test_file}")
-            self.theta_test = sims["theta"]
-            self.y_test = sims["y"]
-
-            # record number of test samples
-            self.ntest = len(self.theta_test)
+            self.load_test(f"{self.savedir}/{test_file}")
         else:
-            self.init_test(nsample=ntest)
+            if reload == True:
+                try:
+                    cache_file = f"{self.savedir}/initial_test_sample.npz"
+                    self.load_test(cache_file)
+                except:
+                    print(f"Unable to reload {cache_file}. Computing new samples...")
+                    self.init_test(nsample=ntest)
+            else:
+                self.init_test(nsample=ntest)
+
+        # record number of training samples
+        self.ninit_train = len(self.theta0)
+        self.ntrain = self.ninit_train
+        self.nactive = 0
+
+        # record number of test samples
+        self.ntest = len(self.theta_test)
 
         # Create scaling function using the training sample
         self.scaler_t = MinMaxScaler()
