@@ -394,13 +394,15 @@ class SurrogateModel(object):
         return thetaN, yN
 
 
-    def active_train(self, niter=100, algorithm="bape", gp_opt_freq=10): 
+    def active_train(self, niter=100, algorithm="bape", gp_opt_freq=10, save_progress=True): 
         """
         :param niter: (*int, optional*)
 
         :param algorithm: (*str, optional*) 
 
         :param gp_opt_freq: (*int, optional*)
+
+        :param save_progress: (*bool, optional*)
         """
 
         # Set algorithm
@@ -498,6 +500,11 @@ class SurrogateModel(object):
             self.training_results["gp_train_time"].append(fit_gp_tf - fit_gp_t0)
             self.training_results["obj_fn_opt_time"].append(opt_obj_tf - opt_obj_t0)
 
+            # record total number of training samples
+            self.ntrain = len(self.theta)
+            # number of active training samples
+            self.nactive = self.ntrain - self.ninit_train
+
             # Optimize GP?
             if ii % self.gp_opt_freq == 0:
                 t0 = time.time()
@@ -507,11 +514,10 @@ class SurrogateModel(object):
                 if self.verbose:
                     print(f"optimized hyperparameters: ({np.round(tf - t0, 1)}s)")
                     print(self.gp.get_parameter_vector())
-
-        # record total number of training samples
-        self.ntrain = len(self.theta)
-        # number of active training samples
-        self.nactive = self.ntrain - self.ninit_train
+                
+                if (save_progress == True) and (ii != 0):
+                    self.save()
+                    self.plot(plots=["gp_error", "gp_hyperparam", "gp_train_scatter"])
 
         if self.cache:
             self.save()
@@ -838,6 +844,7 @@ class SurrogateModel(object):
             else:
                 raise NameError("Must run init_train and/or active_train before plotting gp_train_corner.")
 
+        # N-D scatterplots and histograms
         if "gp_train_scatter" in plots:  
             if hasattr(self, "theta") and hasattr(self, "y"):
                 print("Plotting training sample corner plot...")
