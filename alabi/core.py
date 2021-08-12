@@ -831,7 +831,9 @@ class SurrogateModel(object):
         # ================================
 
         if "gp_all" in plots:
-            gp_plots = ["gp_error", "gp_hyperparam", "gp_timing", "gp_train_corner"]
+            gp_plots = ["gp_error", "gp_hyperparam", "gp_timing", "gp_train_corner", "gp_train_scatter"]
+            if self.ndim == 2:
+                gp_plots.append("gp_fit_2D")
             for pl in gp_plots:
                 plots.append(pl)
 
