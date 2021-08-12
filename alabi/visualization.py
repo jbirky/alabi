@@ -111,7 +111,7 @@ def plot_corner_lnp(sm):
     fig = corner.corner(sm.theta, c=yy, labels=sm.labels, 
             plot_datapoints=False, plot_density=False, plot_contours=False,
             show_titles=True, title_kwargs={"fontsize": 18}, 
-            label_kwargs={"fontsize": 22})
+            label_kwargs={"fontsize": 22}, data_kwargs={'alpha':1.0})
 
     axes = np.array(fig.axes).reshape((sm.ndim, sm.ndim))
     cb_rng = [yy.min(), yy.max()]
@@ -120,7 +120,8 @@ def plot_corner_lnp(sm):
         for xi in range(yi):
             ax = axes[yi, xi]
             im = ax.scatter(sm.theta.T[xi], sm.theta.T[yi], c=yy, s=2, cmap='coolwarm', 
-                            norm=colors.LogNorm(vmin=min(cb_rng), vmax=max(cb_rng)))
+                            norm=colors.LogNorm(vmin=min(cb_rng), vmax=max(cb_rng)),
+                            alpha=1.0)
 
     cb = fig.colorbar(im, ax=axes.ravel().tolist(), orientation='vertical', anchor=(0,1), 
                         shrink=.7, pad=.1)
