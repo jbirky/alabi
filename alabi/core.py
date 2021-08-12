@@ -141,11 +141,6 @@ class SurrogateModel(object):
         self.theta = self.theta0
         self.y = self.y0
 
-        # record number of training samples
-        self.ninit_train = len(self.theta0)
-        self.ntrain = self.ninit_train
-        self.nactive = 0
-
         if self.cache:
             np.savez(f"{self.savedir}/initial_training_sample.npz", theta=self.theta, y=self.y)
 
@@ -166,15 +161,30 @@ class SurrogateModel(object):
         self.theta_test = ut.prior_sampler(nsample=nsample, bounds=self.bounds, sampler=sampler)
         self.y_test = ut.eval_fn(self.fn, self.theta_test, ncore=self.ncore)
 
-        # record number of test samples
-        self.ntest = len(self.theta_test)
-
         if self.cache:
             np.savez(f"{self.savedir}/initial_test_sample.npz", theta=self.theta_test, y=self.y_test)
 
 
+    def load_train(self, cache_file):
+
+        print(f"Loading training sample from {cache_file}...")
+        sims = np.load(cache_file)
+        self.theta0 = sims["theta"]
+        self.y0 = sims["y"]
+        self.theta = self.theta0
+        self.y = self.y0
+
+
+    def load_test(self, cache_file):
+
+        print(f"Loading test sample from {cache_file}...")
+        sims = np.load(cache_file)
+        self.theta_test = sims["theta"]
+        self.y_test = sims["y"]
+
+
     def init_samples(self, train_file=None, test_file=None,
-                     ntrain=None, ntest=None, sampler=None):
+                     ntrain=None, ntest=None, sampler=None, reload=True):
         """
         Draw set of initial training samples and test samples. 
         To load cached samples from a numpy zip file from a previous run, 
@@ -196,28 +206,38 @@ class SurrogateModel(object):
         """
 
         if train_file is not None:
-            sims = np.load(f"{self.savedir}/{train_file}")
-            self.theta0 = sims["theta"]
-            self.y0 = sims["y"]
-            self.theta = self.theta0
-            self.y = self.y0
-
-            # record number of training samples
-            self.ninit_train = len(self.theta0)
-            self.ntrain = self.ninit_train
-            self.nactive = 0
+            self.load_train(f"{self.savedir}/{train_file}")  
         else:
-            self.init_train(nsample=ntrain)
+            if reload == True:
+                try:
+                    cache_file = f"{self.savedir}/initial_training_sample.npz"
+                    self.load_train(cache_file)
+                except:
+                    print(f"Unable to reload {cache_file}. Computing new samples...")
+                    self.init_train(nsample=ntrain)
+            else:
+                self.init_train(nsample=ntrain)
 
         if test_file is not None:
-            sims = np.load(f"{self.savedir}/{test_file}")
-            self.theta_test = sims["theta"]
-            self.y_test = sims["y"]
-
-            # record number of test samples
-            self.ntest = len(self.theta_test)
+            self.load_test(f"{self.savedir}/{test_file}")
         else:
-            self.init_test(nsample=ntest)
+            if reload == True:
+                try:
+                    cache_file = f"{self.savedir}/initial_test_sample.npz"
+                    self.load_test(cache_file)
+                except:
+                    print(f"Unable to reload {cache_file}. Computing new samples...")
+                    self.init_test(nsample=ntest)
+            else:
+                self.init_test(nsample=ntest)
+
+        # record number of training samples
+        self.ninit_train = len(self.theta0)
+        self.ntrain = self.ninit_train
+        self.nactive = 0
+
+        # record number of test samples
+        self.ntest = len(self.theta_test)
 
         # Create scaling function using the training sample
         self.scaler_t = MinMaxScaler()
@@ -394,13 +414,15 @@ class SurrogateModel(object):
         return thetaN, yN
 
 
-    def active_train(self, niter=100, algorithm="bape", gp_opt_freq=10): 
+    def active_train(self, niter=100, algorithm="bape", gp_opt_freq=10, save_progress=True): 
         """
         :param niter: (*int, optional*)
 
         :param algorithm: (*str, optional*) 
 
         :param gp_opt_freq: (*int, optional*)
+
+        :param save_progress: (*bool, optional*)
         """
 
         # Set algorithm
@@ -498,6 +520,11 @@ class SurrogateModel(object):
             self.training_results["gp_train_time"].append(fit_gp_tf - fit_gp_t0)
             self.training_results["obj_fn_opt_time"].append(opt_obj_tf - opt_obj_t0)
 
+            # record total number of training samples
+            self.ntrain = len(self.theta)
+            # number of active training samples
+            self.nactive = self.ntrain - self.ninit_train
+
             # Optimize GP?
             if ii % self.gp_opt_freq == 0:
                 t0 = time.time()
@@ -507,11 +534,10 @@ class SurrogateModel(object):
                 if self.verbose:
                     print(f"optimized hyperparameters: ({np.round(tf - t0, 1)}s)")
                     print(self.gp.get_parameter_vector())
-
-        # record total number of training samples
-        self.ntrain = len(self.theta)
-        # number of active training samples
-        self.nactive = self.ntrain - self.ninit_train
+                
+                if (save_progress == True) and (ii != 0):
+                    self.save()
+                    self.plot(plots=["gp_error", "gp_hyperparam", "gp_train_scatter"])
 
         if self.cache:
             self.save()
@@ -631,10 +657,10 @@ class SurrogateModel(object):
         # Run the sampler!
         emcee_t0 = time.time()
         self.sampler = emcee.EnsembleSampler(self.nwalkers, 
-                                        self.ndim, 
-                                        self.lnprob, 
-                                        pool=pool,
-                                        **sampler_kwargs)
+                                             self.ndim, 
+                                             self.lnprob, 
+                                             pool=pool,
+                                             **sampler_kwargs)
 
         self.sampler.run_mcmc(p0, self.nsteps, progress=True, **run_kwargs)
 
@@ -642,7 +668,7 @@ class SurrogateModel(object):
         self.emcee_runtime = time.time() - emcee_t0
 
         # burn, thin, and flatten samples
-        self.iburn, self.ithin = mcmc_utils.estimateBurnin(self.sampler, verbose=self.verbose)
+        self.iburn, self.ithin = mcmc_utils.estimate_burnin(self.sampler, verbose=self.verbose)
         self.emcee_samples_full = self.sampler.get_chain()
         self.emcee_samples = self.sampler.get_chain(discard=self.iburn, flat=True, thin=self.ithin) 
 
@@ -667,8 +693,8 @@ class SurrogateModel(object):
             np.savez(f"{self.savedir}/emcee_samples_final.npz", samples=self.emcee_samples)
 
     
-    def run_dynesty(self, ptform=None, sampler_kwargs={}, run_kwargs={},
-                     multi_proc=False, ptform_comment=None):
+    def run_dynesty(self, ptform=None, mode='dynamic', sampler_kwargs={}, run_kwargs={},
+                    multi_proc=False, ptform_comment=None):
         """
         Use the ``dynesty`` nested-sampling MCMC package to sample the trained GP surrogate model.
         https://github.com/joshspeagle/dynesty
@@ -688,6 +714,7 @@ class SurrogateModel(object):
         """
 
         import dynesty
+        from dynesty import NestedSampler
         from dynesty import DynamicNestedSampler
         from dynesty import utils as dyfunc
 
@@ -724,11 +751,23 @@ class SurrogateModel(object):
         dynesty_t0 = time.time()
 
         # initialize our nested sampler
-        dsampler = DynamicNestedSampler(self.evaluate, 
-                                        self.ptform, 
-                                        self.ndim,
-                                        pool=pool,
-                                        **sampler_kwargs)
+        if mode == 'dynamic':
+            dsampler = DynamicNestedSampler(self.evaluate, 
+                                            self.ptform, 
+                                            self.ndim,
+                                            pool=pool,
+                                            **sampler_kwargs)
+            print("Initialized dynesty DynamicNestedSampler.")
+        elif mode == 'static':
+            dsampler = NestedSampler(self.evaluate, 
+                                     self.ptform, 
+                                     self.ndim,
+                                     pool=pool,
+                                     **sampler_kwargs)
+            print("Initialized dynesty NestedSampler.")
+        else:
+            raise ValueError(f"mode {mode} is not a valid option. Choose 'dynamic' or 'static'.")
+
 
         dsampler.run_nested(**run_kwargs)
         self.res = dsampler.results
@@ -819,6 +858,14 @@ class SurrogateModel(object):
 
         # N-D scatterplots and histograms colored by function value
         if "gp_train_corner" in plots:  
+            if hasattr(self, "theta") and hasattr(self, "y"):
+                print("Plotting training sample corner plot...")
+                vis.plot_corner_lnp(self)
+            else:
+                raise NameError("Must run init_train and/or active_train before plotting gp_train_corner.")
+
+        # N-D scatterplots and histograms
+        if "gp_train_scatter" in plots:  
             if hasattr(self, "theta") and hasattr(self, "y"):
                 print("Plotting training sample corner plot...")
                 vis.plot_corner_scatter(self)

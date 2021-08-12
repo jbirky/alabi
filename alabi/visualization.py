@@ -6,6 +6,7 @@
 import numpy as np
 import os
 import corner
+import warnings
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib import rc
@@ -21,6 +22,7 @@ from dynesty import plotting as dyplot
 __all__ = ["plot_error_vs_iteration", 
            "plot_hyperparam_vs_iteration", 
            "plot_train_time_vs_iteration",
+           "plot_corner_lnp",
            "plot_corner_scatter",
            "plot_train_sample_vs_iteration",
            "plot_gp_fit_1D",
@@ -103,14 +105,15 @@ def plot_train_sample_vs_iteration(sm):
     plt.close()
 
 
-def plot_corner_scatter(sm):
+def plot_corner_lnp(sm):
 
     yy = -sm.y 
 
+    warnings.simplefilter("ignore")
     fig = corner.corner(sm.theta, c=yy, labels=sm.labels, 
             plot_datapoints=False, plot_density=False, plot_contours=False,
             show_titles=True, title_kwargs={"fontsize": 18}, 
-            label_kwargs={"fontsize": 22})
+            label_kwargs={"fontsize": 22}, data_kwargs={'alpha':1.0})
 
     axes = np.array(fig.axes).reshape((sm.ndim, sm.ndim))
     cb_rng = [yy.min(), yy.max()]
@@ -119,7 +122,8 @@ def plot_corner_scatter(sm):
         for xi in range(yi):
             ax = axes[yi, xi]
             im = ax.scatter(sm.theta.T[xi], sm.theta.T[yi], c=yy, s=2, cmap='coolwarm', 
-                            norm=colors.LogNorm(vmin=min(cb_rng), vmax=max(cb_rng)))
+                            norm=colors.LogNorm(vmin=min(cb_rng), vmax=max(cb_rng)),
+                            alpha=1.0)
 
     cb = fig.colorbar(im, ax=axes.ravel().tolist(), orientation='vertical', anchor=(0,1), 
                         shrink=.7, pad=.1)
@@ -127,6 +131,27 @@ def plot_corner_scatter(sm):
     cb.set_ticks(cb_rng)
     cb.ax.tick_params(labelsize=18)
     fig.savefig(f"{sm.savedir}/gp_training_sample_corner.png")
+    plt.close()
+
+
+def plot_corner_scatter(sm):
+
+    yy = -sm.y 
+
+    warnings.simplefilter("ignore")
+    fig = corner.corner(sm.theta[0:sm.ninit_train], labels=sm.labels, 
+            plot_datapoints=True, plot_density=False, plot_contours=False,
+            show_titles=True, title_kwargs={"fontsize": 18}, color='b',
+            label_kwargs={"fontsize": 22}, data_kwargs={'alpha':1.0})
+
+    if sm.nactive > sm.ndim:
+        fig = corner.corner(sm.theta[sm.ninit_train:], labels=sm.labels, 
+                plot_datapoints=True, plot_density=False, plot_contours=False,
+                show_titles=True, title_kwargs={"fontsize": 18}, color='r',
+                label_kwargs={"fontsize": 22}, data_kwargs={'alpha':1.0},
+                fig=fig)
+
+    fig.savefig(f"{sm.savedir}/gp_training_sample_scatter.png")
     plt.close()
 
 
@@ -198,6 +223,7 @@ def plot_true_fit_2D(fn, bounds, savedir, ngrid=60):
 
 def plot_corner(sm, samples, sampler=""):
 
+    warnings.simplefilter("ignore")
     fig = corner.corner(samples, quantiles=[0.16, 0.5, 0.84], show_titles=True,
                         scale_hist=True, plot_contours=True, labels=sm.labels,
                         title_kwargs={"fontsize": 20}, label_kwargs={"fontsize": 20})
@@ -245,6 +271,7 @@ def plot_mcmc_comparison(sm):
     lw = 1.5
     colors = ["orange", "royalblue"]
 
+    warnings.simplefilter("ignore")
     fig = corner.corner(sm.emcee_samples,  labels=sm.labels, range=sm.bounds,
                     show_titles=True, verbose=False, max_n_ticks=4,
                     plot_contours=True, plot_datapoints=True, plot_density=True,
