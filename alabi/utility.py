@@ -23,6 +23,7 @@ __all__ = ["agp_utility",
            "assign_utility",
            "minimize_objective", 
            "prior_sampler", 
+           "prior_sampler_normal",
            "eval_fn", 
            "lnprior_uniform",
            "prior_transform_uniform",
@@ -89,6 +90,20 @@ def prior_sampler(bounds=None, nsample=1, sampler='uniform'):
         raise ValueError(err_msg)
 
     return np.array(samples) 
+
+
+def prior_sampler_normal(prior_data, bounds, nsample=1):
+
+    ndim = len(bounds)
+
+    rvs = np.zeros((ndim, nsample))
+    for ii in range(ndim):
+        if prior_data[ii][0] is not None:
+            rvs[ii] = truncnorm.rvs(bounds[ii][0], bounds[ii][1], loc=prior_data[ii][0], scale=prior_data[ii][1], size=nsample)
+        else:
+            rvs[ii] = np.random.uniform(low=bounds[ii][0], high=bounds[ii][1], size=nsample)
+    
+    return rvs.T
 
     
 def eval_fn(fn, theta, ncore=mp.cpu_count()):
