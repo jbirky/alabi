@@ -396,7 +396,7 @@ class SurrogateModel(object):
         return ypred
 
 
-    def find_next_point(self, nopt=3):
+    def find_next_point(self, nopt=3, opt_init=False):
         """
         Find next set of ``(theta, y)`` training points by maximizing the
         active learning utility function.
@@ -406,10 +406,15 @@ class SurrogateModel(object):
             Defaults to 1. Increase to avoid converging to local maxima.
         """
 
+        if opt_init:
+            t0 = self.theta[np.argmax(self.y)]
+        else:
+            t0 = None
+
         thetaN, _ = ut.minimize_objective(self.utility, self.y, self.gp,
                                             bounds=self.bounds,
                                             nopt=nopt,
-                                            # t0=self.theta_[np.argmax(self.y_)],
+                                            t0=t0,
                                             args=(self.y, self.gp, self.bounds))
 
         # evaluate function at the optimized theta
@@ -418,7 +423,8 @@ class SurrogateModel(object):
         return thetaN, yN
 
 
-    def active_train(self, niter=100, algorithm="bape", gp_opt_freq=10, save_progress=True): 
+    def active_train(self, niter=100, algorithm="bape", gp_opt_freq=10, save_progress=True,
+                     opt_init=False): 
         """
         :param niter: (*int, optional*)
 
@@ -466,7 +472,7 @@ class SurrogateModel(object):
             while True:
                 # Find next training point!
                 opt_obj_t0 = time.time()
-                thetaN, yN = self.find_next_point()
+                thetaN, yN = self.find_next_point(opt_init=opt_init)
                 opt_obj_tf = time.time()
 
                 # add theta and y to training sample
