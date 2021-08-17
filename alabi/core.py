@@ -66,7 +66,7 @@ class SurrogateModel(object):
         self.bounds = bounds
 
         if prior_sampler is None:
-            self.prior_sampler = partial(ut.prior_sampler, bounds=self.bounds)
+            self.prior_sampler = partial(ut.prior_sampler, bounds=self.bounds, sampler='sobol')
         else:
             self.prior_sampler = prior_sampler
 
@@ -127,7 +127,7 @@ class SurrogateModel(object):
             cache_utils.write_report_dynesty(self, file)
 
 
-    def init_train(self, nsample=None, sampler='sobol'):
+    def init_train(self, nsample=None):
         """
         :param nsample: (*int, optional*) 
             Number of samples. Defaults to ``nsample = 50 * self.ndim``
@@ -151,7 +151,7 @@ class SurrogateModel(object):
             np.savez(f"{self.savedir}/initial_training_sample.npz", theta=self.theta, y=self.y)
 
 
-    def init_test(self, nsample=None, sampler='sobol'):
+    def init_test(self, nsample=None):
         """
         :param nsample: (*int, optional*) 
             Number of samples. Defaults to ``nsample = 50 * self.ndim``

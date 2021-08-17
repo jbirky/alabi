@@ -381,7 +381,7 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
 
     # Get prior sampler
     if ps is None:
-        ps = partialprior_sampler, bounds=bounds)
+        ps = partial(prior_sampler, bounds=bounds)
 
     bound_methods = ["nelder-mead", "l-bfgs", "tnc", "slsqp", "powell", "trust-constr"]
     # scipy >= 1.5 should be installed to use bounds in optimization
