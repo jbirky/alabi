@@ -9,7 +9,7 @@ or computing KL divergences, and the GP utility functions, e.g. the bape utility
 
 import numpy as np
 from scipy.optimize import minimize
-from scipy.stats import norm
+from scipy.stats import norm, truncnorm
 from skopt.space import Space
 from skopt.sampler import Sobol, Lhs, Halton, Hammersly, Grid
 import multiprocessing as mp
@@ -368,7 +368,7 @@ def assign_utility(algorithm):
 
 
 def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
-                       t0=None, args=None, options={}, max_iter=100):
+                       t0=None, ps=None, args=None, options={}, max_iter=100):
     """
     Optimize the active learning objective function
     """
@@ -378,6 +378,10 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
         options["adaptive"] = True
     # options["maxiter"] = 20
     # options["disp"] = True
+
+    # Get prior sampler
+    if ps is None:
+        ps = partialprior_sampler, bounds=bounds)
 
     bound_methods = ["nelder-mead", "l-bfgs", "tnc", "slsqp", "powell", "trust-constr"]
     # scipy >= 1.5 should be installed to use bounds in optimization
@@ -403,7 +407,7 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
         while True:
 
             if t0 is None:
-                t0 = prior_sampler(nsample=1, bounds=bounds)
+                t0 = ps(nsample=1)
 
             # Too many iterations
             if test_iter >= max_iter:
@@ -437,7 +441,7 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
                 print('Utility function optimization infinite fail', x_opt, f_opt)
 
             # Try a new initialization point
-            t0 = prior_sampler(nsample=1, bounds=bounds)
+            t0 = ps(nsample=1)
             
             test_iter += 1
         # end loop

@@ -49,7 +49,7 @@ class SurrogateModel(object):
     :param ncore: (*int, optional*)
     """
 
-    def __init__(self, fn=None, bounds=None, labels=None, 
+    def __init__(self, fn=None, bounds=None, labels=None, prior_sampler=None,
                  cache=True, savedir="results/", model_name="surrogate_model",
                  verbose=True, ncore=mp.cpu_count()):
 
@@ -64,6 +64,11 @@ class SurrogateModel(object):
         self.fn = fn
         
         self.bounds = bounds
+
+        if prior_sampler is None:
+            self.prior_sampler = partial(ut.prior_sampler, bounds=self.bounds)
+        else:
+            self.prior_sampler = prior_sampler
 
         # Determine dimensionality 
         self.ndim = len(self.bounds)
@@ -135,7 +140,8 @@ class SurrogateModel(object):
         if nsample is None:
             nsample = 50 * self.ndim
 
-        self.theta0 = ut.prior_sampler(nsample=nsample, bounds=self.bounds, sampler=sampler)
+        # self.theta0 = ut.prior_sampler(nsample=nsample, bounds=self.bounds, sampler=sampler)
+        self.theta0 = self.prior_sampler(nsample=nsample)
         self.y0 = ut.eval_fn(self.fn, self.theta0, ncore=self.ncore)
 
         self.theta = self.theta0
@@ -158,7 +164,8 @@ class SurrogateModel(object):
         if nsample is None:
             nsample = 50 * self.ndim
 
-        self.theta_test = ut.prior_sampler(nsample=nsample, bounds=self.bounds, sampler=sampler)
+        # self.theta_test = ut.prior_sampler(nsample=nsample, bounds=self.bounds, sampler=sampler)
+        self.theta_test = self.prior_sampler(nsample=nsample)
         self.y_test = ut.eval_fn(self.fn, self.theta_test, ncore=self.ncore)
 
         if self.cache:
@@ -415,6 +422,7 @@ class SurrogateModel(object):
                                             bounds=self.bounds,
                                             nopt=nopt,
                                             t0=t0,
+                                            ps=self.prior_sampler,
                                             args=(self.y, self.gp, self.bounds))
 
         # evaluate function at the optimized theta
