@@ -99,7 +99,9 @@ def prior_sampler_normal(prior_data, bounds, nsample=1):
     rvs = np.zeros((ndim, nsample))
     for ii in range(ndim):
         if prior_data[ii][0] is not None:
-            rvs[ii] = truncnorm.rvs(bounds[ii][0], bounds[ii][1], loc=prior_data[ii][0], scale=prior_data[ii][1], size=nsample)
+            lb = (bounds[ii][0] - prior_data[ii][0]) / prior_data[ii][1]
+            ub = (bounds[ii][1] - prior_data[ii][0]) / prior_data[ii][1]
+            rvs[ii] = truncnorm.rvs(lb, ub, loc=prior_data[ii][0], scale=prior_data[ii][1], size=nsample)
         else:
             rvs[ii] = np.random.uniform(low=bounds[ii][0], high=bounds[ii][1], size=nsample)
     
