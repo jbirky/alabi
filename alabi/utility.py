@@ -206,7 +206,7 @@ def logsubexp(x1, x2):
 #===========================================================
 
 
-def agp_utility(theta, y, gp):
+def agp_utility(theta, y, gp, bounds):
     """
     AGP (Adaptive Gaussian Process) utility function, the entropy of the
     posterior distribution. This is what you maximize to find the next x under
@@ -228,6 +228,9 @@ def agp_utility(theta, y, gp):
     :param util: (*float*)
         utility of theta under the gp
     """
+
+    if not np.isfinite(lnprior_uniform(theta, bounds)):
+        return np.inf
 
     # Only works if the GP object has been computed, otherwise you messed up
     if gp.computed:
@@ -295,7 +298,7 @@ def bape_utility(theta, y, gp, bounds):
     return util
 
 
-def jones_utility(theta, y, gp, zeta=0.01):
+def jones_utility(theta, y, gp, bounds, zeta=0.01):
     """
     Jones utility function - Expected Improvement derived in Jones et al. (1998)
 
@@ -317,6 +320,9 @@ def jones_utility(theta, y, gp, zeta=0.01):
     :param util: (*float*)
         utility of theta under the gp
     """
+
+    if not np.isfinite(lnprior_uniform(theta, bounds)):
+        return np.inf
 
     # Only works if the GP object has been computed, otherwise you messed up
     if gp.computed:
