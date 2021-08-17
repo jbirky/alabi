@@ -191,7 +191,7 @@ class SurrogateModel(object):
 
 
     def init_samples(self, train_file=None, test_file=None, reload=False,
-                     ntrain=None, ntest=None, sampler=None):
+                     ntrain=None, ntest=None, sampler=None, scale=True):
         """
         Draw set of initial training samples and test samples. 
         To load cached samples from a numpy zip file from a previous run, 
@@ -250,13 +250,15 @@ class SurrogateModel(object):
         # record number of test samples
         self.ntest = len(self.theta_test)
 
-        # Create scaling function using the training sample
-        self.scaler_t = MinMaxScaler()
-        self.scaler_t.fit(np.array(self.bounds).T)
+        self.scale = scale
+        if self.scale == True:
+            # Create scaling function using the training sample
+            self.scaler_t = MinMaxScaler()
+            self.scaler_t.fit(np.array(self.bounds).T)
 
-        self.scaler_y = StandardScaler()
-        yT = self.y.reshape(1,-1).T
-        self.scaler_y.fit(yT)
+            self.scaler_y = StandardScaler()
+            yT = self.y.reshape(1,-1).T
+            self.scaler_y.fit(yT)
 
         
     def init_gp(self, kernel=None, fit_amp=True, fit_mean=True, 
@@ -513,16 +515,22 @@ class SurrogateModel(object):
 
             # evaluate gp training error (scaled)
             ypred = self.gp.predict(self.y, self.theta, return_cov=False, return_var=False)
-            ypred_ = self.scaler_y.transform(ypred.reshape(1,-1).T).flatten()
-            y_ = self.scaler_y.transform(self.y.reshape(1,-1).T).flatten()
-            training_error = np.mean((y_ - ypred_)**2)
+            if self.scale == True:
+                ypred_ = self.scaler_y.transform(ypred.reshape(1,-1).T).flatten()
+                y_ = self.scaler_y.transform(self.y.reshape(1,-1).T).flatten()
+                training_error = np.mean((y_ - ypred_)**2)
+            else:
+                training_error = np.mean((y - pred)**2)
 
             # evaluate gp test error (scaled)
             if hasattr(self, 'theta_test') and hasattr(self, 'y_test'):
                 ytest = self.gp.predict(self.y, self.theta_test, return_cov=False, return_var=False)
-                ytest_ = self.scaler_y.transform(ytest.reshape(1,-1).T).flatten()
-                y_test_ = self.scaler_y.transform(self.y_test.reshape(1,-1).T).flatten()
-                test_error = np.mean((y_test_ - ytest_)**2)
+                if self.scale == True:
+                    ytest_ = self.scaler_y.transform(ytest.reshape(1,-1).T).flatten()
+                    y_test_ = self.scaler_y.transform(self.y_test.reshape(1,-1).T).flatten()
+                    test_error = np.mean((y_test_ - ytest_)**2)
+                else:
+                    test_error = np.mean((y_test - ytest)**2)
             else:
                 test_error = np.nan
 
