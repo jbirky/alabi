@@ -140,7 +140,6 @@ class SurrogateModel(object):
         if nsample is None:
             nsample = 50 * self.ndim
 
-        # self.theta0 = ut.prior_sampler(nsample=nsample, bounds=self.bounds, sampler=sampler)
         self.theta0 = self.prior_sampler(nsample=nsample)
         self.y0 = ut.eval_fn(self.fn, self.theta0, ncore=self.ncore)
 
@@ -164,7 +163,6 @@ class SurrogateModel(object):
         if nsample is None:
             nsample = 50 * self.ndim
 
-        # self.theta_test = ut.prior_sampler(nsample=nsample, bounds=self.bounds, sampler=sampler)
         self.theta_test = self.prior_sampler(nsample=nsample)
         self.y_test = ut.eval_fn(self.fn, self.theta_test, ncore=self.ncore)
 
@@ -369,11 +367,16 @@ class SurrogateModel(object):
 
         # save white noise to obj
         self.white_noise = white_noise
+        self.fit_white_noise = fit_white_noise
+
+        # save amplitude and mean hyperparameter choices
+        self.fit_amp = fit_amp
+        self.fit_mean = fit_mean
         
         warnings.simplefilter("ignore")
         self.gp = gp_utils.fit_gp(self.theta, self.y, self.kernel, 
-                                  fit_amp=fit_amp, fit_mean=fit_mean,
-                                  fit_white_noise=fit_white_noise,
+                                  fit_amp=self.fit_amp, fit_mean=self.fit_mean,
+                                  fit_white_noise=self.fit_white_noise,
                                   white_noise=self.white_noise)
 
         t0 = time.time()
@@ -479,30 +482,23 @@ class SurrogateModel(object):
                 else:
                     self.utility = ut.bape_utility
 
-            while True:
-                # Find next training point!
-                opt_obj_t0 = time.time()
-                thetaN, yN = self.find_next_point(opt_init=opt_init)
-                opt_obj_tf = time.time()
+            # Find next training point!
+            opt_obj_t0 = time.time()
+            thetaN, yN = self.find_next_point(opt_init=opt_init)
+            opt_obj_tf = time.time()
 
-                # add theta and y to training sample
-                theta_prop = np.append(self.theta, [thetaN], axis=0)
-                y_prop = np.append(self.y, yN)
+            # add theta and y to training sample
+            theta_prop = np.append(self.theta, [thetaN], axis=0)
+            y_prop = np.append(self.y, yN)
 
-                try:
-                    fit_gp_t0 = time.time()
-                    # Fit GP. Make sure to feed in previous iteration hyperparameters!
-                    gp = gp_utils.fit_gp(theta_prop, y_prop, self.kernel,
-                                         hyperparameters=self.gp.get_parameter_vector())
-                    fit_gp_tf = time.time()
-                    break
-
-                except:
-                    if self.verbose:
-                        msg = "Warning: GP fit failed. Likely covariance matrix was not positive definite. "
-                        msg += "Attempting another training sample... "
-                        msg += "If this issue persists, try adjusting the white_noise or expanding the hyperparameter prior"
-                        print(msg)
+            fit_gp_t0 = time.time()
+            # Fit GP. Make sure to feed in previous iteration hyperparameters!
+            gp = gp_utils.fit_gp(theta_prop, y_prop, self.kernel,
+                                    hyperparameters=self.gp.get_parameter_vector(),
+                                    fit_amp=self.fit_amp, fit_mean=self.fit_mean,
+                                    fit_white_noise=self.fit_white_noise,
+                                    white_noise=self.white_noise)
+            fit_gp_tf = time.time()
 
             # If proposed (theta, y) did not cause fitting issues, save to surrogate model obj
             self.theta = theta_prop
