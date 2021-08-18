@@ -376,7 +376,7 @@ def assign_utility(algorithm):
 
 
 def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
-                       t0=None, ps=None, args=None, options={}, max_iter=100):
+                       t0=None, ps=None, args=None, options=None, max_iter=100):
     """
     Optimize the active learning objective function
     """
