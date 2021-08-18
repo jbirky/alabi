@@ -8,6 +8,7 @@ or computing KL divergences, and the GP utility functions, e.g. the bape utility
 """
 
 import numpy as np
+import scipy
 from scipy.optimize import minimize
 from scipy.stats import norm, truncnorm
 from skopt.space import Space
