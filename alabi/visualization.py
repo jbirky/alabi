@@ -65,13 +65,13 @@ def plot_hyperparam_vs_iteration(sm, title="GP fit"):
         for ii in range(1, len(hp_names)):
             ax1.plot(sm.training_results["iteration"], hp_values.T[ii], 
                     label=hp_names[ii].replace('_', ' '))
-        ax1.tick_params(axis='y', labelcolor='tab:blue')
+        ax1.tick_params(axis='y')
 
         # plot mean on separate axis
         ax2 = ax1.twinx()
-        ax2.set_ylabel('mean hyperparameter', color='k', fontsize=18)  
-        ax2.plot(sm.training_results["iteration"], hp_values.T[0], color='k')
-        ax2.tick_params(axis='y', labelcolor='k')
+        ax2.set_ylabel('mean hyperparameter', color='grey', fontsize=18)  
+        ax2.plot(sm.training_results["iteration"], hp_values.T[0], color='grey')
+        ax2.tick_params(axis='y', labelcolor='grey')
     else:
         for ii, name in enumerate(hp_names):
             ax1.plot(sm.training_results["iteration"], hp_values.T[ii], 
