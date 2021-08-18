@@ -382,7 +382,9 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
     """
 
     # Initialize options
-    if str(method).lower() == "nelder-mead" and options is None:
+    if options is None:
+        options = {}
+    if str(method).lower() == "nelder-mead":
         options["adaptive"] = True
     # options["maxiter"] = 20
     # options["disp"] = True
