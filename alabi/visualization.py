@@ -58,19 +58,32 @@ def plot_hyperparam_vs_iteration(sm, title="GP fit"):
     hp_names = sm.gp.get_parameter_names()
     hp_values = np.array(sm.training_results["gp_hyperparameters"])
 
-    fig = plt.figure(figsize=[8,6])
+    fig, ax1 = plt.subplots(figsize=[8,6])
 
     # Plot log hyperparameters
-    for ii, name in enumerate(hp_names):
-        plt.plot(sm.training_results["iteration"], hp_values.T[ii], 
-                label=name.replace('_', ' '))
-    
-    plt.xlabel('iteration', fontsize=18)
-    plt.ylabel('GP scale hyperparameters', fontsize=18)
-    plt.xlim(0, max(sm.training_results["iteration"]))
-    plt.minorticks_on()
-    plt.legend(loc='best')
-    plt.title(title, fontsize=22)
+    if sm.fit_mean == True:
+        for ii in range(1, len(hp_names)):
+            ax1.plot(sm.training_results["iteration"], hp_values.T[ii], 
+                    label=hp_names[ii].replace('_', ' '))
+        ax1.tick_params(axis='y', labelcolor='tab:blue')
+
+        # plot mean on separate axis
+        ax2 = ax1.twinx()
+        ax2.set_ylabel('mean hyperparameter', color='k', fontsize=18)  
+        ax2.plot(sm.training_results["iteration"], hp_values.T[0], color='k')
+        ax2.tick_params(axis='y', labelcolor='k')
+    else:
+        for ii, name in enumerate(hp_names):
+            ax1.plot(sm.training_results["iteration"], hp_values.T[ii], 
+                     label=name.replace('_', ' '))
+
+    ax1.set_xlabel('iteration', fontsize=18)
+    ax1.set_ylabel('GP scale hyperparameters', fontsize=18)
+    ax1.set_xlim(0, max(sm.training_results["iteration"]))
+    ax1.set_ylim(-20, 20)
+    ax1.minorticks_on()
+    ax1.legend(loc='best')
+    ax1.set_title(title, fontsize=22)
     plt.tight_layout()
     plt.savefig(f"{sm.savedir}/gp_hyperparameters_vs_iteration.png")
     plt.close()
