@@ -13,8 +13,9 @@ __all__ = ["load_model_cache",
            "write_report_dynesty"]
 
 
-def load_model_cache(file):
+def load_model_cache(savedir, fname="surrogate_model.pkl"):
 
+    file = os.path.join(savedir, fname)
     with open(file, "rb") as f:
         sm = pickle.load(f)
 
