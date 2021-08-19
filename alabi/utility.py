@@ -434,7 +434,7 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
                 tmp = minimize(obj_fn, t0, args=args, bounds=tuple(bounds),
                                method=method, options=options)
             except:
-                raise Warning('Objective function optimization failed')
+                raise Warning("Objective function optimization failed")
 
             x_opt = tmp.x 
             f_opt = tmp.fun
@@ -447,9 +447,9 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
 
                     break
                 else:
-                    print('Utility function optimization prior fail', x_opt)
+                    print("Warning: Utility function optimization prior fail", x_opt)
             else:
-                print('Utility function optimization infinite fail', x_opt, f_opt)
+                print("Warning: Utility function optimization infinite fail", x_opt, f_opt)
 
             # Try a new initialization point
             t0 = ps(nsample=1)
