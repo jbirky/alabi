@@ -36,6 +36,9 @@ def write_report_gp(self, file):
     lines += f"-------------- \n"
     lines += f"Kernel: {self.kernel_name} \n"
     lines += f"Function bounds: {self.bounds} \n"
+    lines += f"fit mean: {self.fit_mean} \n"
+    lines += f"fit amplitude: {self.fit_amp} \n"
+    lines += f"fit white_noise: {self.fit_white_noise} \n"
     lines += f"GP white noise: {self.white_noise} \n"
     lines += f"Active learning algorithm : {self.algorithm} \n\n" 
 
