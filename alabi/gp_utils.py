@@ -123,12 +123,20 @@ def fit_gp(theta, y, kernel, fit_amp=True, fit_mean=True, fit_white_noise=False,
 
     if hyperparameters is not None:
         gp.set_parameter_vector(hyperparameters)
-    gp.compute(theta)
 
+    try:
+        gp.compute(theta)
+    except:
+        print(f"Warning: GP fit failed with point {theta[-1]}. Reoptimizing hyperparameters...")
+        try:
+            gp = optimize_gp(gp, theta, y)
+        except:
+            gp = None
+        
     return gp
 
 
-def optimize_gp(gp, theta, y, seed=None, nopt=1, method="powell",
+def optimize_gp(gp, theta, y, seed=None, nopt=3, method="powell",
                 options=None, p0=None, gp_hyper_prior=None):
     
     # Collapse arrays if 1D
@@ -166,18 +174,26 @@ def optimize_gp(gp, theta, y, seed=None, nopt=1, method="powell",
                          jac=jac, bounds=None, options=options)["x"]
         res.append(resii)
 
-        # Update the kernel with solution for computing marginal loglike
-        gp.set_parameter_vector(resii)
-        gp.recompute()
+        try:
+            # Update the kernel with solution for computing marginal loglike
+            gp.set_parameter_vector(resii)
+            gp.recompute()
 
-        # Compute marginal log likelihood for this set of kernel hyperparameters
-        mll.append(gp.log_likelihood(y, quiet=True))
+            # Compute marginal log likelihood for this set of kernel hyperparameters
+            mll.append(gp.log_likelihood(y, quiet=True))
+        except:
+            # solution not valid
+            mll.append(-np.inf)
 
     # Pick result with largest marginal log likelihood
     ind = np.argmax(mll)
 
     # Update gp
     gp.set_parameter_vector(res[ind])
-    gp.recompute()
+
+    try:
+        gp.recompute()
+    except:
+        gp = None
 
     return gp

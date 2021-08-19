@@ -380,8 +380,11 @@ class SurrogateModel(object):
                                   white_noise=self.white_noise)
 
         t0 = time.time()
-        self.gp = gp_utils.optimize_gp(self.gp, self.theta, self.y,
-                                       gp_hyper_prior=self.gp_hyper_prior)
+        op_gp = None
+        while op_gp is None:
+            op_gp = gp_utils.optimize_gp(self.gp, self.theta, self.y,
+                                         gp_hyper_prior=self.gp_hyper_prior)
+        self.gp = op_gp
         tf = time.time()
 
         if self.verbose:
@@ -408,6 +411,11 @@ class SurrogateModel(object):
         return ypred
 
 
+    def neg_evaluate(self, theta_xs):
+
+        return -1 * self.evaluate(theta_xs)
+
+
     def find_next_point(self, nopt=3, opt_init=False):
         """
         Find next set of ``(theta, y)`` training points by maximizing the
@@ -419,7 +427,8 @@ class SurrogateModel(object):
         """
 
         if opt_init:
-            t0 = self.theta[np.argmax(self.y)]
+            p0 = self.prior_sampler(nsample=1)
+            t0 = minimize(self.neg_evaluate, p0, bounds=tuple(self.bounds), method="nelder-mead")["x"]
         else:
             t0 = None
 
@@ -473,7 +482,7 @@ class SurrogateModel(object):
         # start timing active learning 
         train_t0 = time.time()
 
-        for ii in tqdm.tqdm(range(niter)):
+        for ii in tqdm.tqdm(range(1, niter+1)):
 
             # AGP on even, BAPE on odd
             if self.algorithm == "alternate":
@@ -482,29 +491,33 @@ class SurrogateModel(object):
                 else:
                     self.utility = ut.bape_utility
 
-            # Find next training point!
-            opt_obj_t0 = time.time()
-            thetaN, yN = self.find_next_point(opt_init=opt_init)
-            opt_obj_tf = time.time()
+            gp = None
+            while gp is None:
+                # Find next training point!
+                opt_obj_t0 = time.time()
+                thetaN, yN = self.find_next_point(opt_init=opt_init)
+                opt_obj_tf = time.time()
+                
+                # add theta and y to training sample
+                theta_prop = np.append(self.theta, [thetaN], axis=0)
+                y_prop = np.append(self.y, yN)
 
-            # add theta and y to training sample
-            theta_prop = np.append(self.theta, [thetaN], axis=0)
-            y_prop = np.append(self.y, yN)
-
-            fit_gp_t0 = time.time()
-            # Fit GP. Make sure to feed in previous iteration hyperparameters!
-            gp = gp_utils.fit_gp(theta_prop, y_prop, self.kernel,
-                                    hyperparameters=self.gp.get_parameter_vector(),
-                                    fit_amp=self.fit_amp, fit_mean=self.fit_mean,
-                                    fit_white_noise=self.fit_white_noise,
-                                    white_noise=self.white_noise)
-            fit_gp_tf = time.time()
+                fit_gp_t0 = time.time()
+                # Fit GP. Make sure to feed in previous iteration hyperparameters!
+                gp = gp_utils.fit_gp(theta_prop, y_prop, self.kernel,
+                                        hyperparameters=self.gp.get_parameter_vector(),
+                                        fit_amp=self.fit_amp, fit_mean=self.fit_mean,
+                                        fit_white_noise=self.fit_white_noise,
+                                        white_noise=self.white_noise)
+                fit_gp_tf = time.time()
 
             # If proposed (theta, y) did not cause fitting issues, save to surrogate model obj
             self.theta = theta_prop
             self.y = y_prop
 
             self.gp = gp
+
+            print("Total training samples:", len(self.theta))
 
             # record active learning train runtime
             self.train_runtime = time.time() - train_t0 
@@ -548,18 +561,33 @@ class SurrogateModel(object):
             self.nactive = self.ntrain - self.ninit_train
 
             # Optimize GP?
-            if ii % self.gp_opt_freq == 0:
+            if (ii + first_iter) % self.gp_opt_freq == 0:
+                
                 t0 = time.time()
-                gp = gp_utils.optimize_gp(gp, self.theta, self.y,
-                                          gp_hyper_prior=self.gp_hyper_prior)
+                op_gp = None
+                # on first attempt, initialize gp optimization at current hyperparameters
+                p0 = self.gp.get_parameter_vector()
+                while op_gp is None:
+                    op_gp = gp_utils.optimize_gp(gp, self.theta, self.y,
+                                            gp_hyper_prior=self.gp_hyper_prior,
+                                            p0=p0)
+                    # if this initialization doesn't work, try random initialization
+                    p0 = None
+
+                self.gp = op_gp
                 tf = time.time()
+
                 if self.verbose:
                     print(f"optimized hyperparameters: ({np.round(tf - t0, 1)}s)")
                     print(self.gp.get_parameter_vector())
                 
                 if (save_progress == True) and (ii != 0):
                     self.save()
-                    self.plot(plots=["gp_error", "gp_hyperparam", "gp_train_scatter"])
+                    self.plot(plots=["gp_error", "gp_hyperparam"])
+                    if self.ndim == 2:
+                        self.plot(plots=["gp_fit_2D"])
+                    else:
+                        self.plot(plots=["gp_train_scatter"])
 
         if self.cache:
             self.save()
@@ -913,6 +941,14 @@ class SurrogateModel(object):
                     print("theta must be 2D to use gp_fit_2D!")
             else:
                 raise NameError("Must run init_train and/or active_train before plotting gp_fit_2D.")
+
+        # Objective function contour plot
+        if "obj_fn_2D" in plots:
+            if hasattr(self, "theta") and hasattr(self, "y") and hasattr(self, "gp"):
+                print("Plotting objective function contours 2D...")
+                vis.plot_utility_2D(self, ngrid=60)
+            else:
+                raise NameError("Must run init_train and init_gp before plotting obj_fn_2D.")
 
         # ================================
         # emcee plots
