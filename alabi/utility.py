@@ -8,8 +8,9 @@ or computing KL divergences, and the GP utility functions, e.g. the bape utility
 """
 
 import numpy as np
+import scipy
 from scipy.optimize import minimize
-from scipy.stats import norm
+from scipy.stats import norm, truncnorm
 from skopt.space import Space
 from skopt.sampler import Sobol, Lhs, Halton, Hammersly, Grid
 import multiprocessing as mp
@@ -23,6 +24,7 @@ __all__ = ["agp_utility",
            "assign_utility",
            "minimize_objective", 
            "prior_sampler", 
+           "prior_sampler_normal",
            "eval_fn", 
            "lnprior_uniform",
            "prior_transform_uniform",
@@ -89,6 +91,22 @@ def prior_sampler(bounds=None, nsample=1, sampler='uniform'):
         raise ValueError(err_msg)
 
     return np.array(samples) 
+
+
+def prior_sampler_normal(prior_data, bounds, nsample=1):
+
+    ndim = len(bounds)
+
+    rvs = np.zeros((ndim, nsample))
+    for ii in range(ndim):
+        if prior_data[ii][0] is not None:
+            lb = (bounds[ii][0] - prior_data[ii][0]) / prior_data[ii][1]
+            ub = (bounds[ii][1] - prior_data[ii][0]) / prior_data[ii][1]
+            rvs[ii] = truncnorm.rvs(lb, ub, loc=prior_data[ii][0], scale=prior_data[ii][1], size=nsample)
+        else:
+            rvs[ii] = np.random.uniform(low=bounds[ii][0], high=bounds[ii][1], size=nsample)
+    
+    return rvs.T
 
     
 def eval_fn(fn, theta, ncore=mp.cpu_count()):
@@ -191,7 +209,7 @@ def logsubexp(x1, x2):
 #===========================================================
 
 
-def agp_utility(theta, y, gp):
+def agp_utility(theta, y, gp, bounds):
     """
     AGP (Adaptive Gaussian Process) utility function, the entropy of the
     posterior distribution. This is what you maximize to find the next x under
@@ -213,6 +231,9 @@ def agp_utility(theta, y, gp):
     :param util: (*float*)
         utility of theta under the gp
     """
+
+    if not np.isfinite(lnprior_uniform(theta, bounds)):
+        return np.inf
 
     # Only works if the GP object has been computed, otherwise you messed up
     if gp.computed:
@@ -280,7 +301,7 @@ def bape_utility(theta, y, gp, bounds):
     return util
 
 
-def jones_utility(theta, y, gp, zeta=0.01):
+def jones_utility(theta, y, gp, bounds, zeta=0.01):
     """
     Jones utility function - Expected Improvement derived in Jones et al. (1998)
 
@@ -302,6 +323,9 @@ def jones_utility(theta, y, gp, zeta=0.01):
     :param util: (*float*)
         utility of theta under the gp
     """
+
+    if not np.isfinite(lnprior_uniform(theta, bounds)):
+        return np.inf
 
     # Only works if the GP object has been computed, otherwise you messed up
     if gp.computed:
@@ -353,16 +377,22 @@ def assign_utility(algorithm):
 
 
 def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
-                       t0=None, args=None, options={}, max_iter=100):
+                       t0=None, ps=None, args=None, options=None, max_iter=100):
     """
     Optimize the active learning objective function
     """
 
     # Initialize options
-    if str(method).lower() == "nelder-mead" and options is None:
+    if options is None:
+        options = {}
+    if str(method).lower() == "nelder-mead":
         options["adaptive"] = True
     # options["maxiter"] = 20
     # options["disp"] = True
+
+    # Get prior sampler
+    if ps is None:
+        ps = partial(prior_sampler, bounds=bounds)
 
     bound_methods = ["nelder-mead", "l-bfgs", "tnc", "slsqp", "powell", "trust-constr"]
     # scipy >= 1.5 should be installed to use bounds in optimization
@@ -388,7 +418,7 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
         while True:
 
             if t0 is None:
-                t0 = prior_sampler(nsample=1, bounds=bounds)
+                t0 = ps(nsample=1)
 
             # Too many iterations
             if test_iter >= max_iter:
@@ -404,7 +434,7 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
                 tmp = minimize(obj_fn, t0, args=args, bounds=tuple(bounds),
                                method=method, options=options)
             except:
-                raise Warning('Objective function optimization failed')
+                raise Warning("Objective function optimization failed")
 
             x_opt = tmp.x 
             f_opt = tmp.fun
@@ -417,12 +447,12 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
 
                     break
                 else:
-                    print('Utility function optimization prior fail', x_opt)
+                    print("Warning: Utility function optimization prior fail", x_opt)
             else:
-                print('Utility function optimization infinite fail', x_opt, f_opt)
+                print("Warning: Utility function optimization infinite fail", x_opt, f_opt)
 
             # Try a new initialization point
-            t0 = prior_sampler(nsample=1, bounds=bounds)
+            t0 = ps(nsample=1)
             
             test_iter += 1
         # end loop

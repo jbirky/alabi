@@ -49,7 +49,7 @@ class SurrogateModel(object):
     :param ncore: (*int, optional*)
     """
 
-    def __init__(self, fn=None, bounds=None, labels=None, 
+    def __init__(self, fn=None, bounds=None, labels=None, prior_sampler=None,
                  cache=True, savedir="results/", model_name="surrogate_model",
                  verbose=True, ncore=mp.cpu_count()):
 
@@ -64,6 +64,11 @@ class SurrogateModel(object):
         self.fn = fn
         
         self.bounds = bounds
+
+        if prior_sampler is None:
+            self.prior_sampler = partial(ut.prior_sampler, bounds=self.bounds, sampler='sobol')
+        else:
+            self.prior_sampler = prior_sampler
 
         # Determine dimensionality 
         self.ndim = len(self.bounds)
@@ -122,7 +127,7 @@ class SurrogateModel(object):
             cache_utils.write_report_dynesty(self, file)
 
 
-    def init_train(self, nsample=None, sampler='sobol'):
+    def init_train(self, nsample=None):
         """
         :param nsample: (*int, optional*) 
             Number of samples. Defaults to ``nsample = 50 * self.ndim``
@@ -135,7 +140,7 @@ class SurrogateModel(object):
         if nsample is None:
             nsample = 50 * self.ndim
 
-        self.theta0 = ut.prior_sampler(nsample=nsample, bounds=self.bounds, sampler=sampler)
+        self.theta0 = self.prior_sampler(nsample=nsample)
         self.y0 = ut.eval_fn(self.fn, self.theta0, ncore=self.ncore)
 
         self.theta = self.theta0
@@ -145,7 +150,7 @@ class SurrogateModel(object):
             np.savez(f"{self.savedir}/initial_training_sample.npz", theta=self.theta, y=self.y)
 
 
-    def init_test(self, nsample=None, sampler='sobol'):
+    def init_test(self, nsample=None):
         """
         :param nsample: (*int, optional*) 
             Number of samples. Defaults to ``nsample = 50 * self.ndim``
@@ -158,7 +163,7 @@ class SurrogateModel(object):
         if nsample is None:
             nsample = 50 * self.ndim
 
-        self.theta_test = ut.prior_sampler(nsample=nsample, bounds=self.bounds, sampler=sampler)
+        self.theta_test = self.prior_sampler(nsample=nsample)
         self.y_test = ut.eval_fn(self.fn, self.theta_test, ncore=self.ncore)
 
         if self.cache:
@@ -183,8 +188,8 @@ class SurrogateModel(object):
         self.y_test = sims["y"]
 
 
-    def init_samples(self, train_file=None, test_file=None,
-                     ntrain=None, ntest=None, sampler=None, reload=True):
+    def init_samples(self, train_file=None, test_file=None, reload=False,
+                     ntrain=None, ntest=None, sampler=None, scale=True):
         """
         Draw set of initial training samples and test samples. 
         To load cached samples from a numpy zip file from a previous run, 
@@ -197,6 +202,10 @@ class SurrogateModel(object):
 
         :param test_file: (*str, optional*)
             Path to cached training samples. E.g. ``test_file='results/initial_test_sample.npz'``
+
+        :param reload: (*bool, optional*)
+            Attempt to load cached samples from default cache files? 
+            Will not be used if user specifies ``train_file`` or ``test_file``. Defaults to False.
 
         :param ntrain: (*int, optional*)
             Number of training samples to compute.
@@ -239,13 +248,15 @@ class SurrogateModel(object):
         # record number of test samples
         self.ntest = len(self.theta_test)
 
-        # Create scaling function using the training sample
-        self.scaler_t = MinMaxScaler()
-        self.scaler_t.fit(np.array(self.bounds).T)
+        self.scale = scale
+        if self.scale == True:
+            # Create scaling function using the training sample
+            self.scaler_t = MinMaxScaler()
+            self.scaler_t.fit(np.array(self.bounds).T)
 
-        self.scaler_y = StandardScaler()
-        yT = self.y.reshape(1,-1).T
-        self.scaler_y.fit(yT)
+            self.scaler_y = StandardScaler()
+            yT = self.y.reshape(1,-1).T
+            self.scaler_y.fit(yT)
 
         
     def init_gp(self, kernel=None, fit_amp=True, fit_mean=True, 
@@ -356,16 +367,24 @@ class SurrogateModel(object):
 
         # save white noise to obj
         self.white_noise = white_noise
+        self.fit_white_noise = fit_white_noise
+
+        # save amplitude and mean hyperparameter choices
+        self.fit_amp = fit_amp
+        self.fit_mean = fit_mean
         
         warnings.simplefilter("ignore")
         self.gp = gp_utils.fit_gp(self.theta, self.y, self.kernel, 
-                                  fit_amp=fit_amp, fit_mean=fit_mean,
-                                  fit_white_noise=fit_white_noise,
+                                  fit_amp=self.fit_amp, fit_mean=self.fit_mean,
+                                  fit_white_noise=self.fit_white_noise,
                                   white_noise=self.white_noise)
 
         t0 = time.time()
-        self.gp = gp_utils.optimize_gp(self.gp, self.theta, self.y,
-                                       gp_hyper_prior=self.gp_hyper_prior)
+        op_gp = None
+        while op_gp is None:
+            op_gp = gp_utils.optimize_gp(self.gp, self.theta, self.y,
+                                         gp_hyper_prior=self.gp_hyper_prior)
+        self.gp = op_gp
         tf = time.time()
 
         if self.verbose:
@@ -392,7 +411,12 @@ class SurrogateModel(object):
         return ypred
 
 
-    def find_next_point(self, nopt=3):
+    def neg_evaluate(self, theta_xs):
+
+        return -1 * self.evaluate(theta_xs)
+
+
+    def find_next_point(self, nopt=3, opt_init=False):
         """
         Find next set of ``(theta, y)`` training points by maximizing the
         active learning utility function.
@@ -402,10 +426,17 @@ class SurrogateModel(object):
             Defaults to 1. Increase to avoid converging to local maxima.
         """
 
+        if opt_init:
+            p0 = self.prior_sampler(nsample=1)
+            t0 = minimize(self.neg_evaluate, p0, bounds=tuple(self.bounds), method="nelder-mead")["x"]
+        else:
+            t0 = None
+
         thetaN, _ = ut.minimize_objective(self.utility, self.y, self.gp,
                                             bounds=self.bounds,
                                             nopt=nopt,
-                                            # t0=self.theta_[np.argmax(self.y_)],
+                                            t0=t0,
+                                            ps=self.prior_sampler,
                                             args=(self.y, self.gp, self.bounds))
 
         # evaluate function at the optimized theta
@@ -414,7 +445,8 @@ class SurrogateModel(object):
         return thetaN, yN
 
 
-    def active_train(self, niter=100, algorithm="bape", gp_opt_freq=10, save_progress=True): 
+    def active_train(self, niter=100, algorithm="bape", gp_opt_freq=10, save_progress=True,
+                     opt_init=False): 
         """
         :param niter: (*int, optional*)
 
@@ -450,7 +482,7 @@ class SurrogateModel(object):
         # start timing active learning 
         train_t0 = time.time()
 
-        for ii in tqdm.tqdm(range(niter)):
+        for ii in tqdm.tqdm(range(1, niter+1)):
 
             # AGP on even, BAPE on odd
             if self.algorithm == "alternate":
@@ -459,30 +491,25 @@ class SurrogateModel(object):
                 else:
                     self.utility = ut.bape_utility
 
-            while True:
+            gp = None
+            while gp is None:
                 # Find next training point!
                 opt_obj_t0 = time.time()
-                thetaN, yN = self.find_next_point()
+                thetaN, yN = self.find_next_point(opt_init=opt_init)
                 opt_obj_tf = time.time()
-
+                
                 # add theta and y to training sample
                 theta_prop = np.append(self.theta, [thetaN], axis=0)
                 y_prop = np.append(self.y, yN)
 
-                try:
-                    fit_gp_t0 = time.time()
-                    # Fit GP. Make sure to feed in previous iteration hyperparameters!
-                    gp = gp_utils.fit_gp(theta_prop, y_prop, self.kernel,
-                                         hyperparameters=self.gp.get_parameter_vector())
-                    fit_gp_tf = time.time()
-                    break
-
-                except:
-                    if self.verbose:
-                        msg = "Warning: GP fit failed. Likely covariance matrix was not positive definite. "
-                        msg += "Attempting another training sample... "
-                        msg += "If this issue persists, try adjusting the white_noise or expanding the hyperparameter prior"
-                        print(msg)
+                fit_gp_t0 = time.time()
+                # Fit GP. Make sure to feed in previous iteration hyperparameters!
+                gp = gp_utils.fit_gp(theta_prop, y_prop, self.kernel,
+                                        hyperparameters=self.gp.get_parameter_vector(),
+                                        fit_amp=self.fit_amp, fit_mean=self.fit_mean,
+                                        fit_white_noise=self.fit_white_noise,
+                                        white_noise=self.white_noise)
+                fit_gp_tf = time.time()
 
             # If proposed (theta, y) did not cause fitting issues, save to surrogate model obj
             self.theta = theta_prop
@@ -490,21 +517,29 @@ class SurrogateModel(object):
 
             self.gp = gp
 
+            print("Total training samples:", len(self.theta))
+
             # record active learning train runtime
             self.train_runtime = time.time() - train_t0 
 
             # evaluate gp training error (scaled)
             ypred = self.gp.predict(self.y, self.theta, return_cov=False, return_var=False)
-            ypred_ = self.scaler_y.transform(ypred.reshape(1,-1).T).flatten()
-            y_ = self.scaler_y.transform(self.y.reshape(1,-1).T).flatten()
-            training_error = np.mean((y_ - ypred_)**2)
+            if self.scale == True:
+                ypred_ = self.scaler_y.transform(ypred.reshape(1,-1).T).flatten()
+                y_ = self.scaler_y.transform(self.y.reshape(1,-1).T).flatten()
+                training_error = np.mean((y_ - ypred_)**2)
+            else:
+                training_error = np.mean((y - pred)**2)
 
             # evaluate gp test error (scaled)
             if hasattr(self, 'theta_test') and hasattr(self, 'y_test'):
                 ytest = self.gp.predict(self.y, self.theta_test, return_cov=False, return_var=False)
-                ytest_ = self.scaler_y.transform(ytest.reshape(1,-1).T).flatten()
-                y_test_ = self.scaler_y.transform(self.y_test.reshape(1,-1).T).flatten()
-                test_error = np.mean((y_test_ - ytest_)**2)
+                if self.scale == True:
+                    ytest_ = self.scaler_y.transform(ytest.reshape(1,-1).T).flatten()
+                    y_test_ = self.scaler_y.transform(self.y_test.reshape(1,-1).T).flatten()
+                    test_error = np.mean((y_test_ - ytest_)**2)
+                else:
+                    test_error = np.mean((y_test - ytest)**2)
             else:
                 test_error = np.nan
 
@@ -526,18 +561,33 @@ class SurrogateModel(object):
             self.nactive = self.ntrain - self.ninit_train
 
             # Optimize GP?
-            if ii % self.gp_opt_freq == 0:
+            if (ii + first_iter) % self.gp_opt_freq == 0:
+                
                 t0 = time.time()
-                gp = gp_utils.optimize_gp(gp, self.theta, self.y,
-                                          gp_hyper_prior=self.gp_hyper_prior)
+                op_gp = None
+                # on first attempt, initialize gp optimization at current hyperparameters
+                p0 = self.gp.get_parameter_vector()
+                while op_gp is None:
+                    op_gp = gp_utils.optimize_gp(gp, self.theta, self.y,
+                                            gp_hyper_prior=self.gp_hyper_prior,
+                                            p0=p0)
+                    # if this initialization doesn't work, try random initialization
+                    p0 = None
+
+                self.gp = op_gp
                 tf = time.time()
+
                 if self.verbose:
                     print(f"optimized hyperparameters: ({np.round(tf - t0, 1)}s)")
                     print(self.gp.get_parameter_vector())
                 
                 if (save_progress == True) and (ii != 0):
                     self.save()
-                    self.plot(plots=["gp_error", "gp_hyperparam", "gp_train_scatter"])
+                    self.plot(plots=["gp_error", "gp_hyperparam"])
+                    if self.ndim == 2:
+                        self.plot(plots=["gp_fit_2D"])
+                    else:
+                        self.plot(plots=["gp_train_scatter"])
 
         if self.cache:
             self.save()
@@ -827,7 +877,9 @@ class SurrogateModel(object):
         # ================================
 
         if "gp_all" in plots:
-            gp_plots = ["gp_error", "gp_hyperparam", "gp_timing", "gp_train_corner"]
+            gp_plots = ["gp_error", "gp_hyperparam", "gp_timing", "gp_train_corner", "gp_train_scatter"]
+            if self.ndim == 2:
+                gp_plots.append("gp_fit_2D")
             for pl in gp_plots:
                 plots.append(pl)
 
@@ -889,6 +941,14 @@ class SurrogateModel(object):
                     print("theta must be 2D to use gp_fit_2D!")
             else:
                 raise NameError("Must run init_train and/or active_train before plotting gp_fit_2D.")
+
+        # Objective function contour plot
+        if "obj_fn_2D" in plots:
+            if hasattr(self, "theta") and hasattr(self, "y") and hasattr(self, "gp"):
+                print("Plotting objective function contours 2D...")
+                vis.plot_utility_2D(self, ngrid=60)
+            else:
+                raise NameError("Must run init_train and init_gp before plotting obj_fn_2D.")
 
         # ================================
         # emcee plots
