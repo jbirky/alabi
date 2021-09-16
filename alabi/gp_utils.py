@@ -14,7 +14,9 @@ from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
 from functools import partial
 
-__all__ = ["default_hyper_prior", "optimize_gp"]
+__all__ = ["default_hyper_prior", 
+           "configure_gp", 
+           "optimize_gp"]
 
 
 def default_hyper_prior(p, hp_rng=20, mu=None, sigma=None, sigma_level=3):
@@ -42,7 +44,7 @@ def default_hyper_prior(p, hp_rng=20, mu=None, sigma=None, sigma_level=3):
     return 0.0
 
 
-def _nll(p, gp, y, priorFn=None):
+def _nll(p, gp, y, prior_fn=None):
     """
     Given parameters and data, compute the negative log likelihood of the data
     under the george Gaussian process.
@@ -54,7 +56,7 @@ def _nll(p, gp, y, priorFn=None):
     gp : george.GP
     y : array
         data to condition GP on
-    priorFn : callable
+    prior_fn : callable
         Prior function for the GP hyperparameters, p
 
     Returns
@@ -64,8 +66,8 @@ def _nll(p, gp, y, priorFn=None):
     """
 
     # Apply priors on GP hyperparameters
-    if priorFn is not None:
-        if not np.isfinite(priorFn(p)):
+    if prior_fn is not None:
+        if not np.isfinite(prior_fn(p)):
             return np.inf
 
     # Catch singular matrices
@@ -76,6 +78,24 @@ def _nll(p, gp, y, priorFn=None):
 
     ll = gp.log_likelihood(y, quiet=True)
     return -ll if np.isfinite(ll) else np.inf
+
+
+def gp_initial_guess(p0, gp_hyper_prior, nparam, median=None):
+
+    if p0 is None:
+        # Pick random guesses for kernel hyperparameters
+        if median is not None:
+            x0 = [median] + [20*np.random.uniform(low=-1.0, high=1.0, size=1)[0] for _ in range(nparam - 1)]
+        else:
+            x0 = [np.random.randn() for _ in range(nparam)]
+        print('randomized guess', gp_hyper_prior(x0))
+    else:
+        # Take user-supplied guess and slightly perturb it
+        x0 = np.array(p0) + np.min(p0) * 1.0e-3 * np.random.randn(len(p0))
+        print('user guess', gp_hyper_prior(x0))
+        print(x0)
+
+    return x0
 
 
 def _grad_nll(p, gp, y, priorFn=None):
@@ -108,7 +128,7 @@ def _grad_nll(p, gp, y, priorFn=None):
     return -gp.grad_log_likelihood(y, quiet=True)
 
 
-def fit_gp(theta, y, kernel, fit_amp=True, fit_mean=True, fit_white_noise=False,
+def configure_gp(theta, y, kernel, fit_amp=True, fit_mean=True, fit_white_noise=False,
            white_noise=-12, hyperparameters=None):
 
     if np.any(~np.isfinite(theta)) or np.any(~np.isfinite(y)):
@@ -119,7 +139,7 @@ def fit_gp(theta, y, kernel, fit_amp=True, fit_mean=True, fit_white_noise=False,
         kernel *= np.var(y)
 
     gp = george.GP(kernel=kernel, fit_mean=fit_mean, mean=np.median(y),
-                white_noise=white_noise, fit_white_noise=fit_white_noise)
+                   white_noise=white_noise, fit_white_noise=fit_white_noise)
 
     if hyperparameters is not None:
         gp.set_parameter_vector(hyperparameters)
@@ -136,44 +156,38 @@ def fit_gp(theta, y, kernel, fit_amp=True, fit_mean=True, fit_white_noise=False,
     return gp
 
 
-def optimize_gp(gp, theta, y, seed=None, nopt=3, method="powell",
-                options=None, p0=None, gp_hyper_prior=None):
+def optimize_gp(gp, theta, y, gp_hyper_prior, nparam, 
+                nopt=3, method="powell", options=None, p0=None):
     
     # Collapse arrays if 1D
     theta = theta.squeeze()
     y = y.squeeze()
 
-    if gp_hyper_prior is None:
-        gp_hyper_prior = partial(default_hyper_prior, 
-                                 hp_rng=20,
-                                 mu=np.median(y), 
-                                 sigma=np.std(y),
-                                 sigma_level=3)
+    # if gp_hyper_prior is None:
+    #     gp_hyper_prior = partial(default_hyper_prior, 
+    #                                 hp_rng=20,
+    #                                 mu=np.median(y), 
+    #                                 sigma=np.std(y),
+    #                                 sigma_level=3)
+    
+    # Minimize GP nll, save result, evaluate marginal likelihood
+    if method not in ["nelder-mead", "powell", "cg"]:
+        jac = _grad_nll
+    else:
+        jac = None
     
     # Run the optimization routine nopt times
     res = []
     mll = []
 
     # Optimize GP hyperparameters by maximizing marginal log_likelihood
-    for ii in range(nopt):
-        # Initialize inputs for each minimization
-        if p0 is None:
-            # Pick random guesses for kernel hyperparameters
-            x0 = [np.median(y)] + [np.random.randn() for _ in range(len(gp.get_parameter_vector())-1)]
-        else:
-            # Take user-supplied guess and slightly perturb it
-            x0 = np.array(p0) + np.min(p0) * 1.0e-3 * np.random.randn(len(p0))
-
-        # Minimize GP nll, save result, evaluate marginal likelihood
-        if method not in ["nelder-mead", "powell", "cg"]:
-            jac = _grad_nll
-        else:
-            jac = None
+    for ii, x0 in enumerate(p0):
+        # # Initialize inputs for each minimization
+        # x0 = gp_initial_guess(p0, gp_hyper_prior, nparam, median=np.median(y))
 
         resii = minimize(_nll, x0, args=(gp, y, gp_hyper_prior), method=method,
                          jac=jac, bounds=None, options=options)["x"]
         res.append(resii)
-
         try:
             # Update the kernel with solution for computing marginal loglike
             gp.set_parameter_vector(resii)
@@ -188,12 +202,26 @@ def optimize_gp(gp, theta, y, seed=None, nopt=3, method="powell",
     # Pick result with largest marginal log likelihood
     ind = np.argmax(mll)
 
-    # Update gp
-    gp.set_parameter_vector(res[ind])
+    print(gp_hyper_prior(res[ind]), res[ind])
 
-    try:
-        gp.recompute()
-    except:
+    # import matplotlib.pyplot as plt
+    # for rr in res:
+    #     plt.plot(range(nparam-1), rr[1:])
+    # plt.plot(range(nparam-1), res[ind][1:], color='r', linewidth=5)
+    # plt.savefig('hyperparameter_opt_fits.png')
+    # plt.show()
+
+    # if hyperparameters allowed by prior
+    if np.isfinite(gp_hyper_prior(res[ind])):
+        # Update gp
+        gp.set_parameter_vector(res[ind])
+        try:
+            gp.recompute()
+        except:
+            print("\nWarning: GP hyperparameter optimization failed. Cannot recompute gp.\n")
+            gp = None
+    else:
+        print("\nWarning: GP hyperparameter optimization failed. Solution failed prior bounds.\n")
         gp = None
 
     return gp
