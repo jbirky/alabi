@@ -80,25 +80,7 @@ def _nll(p, gp, y, prior_fn=None):
     return -ll if np.isfinite(ll) else np.inf
 
 
-def gp_initial_guess(p0, gp_hyper_prior, nparam, median=None):
-
-    if p0 is None:
-        # Pick random guesses for kernel hyperparameters
-        if median is not None:
-            x0 = [median] + [20*np.random.uniform(low=-1.0, high=1.0, size=1)[0] for _ in range(nparam - 1)]
-        else:
-            x0 = [np.random.randn() for _ in range(nparam)]
-        print('randomized guess', gp_hyper_prior(x0))
-    else:
-        # Take user-supplied guess and slightly perturb it
-        x0 = np.array(p0) + np.min(p0) * 1.0e-3 * np.random.randn(len(p0))
-        print('user guess', gp_hyper_prior(x0))
-        print(x0)
-
-    return x0
-
-
-def _grad_nll(p, gp, y, priorFn=None):
+def _grad_nll(p, gp, y, prior_fn=None):
     """
     Given parameters and data, compute the gradient of the negative log
     likelihood of the data under the george Gaussian process.
@@ -110,7 +92,7 @@ def _grad_nll(p, gp, y, priorFn=None):
     gp : george.GP
     y : array
         data to condition GP on
-    priorFn : callable
+    prior_fn : callable
         Prior function for the GP hyperparameters, p
 
     Returns
@@ -120,16 +102,17 @@ def _grad_nll(p, gp, y, priorFn=None):
     """
 
     # Apply priors on GP hyperparameters
-    if priorFn is not None:
-        if not np.isfinite(priorFn(p)):
+    if prior_fn is not None:
+        if not np.isfinite(prior_fn(p)):
             return np.inf
 
     # Negative gradient of log likelihood
     return -gp.grad_log_likelihood(y, quiet=True)
 
 
-def configure_gp(theta, y, kernel, fit_amp=True, fit_mean=True, fit_white_noise=False,
-           white_noise=-12, hyperparameters=None):
+def configure_gp(theta, y, kernel, gp_hyper_prior,  
+                 fit_amp=True, fit_mean=True, fit_white_noise=False,
+                 white_noise=-12, hyperparameters=None):
 
     if np.any(~np.isfinite(theta)) or np.any(~np.isfinite(y)):
         print("theta, y:", theta, y)
@@ -148,27 +131,17 @@ def configure_gp(theta, y, kernel, fit_amp=True, fit_mean=True, fit_white_noise=
         gp.compute(theta)
     except:
         print(f"Warning: GP fit failed with point {theta[-1]}. Reoptimizing hyperparameters...")
-        try:
-            gp = optimize_gp(gp, theta, y)
-        except:
-            gp = None
-        
+        gp, _ = self.opt_gp()
+
     return gp
 
 
-def optimize_gp(gp, theta, y, gp_hyper_prior, nparam, 
-                nopt=3, method="powell", options=None, p0=None):
+def optimize_gp(gp, theta, y, gp_hyper_prior, p0,
+                nopt=3, method="powell", options=None):
     
     # Collapse arrays if 1D
     theta = theta.squeeze()
     y = y.squeeze()
-
-    # if gp_hyper_prior is None:
-    #     gp_hyper_prior = partial(default_hyper_prior, 
-    #                                 hp_rng=20,
-    #                                 mu=np.median(y), 
-    #                                 sigma=np.std(y),
-    #                                 sigma_level=3)
     
     # Minimize GP nll, save result, evaluate marginal likelihood
     if method not in ["nelder-mead", "powell", "cg"]:
@@ -182,8 +155,6 @@ def optimize_gp(gp, theta, y, gp_hyper_prior, nparam,
 
     # Optimize GP hyperparameters by maximizing marginal log_likelihood
     for ii, x0 in enumerate(p0):
-        # # Initialize inputs for each minimization
-        # x0 = gp_initial_guess(p0, gp_hyper_prior, nparam, median=np.median(y))
 
         resii = minimize(_nll, x0, args=(gp, y, gp_hyper_prior), method=method,
                          jac=jac, bounds=None, options=options)["x"]
@@ -201,15 +172,6 @@ def optimize_gp(gp, theta, y, gp_hyper_prior, nparam,
 
     # Pick result with largest marginal log likelihood
     ind = np.argmax(mll)
-
-    print(gp_hyper_prior(res[ind]), res[ind])
-
-    # import matplotlib.pyplot as plt
-    # for rr in res:
-    #     plt.plot(range(nparam-1), rr[1:])
-    # plt.plot(range(nparam-1), res[ind][1:], color='r', linewidth=5)
-    # plt.savefig('hyperparameter_opt_fits.png')
-    # plt.show()
 
     # if hyperparameters allowed by prior
     if np.isfinite(gp_hyper_prior(res[ind])):

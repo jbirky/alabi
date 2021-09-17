@@ -179,6 +179,10 @@ class SurrogateModel(object):
         self.theta = self.theta0
         self.y = self.y0
 
+        if self.ndim != self.theta.shape[1]:
+            raise ValueError(f"Dimension of bounds (n={self.ndim}) does not \
+                              match dimension of training theta (n={self.theta.shape[1]})")
+
 
     def load_test(self, cache_file):
 
@@ -186,6 +190,10 @@ class SurrogateModel(object):
         sims = np.load(cache_file)
         self.theta_test = sims["theta"]
         self.y_test = sims["y"]
+
+        if self.ndim != self.theta_test.shape[1]:
+            raise ValueError(f"Dimension of bounds (n={self.ndim}) does not \
+                              match dimension of test theta (n={self.theta_test.shape[1]})")
 
 
     def init_samples(self, train_file=None, test_file=None, reload=False,
@@ -267,15 +275,18 @@ class SurrogateModel(object):
         if y is None:
             y = self.y
 
+        t0 = time.time()
+
         gp = None
         while gp is None:
-            warnings.simplefilter("ignore")
-            gp = gp_utils.configure_gp(theta, y, self.kernel, 
-                                    fit_amp=self.fit_amp, fit_mean=self.fit_mean,
-                                    fit_white_noise=self.fit_white_noise,
-                                    white_noise=self.white_noise)
+            gp = gp_utils.configure_gp(theta, y, self.kernel, self.gp_hyper_prior, 
+                                       fit_amp=self.fit_amp, fit_mean=self.fit_mean,
+                                       fit_white_noise=self.fit_white_noise,
+                                       white_noise=self.white_noise)
+        
+        timing = time.time() - t0
 
-        return gp
+        return gp, timing
 
 
     def opt_gp(self):
@@ -284,32 +295,28 @@ class SurrogateModel(object):
         op_gp = None
         while op_gp is None:
 
-            # Configure GP hyperparameter prior
-            hp_bounds = [[-self.gp_scale_rng, self.gp_scale_rng] for _ in range(self.gp_nparam)]
-            if self.fit_mean:
-                hp_bounds[0] = [np.mean(self.y)-3*np.std(self.y), np.mean(self.y)+3*np.std(self.y)]
-            gp_hyper_prior = partial(ut.lnprior_uniform, bounds=hp_bounds)
-
             # Random initialization points
-            p0 = ut.prior_sampler(bounds=hp_bounds, nsample=self.gp_nopt, sampler='uniform')
+            p0 = ut.prior_sampler(bounds=self.hp_bounds, nsample=self.gp_nopt, sampler='uniform')
 
             # on first attempt, initialize gp optimization at current hyperparameters
-            p0[0] = self.gp.get_parameter_vector()
+            if hasattr(self, "gp"):
+                p0[0] = self.gp.get_parameter_vector()
 
-            op_gp = gp_utils.optimize_gp(self.gp, self.theta, self.y, gp_hyper_prior, self.gp_nparam,
-                                         p0=p0, nopt=self.gp_nopt,
+            op_gp = gp_utils.optimize_gp(self.gp, self.theta, self.y, 
+                                         self.gp_hyper_prior, p0
+                                         nopt=self.gp_nopt,
                                          method=self.gp_opt_method)
 
         tf = time.time()
-
         timing = tf - t0
+
         if self.verbose:
             print(f"Successfully optimized hyperparameters: ({np.round(timing, 1)}s)")
             print(self.gp.get_parameter_names())
             print(self.gp.get_parameter_vector())
             print('')
 
-        return op_gp
+        return op_gp, timing
 
         
     def init_gp(self, kernel=None, fit_amp=True, fit_mean=True, 
@@ -417,9 +424,6 @@ class SurrogateModel(object):
                 print("Enter either one of the following options, or a george kernel object.")
                 print(george.kernels.__all__)
 
-        # assign GP hyperparameter prior
-        self.gp_scale_rng = gp_scale_rng
-
         # save white noise to obj
         self.white_noise = white_noise
         self.fit_white_noise = fit_white_noise
@@ -435,17 +439,26 @@ class SurrogateModel(object):
         self.gp_nopt = gp_nopt
 
         # number of GP hyperparameters
-        self.gp_nparam = len(self.kernel.get_parameter_vector())
+        self.gp_nparam = self.ndim
         if self.fit_amp:
             self.gp_nparam += 1
         if self.fit_mean:
             self.gp_nparam += 1
+
+        # assign GP hyperparameter prior
+        self.gp_scale_rng = gp_scale_rng
+
+        # Configure GP hyperparameter prior
+        self.hp_bounds = [[-self.gp_scale_rng, self.gp_scale_rng] for _ in range(self.gp_nparam)]
+        if self.fit_mean:
+            self.hp_bounds[0] = [np.mean(self.y)-3*np.std(self.y), np.mean(self.y)+3*np.std(self.y)]
+        self.gp_hyper_prior = partial(ut.lnprior_uniform, bounds=self.hp_bounds)
         
         # Fit GP with training sample and kernel
-        self.gp = self.fit_gp()
+        self.gp, _ = self.fit_gp()
 
         # Optimize GP hyperparameters
-        self.gp = self.opt_gp()
+        self.gp, _ = self.opt_gp()
 
 
     def evaluate(self, theta_xs):
@@ -560,33 +573,12 @@ class SurrogateModel(object):
             theta_prop = np.append(self.theta, [thetaN], axis=0)
             y_prop = np.append(self.y, yN)
 
-            self.fit_gp(theta=theta_prop, y=y_prop)
-
-            # gp = None
-            # while gp is None:
-            #     # Find next training point!
-            #     opt_obj_t0 = time.time()
-            #     thetaN, yN = self.find_next_point(opt_init=opt_init)
-            #     opt_obj_tf = time.time()
-                
-            #     # add theta and y to training sample
-            #     theta_prop = np.append(self.theta, [thetaN], axis=0)
-            #     y_prop = np.append(self.y, yN)
-
-            #     fit_gp_t0 = time.time()
-            #     # Fit GP. Make sure to feed in previous iteration hyperparameters!
-            #     gp = gp_utils.fit_gp(theta_prop, y_prop, self.kernel,
-            #                             hyperparameters=self.gp.get_parameter_vector(),
-            #                             fit_amp=self.fit_amp, fit_mean=self.fit_mean,
-            #                             fit_white_noise=self.fit_white_noise,
-            #                             white_noise=self.white_noise)
-            #     fit_gp_tf = time.time()
+            # Fit GP with new training point
+            self.gp, fit_gp_timing = self.fit_gp(theta=theta_prop, y=y_prop)
 
             # If proposed (theta, y) did not cause fitting issues, save to surrogate model obj
             self.theta = theta_prop
             self.y = y_prop
-
-            self.gp = gp
 
             print("Total training samples:", len(self.theta))
 
@@ -623,7 +615,7 @@ class SurrogateModel(object):
             self.training_results["training_error"].append(training_error)
             self.training_results["test_error"].append(test_error)
             self.training_results["gp_kl_divergence"].append(gp_kl_divergence)
-            self.training_results["gp_train_time"].append(fit_gp_tf - fit_gp_t0)
+            self.training_results["gp_train_time"].append(fit_gp_timing)
             self.training_results["obj_fn_opt_time"].append(opt_timing)
 
             # record total number of training samples
@@ -635,7 +627,7 @@ class SurrogateModel(object):
             if (ii + first_iter) % self.gp_opt_freq == 0:
 
                 # re-optimize hyperparamters
-                self.gp = self.opt_gp()
+                self.gp, _ = self.opt_gp()
                 
                 if (save_progress == True) and (ii != 0):
                     self.save()
