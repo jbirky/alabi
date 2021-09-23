@@ -303,7 +303,7 @@ class SurrogateModel(object):
                 p0[0] = self.gp.get_parameter_vector()
 
             op_gp = gp_utils.optimize_gp(self.gp, self.theta, self.y, 
-                                         self.gp_hyper_prior, p0
+                                         self.gp_hyper_prior, p0,
                                          nopt=self.gp_nopt,
                                          method=self.gp_opt_method)
 
