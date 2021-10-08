@@ -130,8 +130,7 @@ def configure_gp(theta, y, kernel, gp_hyper_prior,
     try:
         gp.compute(theta)
     except:
-        print(f"Warning: GP fit failed with point {theta[-1]}. Reoptimizing hyperparameters...")
-        gp, _ = self.opt_gp()
+        gp = None
 
     return gp
 
