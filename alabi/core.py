@@ -118,7 +118,8 @@ class SurrogateModel(object):
         with open(file+".pkl", "wb") as f:        
             pickle.dump(self, f)
 
-        cache_utils.write_report_gp(self, file)
+        if hasattr(self, "gp"):
+            cache_utils.write_report_gp(self, file)
 
         if self.emcee_run == True:
             cache_utils.write_report_emcee(self, file)
@@ -220,6 +221,16 @@ class SurrogateModel(object):
 
         :param ntest: (*int, optional*)
             Number of test samples to compute.
+
+        :param sampler: (*function, optional*)
+            Prior function for drawing training samples. Defaults to uniform using self.bounds
+
+        :param scale: (*str, optional*)
+            Method for scaling training sample ``y``. 
+            Options: 
+                - None -  no scaling
+                - 'standard' - normalize by standard deviation
+                - 'log' - log scale (for probability distributions logP -> log(-logP))
         """
 
         if train_file is not None:
@@ -257,7 +268,7 @@ class SurrogateModel(object):
         self.ntest = len(self.theta_test)
 
         self.scale = scale
-        if self.scale == True:
+        if self.scale == 'standard':
             # Create scaling function using the training sample
             self.scaler_t = MinMaxScaler()
             self.scaler_t.fit(np.array(self.bounds).T)
@@ -265,6 +276,10 @@ class SurrogateModel(object):
             self.scaler_y = StandardScaler()
             yT = self.y.reshape(1,-1).T
             self.scaler_y.fit(yT)
+
+        elif self.scale == 'log':
+            """T0 BE IMPLEMENTED"""
+            scaler = None
 
     
     def fit_gp(self, theta=None, y=None):
@@ -277,12 +292,13 @@ class SurrogateModel(object):
 
         t0 = time.time()
 
-        gp = None
-        while gp is None:
-            gp = gp_utils.configure_gp(theta, y, self.kernel, self.gp_hyper_prior, 
-                                       fit_amp=self.fit_amp, fit_mean=self.fit_mean,
-                                       fit_white_noise=self.fit_white_noise,
-                                       white_noise=self.white_noise)
+        gp = gp_utils.configure_gp(theta, y, self.kernel, self.gp_hyper_prior, 
+                                    fit_amp=self.fit_amp, fit_mean=self.fit_mean,
+                                    fit_white_noise=self.fit_white_noise,
+                                    white_noise=self.white_noise)
+        if gp is None:
+            print(f"Warning: GP fit failed with point {theta[-1]}. Reoptimizing hyperparameters...")
+            gp, _ = self.opt_gp()
         
         timing = time.time() - t0
 
@@ -788,8 +804,8 @@ class SurrogateModel(object):
             np.savez(f"{self.savedir}/emcee_samples_final.npz", samples=self.emcee_samples)
 
     
-    def run_dynesty(self, ptform=None, mode='dynamic', sampler_kwargs={}, run_kwargs={},
-                    multi_proc=False, ptform_comment=None):
+    def run_dynesty(self, like_fn="surrogate", ptform=None, mode="dynamic", sampler_kwargs={}, run_kwargs={},
+                    multi_proc=False, save_iter=1000, ptform_comment=None):
         """
         Use the ``dynesty`` nested-sampling MCMC package to sample the trained GP surrogate model.
         https://github.com/joshspeagle/dynesty
@@ -820,6 +836,14 @@ class SurrogateModel(object):
         else:
             pool = None
 
+        # specify likelihood function (true function or surrogate model)
+        if like_fn.lower() == "true":
+            print("Initializing dynesty with self.fn as likelihood.")
+            self.like_fn = self.fn
+        else:
+            print("Initializing dynesty with self.evaluate surrogate model as likelihood.")
+            self.like_fn = self.evaluate
+
         # set up prior transform
         if ptform is None:
             self.ptform = partial(ut.prior_transform_uniform, bounds=self.bounds)
@@ -847,14 +871,14 @@ class SurrogateModel(object):
 
         # initialize our nested sampler
         if mode == 'dynamic':
-            dsampler = DynamicNestedSampler(self.evaluate, 
+            dsampler = DynamicNestedSampler(self.like_fn, 
                                             self.ptform, 
                                             self.ndim,
                                             pool=pool,
                                             **sampler_kwargs)
             print("Initialized dynesty DynamicNestedSampler.")
         elif mode == 'static':
-            dsampler = NestedSampler(self.evaluate, 
+            dsampler = NestedSampler(self.like_fn, 
                                      self.ptform, 
                                      self.ndim,
                                      pool=pool,
@@ -864,8 +888,25 @@ class SurrogateModel(object):
             raise ValueError(f"mode {mode} is not a valid option. Choose 'dynamic' or 'static'.")
 
 
-        dsampler.run_nested(**run_kwargs)
-        self.res = dsampler.results
+        run_sampler = True
+        last_iter = 0
+        while run_sampler == True:
+            dsampler.run_nested(maxiter=save_iter, **run_kwargs)
+            self.res = dsampler.results
+
+            file = os.path.join(self.savedir, "dynesty_sampler.pkl")
+
+            # pickle dynesty sampler object
+            print(f"Caching model to {file}...")
+            with open(file, "wb") as f:        
+                pickle.dump(dsampler, f)
+
+            # check if converged (i.e. hasn't run for more iterations)
+            if dsampler.results.niter > last_iter:
+                last_iter = dsampler.results.niter
+                run_sampler = True
+            else:
+                run_sampler = False
 
         # record dynesty runtime
         self.dynesty_runtime = time.time() - dynesty_t0
