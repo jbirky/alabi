@@ -13,7 +13,6 @@ from alabi import cache_utils
 
 import numpy as np
 from scipy.optimize import minimize
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from functools import partial
 import george
 from george import kernels
@@ -47,11 +46,18 @@ class SurrogateModel(object):
     :param model_name: (*str, optional*)
     :param verbose: (*bool, optional*)
     :param ncore: (*int, optional*)
+    :param scale: (*str, optional*)
+            Method for scaling training sample ``y``. 
+            Options: 
+                - None -  no scaling
+                - 'standard' - normalize by standard deviation
+                - 'log'  - log scale 
+                - 'nlog' - log negative scale (for probability distributions logP -> log(-logP)
     """
 
     def __init__(self, fn=None, bounds=None, labels=None, prior_sampler=None,
                  cache=True, savedir="results/", model_name="surrogate_model",
-                 verbose=True, ncore=mp.cpu_count()):
+                 verbose=True, ncore=mp.cpu_count(), scale=None):
 
         # Check all required inputs are specified
         if fn is None:
@@ -61,7 +67,9 @@ class SurrogateModel(object):
 
         # Set function for training the GP, and initial training samples
         # For bayesian inference problem this would be your log likelihood function
-        self.fn = fn
+        # self.fn = fn
+        self.scale = scale
+        self.fn = partial(self.scaled_function, fn=fn)
         
         self.bounds = bounds
 
@@ -104,6 +112,16 @@ class SurrogateModel(object):
         # false if emcee and dynesty have not been run for this object
         self.emcee_run = False
         self.dynesty_run = False
+
+    
+    def scaled_function(self, theta, fn):
+
+        if self.scale == "log":
+            return np.log10(fn(theta))
+        elif self.scale == "nlog":
+            return np.log10(fn(theta))
+        else:
+            return fn(theta)
 
     
     def save(self):
@@ -198,7 +216,7 @@ class SurrogateModel(object):
 
 
     def init_samples(self, train_file=None, test_file=None, reload=False,
-                     ntrain=None, ntest=None, sampler=None, scale=True):
+                     ntrain=None, ntest=None, sampler=None):
         """
         Draw set of initial training samples and test samples. 
         To load cached samples from a numpy zip file from a previous run, 
@@ -224,13 +242,6 @@ class SurrogateModel(object):
 
         :param sampler: (*function, optional*)
             Prior function for drawing training samples. Defaults to uniform using self.bounds
-
-        :param scale: (*str, optional*)
-            Method for scaling training sample ``y``. 
-            Options: 
-                - None -  no scaling
-                - 'standard' - normalize by standard deviation
-                - 'log' - log scale (for probability distributions logP -> log(-logP))
         """
 
         if train_file is not None:
@@ -266,20 +277,6 @@ class SurrogateModel(object):
 
         # record number of test samples
         self.ntest = len(self.theta_test)
-
-        self.scale = scale
-        if self.scale == 'standard':
-            # Create scaling function using the training sample
-            self.scaler_t = MinMaxScaler()
-            self.scaler_t.fit(np.array(self.bounds).T)
-
-            self.scaler_y = StandardScaler()
-            yT = self.y.reshape(1,-1).T
-            self.scaler_y.fit(yT)
-
-        elif self.scale == 'log':
-            """T0 BE IMPLEMENTED"""
-            scaler = None
 
     
     def fit_gp(self, theta=None, y=None):
@@ -491,6 +488,11 @@ class SurrogateModel(object):
         # apply the GP
         ypred = self.gp.predict(self.y, theta_xs, return_cov=False)[0]
 
+        if self.scale == "log":
+            ypred = 10**ypred 
+        elif self.scale == "nlog":
+            ypred = -10**ypred 
+
         return ypred
 
 
@@ -603,22 +605,12 @@ class SurrogateModel(object):
 
             # evaluate gp training error (scaled)
             ypred = self.gp.predict(self.y, self.theta, return_cov=False, return_var=False)
-            if self.scale == True:
-                ypred_ = self.scaler_y.transform(ypred.reshape(1,-1).T).flatten()
-                y_ = self.scaler_y.transform(self.y.reshape(1,-1).T).flatten()
-                training_error = np.mean((y_ - ypred_)**2)
-            else:
-                training_error = np.mean((y - pred)**2)
+            training_error = np.mean((self.y - ypred)**2)
 
             # evaluate gp test error (scaled)
             if hasattr(self, 'theta_test') and hasattr(self, 'y_test'):
                 ytest = self.gp.predict(self.y, self.theta_test, return_cov=False, return_var=False)
-                if self.scale == True:
-                    ytest_ = self.scaler_y.transform(ytest.reshape(1,-1).T).flatten()
-                    y_test_ = self.scaler_y.transform(self.y_test.reshape(1,-1).T).flatten()
-                    test_error = np.mean((y_test_ - ytest_)**2)
-                else:
-                    test_error = np.mean((y_test - ytest)**2)
+                test_error = np.mean((self.y_test - ytest)**2)
             else:
                 test_error = np.nan
 
@@ -958,7 +950,7 @@ class SurrogateModel(object):
         # ================================
 
         if "gp_all" in plots:
-            gp_plots = ["gp_error", "gp_hyperparam", "gp_timing", "gp_train_corner", "gp_train_scatter"]
+            gp_plots = ["gp_error", "gp_hyperparam", "gp_timing", "gp_train_scatter"]
             if self.ndim == 2:
                 gp_plots.append("gp_fit_2D")
             for pl in gp_plots:
