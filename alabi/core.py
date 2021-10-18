@@ -119,7 +119,7 @@ class SurrogateModel(object):
         if self.scale == "log":
             return np.log10(fn(theta))
         elif self.scale == "nlog":
-            return np.log10(fn(theta))
+            return np.log10(-fn(theta))
         else:
             return fn(theta)
 
@@ -535,7 +535,7 @@ class SurrogateModel(object):
         return thetaN, yN, opt_timing
 
 
-    def active_train(self, niter=100, algorithm="bape", gp_opt_freq=10, save_progress=True,
+    def active_train(self, niter=100, algorithm="bape", gp_opt_freq=10, save_progress=False,
                      opt_init=False, obj_opt_method="nelder-mead"): 
         """
         :param niter: (*int, optional*)
@@ -797,7 +797,7 @@ class SurrogateModel(object):
 
     
     def run_dynesty(self, like_fn="surrogate", ptform=None, mode="dynamic", sampler_kwargs={}, run_kwargs={},
-                    multi_proc=False, save_iter=1000, ptform_comment=None):
+                    multi_proc=False, save_iter=None, ptform_comment=None):
         """
         Use the ``dynesty`` nested-sampling MCMC package to sample the trained GP surrogate model.
         https://github.com/joshspeagle/dynesty
@@ -879,30 +879,34 @@ class SurrogateModel(object):
         else:
             raise ValueError(f"mode {mode} is not a valid option. Choose 'dynamic' or 'static'.")
 
+        # Pickle sampler?
+        if save_iter is not None:
+            run_sampler = True
+            last_iter = 0
+            while run_sampler == True:
+                dsampler.run_nested(maxiter=save_iter, **run_kwargs)
+                self.res = dsampler.results
 
-        run_sampler = True
-        last_iter = 0
-        while run_sampler == True:
-            dsampler.run_nested(maxiter=save_iter, **run_kwargs)
-            self.res = dsampler.results
+                file = os.path.join(self.savedir, "dynesty_sampler.pkl")
 
-            file = os.path.join(self.savedir, "dynesty_sampler.pkl")
+                # pickle dynesty sampler object
+                print(f"Caching model to {file}...")
+                with open(file, "wb") as f:        
+                    pickle.dump(dsampler, f)
 
-            # pickle dynesty sampler object
-            print(f"Caching model to {file}...")
-            with open(file, "wb") as f:        
-                pickle.dump(dsampler, f)
-
-            # check if converged (i.e. hasn't run for more iterations)
-            if dsampler.results.niter > last_iter:
-                last_iter = dsampler.results.niter
-                run_sampler = True
-            else:
-                run_sampler = False
+                # check if converged (i.e. hasn't run for more iterations)
+                if dsampler.results.niter > last_iter:
+                    last_iter = dsampler.results.niter
+                    run_sampler = True
+                else:
+                    run_sampler = False
+        else:
+            dsampler.run_nested(**run_kwargs)
 
         # record dynesty runtime
         self.dynesty_runtime = time.time() - dynesty_t0
 
+        self.res = dsampler.results
         samples = self.res.samples  # samples
         weights = np.exp(self.res.logwt - self.res.logz[-1])
 
