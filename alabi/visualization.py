@@ -82,6 +82,7 @@ def plot_hyperparam_vs_iteration(sm, title="GP fit"):
         ax2.set_ylabel('mean hyperparameter', color='grey', fontsize=18)  
         ax2.plot(sm.training_results["iteration"], hp_values.T[0], color='grey')
         ax2.tick_params(axis='y', labelcolor='grey')
+        ax2.minorticks_on()
     else:
         for ii, name in enumerate(hp_names):
             ax1.plot(sm.training_results["iteration"], hp_values.T[ii], 
@@ -92,7 +93,6 @@ def plot_hyperparam_vs_iteration(sm, title="GP fit"):
     ax1.set_xlim(1, max(sm.training_results["iteration"]))
     ax1.set_ylim(-20, 20)
     ax1.minorticks_on()
-    ax2.minorticks_on()
     ax1.legend(loc='best')
     ax1.set_title(title, fontsize=22)
     plt.tight_layout()
