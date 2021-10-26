@@ -609,8 +609,11 @@ class SurrogateModel(object):
 
             # evaluate gp test error (scaled)
             if hasattr(self, 'theta_test') and hasattr(self, 'y_test'):
-                ytest = self.gp.predict(self.y, self.theta_test, return_cov=False, return_var=False)
-                test_error = np.mean((self.y_test - ytest)**2)
+                if (len(self.theta_test) > 0):
+                    ytest = self.gp.predict(self.y, self.theta_test, return_cov=False, return_var=False)
+                    test_error = np.mean((self.y_test - ytest)**2)
+                else:
+                    test_error = np.nan
             else:
                 test_error = np.nan
 
