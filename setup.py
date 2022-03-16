@@ -19,5 +19,6 @@ setup(name="alabi",
                           "pybind11",
                           "pytest",
                           "h5py",
-                          "tqdm"]
+                          "tqdm",
+                          "scikit-optimize"]
      )
