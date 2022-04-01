@@ -13,6 +13,7 @@ from scipy.optimize import minimize
 from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
 from functools import partial
+import copy
 
 __all__ = ["default_hyper_prior", 
            "configure_gp", 
@@ -136,11 +137,15 @@ def configure_gp(theta, y, kernel, gp_hyper_prior,
 
 
 def optimize_gp(gp, theta, y, gp_hyper_prior, p0,
-                nopt=3, method="powell", options=None):
+                nopt=3, method="powell", 
+                options=None, bounds=None):
     
     # Collapse arrays if 1D
     theta = theta.squeeze()
     y = y.squeeze()
+
+    # initial hyperparameters
+    init_hp = gp.get_parameter_vector()
     
     # Minimize GP nll, save result, evaluate marginal likelihood
     if method not in ["nelder-mead", "powell", "cg"]:
@@ -156,33 +161,33 @@ def optimize_gp(gp, theta, y, gp_hyper_prior, p0,
     for ii, x0 in enumerate(p0):
 
         resii = minimize(_nll, x0, args=(gp, y, gp_hyper_prior), method=method,
-                         jac=jac, bounds=None, options=options)["x"]
-        res.append(resii)
-        try:
-            # Update the kernel with solution for computing marginal loglike
-            gp.set_parameter_vector(resii)
-            gp.recompute()
+                         jac=jac, bounds=bounds, options=options)["x"]
 
-            # Compute marginal log likelihood for this set of kernel hyperparameters
-            mll.append(gp.log_likelihood(y, quiet=True))
+        # if hyperparameters allowed by prior
+        if np.isfinite(gp_hyper_prior(resii)):
+            res.append(resii)
+
+        else:
+            print("\nWarning: GP hyperparameter optimization failed. Solution failed prior bounds.\n")
+            res.append(init_hp)
+
+        # Compute marginal log likelihood for this set of kernel hyperparameters
+        op_gp = copy.copy(gp)
+        op_gp.set_parameter_vector(res[ii])
+        try:
+            gp.recompute()
+            mll.append(op_gp.log_likelihood(y, quiet=True))
         except:
-            # solution not valid
+            print("\nWarning: GP hyperparameter optimization failed. Cannot recompute gp.\n")
             mll.append(-np.inf)
+
 
     # Pick result with largest marginal log likelihood
     ind = np.argmax(mll)
-
-    # if hyperparameters allowed by prior
-    if np.isfinite(gp_hyper_prior(res[ind])):
-        # Update gp
-        gp.set_parameter_vector(res[ind])
-        try:
-            gp.recompute()
-        except:
-            print("\nWarning: GP hyperparameter optimization failed. Cannot recompute gp.\n")
-            gp = None
-    else:
-        print("\nWarning: GP hyperparameter optimization failed. Solution failed prior bounds.\n")
+    try:
+        gp.set_parameter_vector(res[ind])   
+        gp.recompute()
+    except:
         gp = None
 
     return gp

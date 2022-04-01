@@ -278,6 +278,15 @@ class SurrogateModel(object):
         # record number of test samples
         self.ntest = len(self.theta_test)
 
+
+    def set_hyperparam_prior_bounds(self):
+
+        # Configure GP hyperparameter prior
+        self.hp_bounds = [[-self.gp_scale_rng, self.gp_scale_rng] for _ in range(self.gp_nparam)]
+        if self.fit_mean:
+            self.hp_bounds[0] = [np.mean(self.y)-3*np.std(self.y), np.mean(self.y)+3*np.std(self.y)]
+        self.gp_hyper_prior = partial(ut.lnprior_uniform, bounds=self.hp_bounds)
+
     
     def fit_gp(self, theta=None, y=None):
 
@@ -289,6 +298,7 @@ class SurrogateModel(object):
 
         t0 = time.time()
 
+        self.set_hyperparam_prior_bounds()
         gp = gp_utils.configure_gp(theta, y, self.kernel, self.gp_hyper_prior, 
                                     fit_amp=self.fit_amp, fit_mean=self.fit_mean,
                                     fit_white_noise=self.fit_white_noise,
@@ -305,26 +315,28 @@ class SurrogateModel(object):
     def opt_gp(self):
 
         t0 = time.time()
-        op_gp = None
-        while op_gp is None:
 
-            # Random initialization points
-            p0 = ut.prior_sampler(bounds=self.hp_bounds, nsample=self.gp_nopt, sampler='uniform')
+        # Random initialization points
+        p0 = ut.prior_sampler(bounds=self.hp_bounds, nsample=self.gp_nopt, sampler='uniform')
 
-            # on first attempt, initialize gp optimization at current hyperparameters
-            if hasattr(self, "gp"):
-                p0[0] = self.gp.get_parameter_vector()
+        # on first attempt, initialize gp optimization at current hyperparameters
+        if hasattr(self, "gp"):
+            p0[0] = self.gp.get_parameter_vector()
 
-            op_gp = gp_utils.optimize_gp(self.gp, self.theta, self.y, 
-                                         self.gp_hyper_prior, p0,
-                                         nopt=self.gp_nopt,
-                                         method=self.gp_opt_method)
+        op_gp = gp_utils.optimize_gp(self.gp, self.theta, self.y, 
+                                        self.gp_hyper_prior, p0,
+                                        nopt=self.gp_nopt,
+                                        method=self.gp_opt_method,
+                                        bounds=self.hp_bounds)
+        if op_gp is None:
+            print("Warning: hyperparameter optimization failed. Keeping previous iteration hyperparameters.")
+            op_gp = self.gp
 
         tf = time.time()
         timing = tf - t0
 
         if self.verbose:
-            print(f"Successfully optimized hyperparameters: ({np.round(timing, 1)}s)")
+            print(f"Optimized hyperparameters: ({np.round(timing, 1)}s)")
             print(self.gp.get_parameter_names())
             print(self.gp.get_parameter_vector())
             print('')
@@ -460,12 +472,6 @@ class SurrogateModel(object):
 
         # assign GP hyperparameter prior
         self.gp_scale_rng = gp_scale_rng
-
-        # Configure GP hyperparameter prior
-        self.hp_bounds = [[-self.gp_scale_rng, self.gp_scale_rng] for _ in range(self.gp_nparam)]
-        if self.fit_mean:
-            self.hp_bounds[0] = [np.mean(self.y)-3*np.std(self.y), np.mean(self.y)+3*np.std(self.y)]
-        self.gp_hyper_prior = partial(ut.lnprior_uniform, bounds=self.hp_bounds)
         
         # Fit GP with training sample and kernel
         self.gp, _ = self.fit_gp()

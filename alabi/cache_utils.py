@@ -41,6 +41,7 @@ def write_report_gp(self, file):
     lines += f"fit amplitude: {self.fit_amp} \n"
     lines += f"fit white_noise: {self.fit_white_noise} \n"
     lines += f"GP white noise: {self.white_noise} \n"
+    lines += f"Hyperparameter bounds: {self.hp_bounds} \n"
     lines += f"Active learning algorithm : {self.algorithm} \n\n" 
 
     lines += f"Number of total training samples: {self.ntrain} \n"
