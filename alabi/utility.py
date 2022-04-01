@@ -14,6 +14,7 @@ from scipy.stats import norm, truncnorm
 from skopt.space import Space
 from skopt.sampler import Sobol, Lhs, Halton, Hammersly, Grid
 import multiprocessing as mp
+from functools import partial
 import warnings
 import time
 import tqdm
@@ -284,19 +285,12 @@ def bape_utility(theta, y, gp, bounds):
     else:
         raise RuntimeError("ERROR: Need to compute GP before using it!")
 
-    # if var <= 0:
-    #     return np.inf
-
     try:
         util = -((2.0 * mu + var) + logsubexp(var, 0.0))
         # util = -(np.exp(2*mu + var) * (np.exp(var) - 1))
     except ValueError:
         print("Invalid util value.  Negative variance or inf mu?")
         raise ValueError("util: %e. mu: %e. var: %e" % (util, mu, var))
-
-    # print(theta, util)
-    # print(mu, var, logsubexp(var, 0.0), util)
-    # print('theta:', theta, 'util', util)
 
     return util
 
@@ -374,6 +368,36 @@ def assign_utility(algorithm):
         raise ValueError(errMsg)
 
     return utility
+
+
+# def check_validity():
+
+#     # If solution is finite and allowed by the prior, save
+#     if np.all(np.isfinite(x_opt)) and np.all(np.isfinite(f_opt)):
+#         if np.isfinite(lnprior_uniform(x_opt, bounds)):
+#             res.append(x_opt)
+#             objective.append(f_opt)
+
+#     return 0
+
+
+# def minimize_objective(t0, uf, bounds):
+
+#     sol = scipy.optimize.differential_evolution(uf, bounds)
+
+#     return sol["x"], sol["fun"]
+
+
+# def find_next_points(sm, npts=1):
+
+#     uf = partial(assign_utility(sm.algorithm), y=sm.y, gp=sm.gp, bounds=sm.bounds)
+
+#     if npts == 1:
+#         method = "shgo"
+#     else:
+#         method = "nelder-mead"
+
+#     return minimize_objective(uf, sm.bounds)
 
 
 def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",

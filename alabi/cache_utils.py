@@ -13,8 +13,9 @@ __all__ = ["load_model_cache",
            "write_report_dynesty"]
 
 
-def load_model_cache(file):
+def load_model_cache(savedir, fname="surrogate_model.pkl"):
 
+    file = os.path.join(savedir, fname)
     with open(file, "rb") as f:
         sm = pickle.load(f)
 
@@ -40,6 +41,7 @@ def write_report_gp(self, file):
     lines += f"fit amplitude: {self.fit_amp} \n"
     lines += f"fit white_noise: {self.fit_white_noise} \n"
     lines += f"GP white noise: {self.white_noise} \n"
+    lines += f"Hyperparameter bounds: {self.hp_bounds} \n"
     lines += f"Active learning algorithm : {self.algorithm} \n\n" 
 
     lines += f"Number of total training samples: {self.ntrain} \n"

@@ -41,6 +41,7 @@ __all__ = ["plot_error_vs_iteration",
 
 def plot_error_vs_iteration(sm, log=False, title="GP fit"):
 
+    fig = plt.figure()
     plt.plot(sm.training_results["iteration"], sm.training_results["training_error"], 
                 label='train error')
     plt.plot(sm.training_results["iteration"], sm.training_results["test_error"], 
@@ -58,6 +59,8 @@ def plot_error_vs_iteration(sm, log=False, title="GP fit"):
     else:
         plt.savefig(f"{sm.savedir}/gp_error_vs_iteration.png")
     plt.close()
+
+    return fig
 
 
 def plot_hyperparam_vs_iteration(sm, title="GP fit"):
@@ -79,6 +82,7 @@ def plot_hyperparam_vs_iteration(sm, title="GP fit"):
         ax2.set_ylabel('mean hyperparameter', color='grey', fontsize=18)  
         ax2.plot(sm.training_results["iteration"], hp_values.T[0], color='grey')
         ax2.tick_params(axis='y', labelcolor='grey')
+        ax2.minorticks_on()
     else:
         for ii, name in enumerate(hp_names):
             ax1.plot(sm.training_results["iteration"], hp_values.T[ii], 
@@ -89,16 +93,18 @@ def plot_hyperparam_vs_iteration(sm, title="GP fit"):
     ax1.set_xlim(1, max(sm.training_results["iteration"]))
     ax1.set_ylim(-20, 20)
     ax1.minorticks_on()
-    ax2.minorticks_on()
     ax1.legend(loc='best')
     ax1.set_title(title, fontsize=22)
     plt.tight_layout()
     plt.savefig(f"{sm.savedir}/gp_hyperparameters_vs_iteration.png")
     plt.close()
 
+    return fig
+
 
 def plot_train_time_vs_iteration(sm, title="GP fit"):
 
+    fig = plt.figure()
     plt.plot(sm.training_results["iteration"], sm.training_results["gp_train_time"], 
                 label='GP train step')
     plt.plot(sm.training_results["iteration"], sm.training_results["obj_fn_opt_time"], 
@@ -112,9 +118,13 @@ def plot_train_time_vs_iteration(sm, title="GP fit"):
     plt.savefig(f"{sm.savedir}/gp_train_time_vs_iteration.png")
     plt.close()
 
+    return fig
+
 
 def plot_train_sample_vs_iteration(sm):
 
+    fig = plt.figure()
+    
     yy = -sm.y[sm.ninit_train:] 
     plt.scatter(sm.training_results["iteration"], yy)
     plt.yscale('log')
@@ -124,6 +134,8 @@ def plot_train_sample_vs_iteration(sm):
     plt.tight_layout()
     plt.savefig(f"{sm.savedir}/gp_train_sample_vs_iteration.png")
     plt.close()
+
+    return fig
 
 
 def plot_corner_lnp(sm):
@@ -154,6 +166,8 @@ def plot_corner_lnp(sm):
     fig.savefig(f"{sm.savedir}/gp_training_sample_corner.png")
     plt.close()
 
+    return fig
+
 
 def plot_corner_scatter(sm):
 
@@ -175,6 +189,8 @@ def plot_corner_scatter(sm):
     fig.savefig(f"{sm.savedir}/gp_training_sample_scatter.png")
     plt.close()
 
+    return fig
+
 
 def plot_gp_fit_1D(sm, title="GP fit"):
 
@@ -192,6 +208,8 @@ def plot_gp_fit_1D(sm, title="GP fit"):
     plt.savefig(f"{sm.savedir}/gp_fit_1D.png")
     plt.close()
 
+    return fig
+
 
 def plot_gp_fit_2D(sm, ngrid=60, title="GP fit"):
 
@@ -206,6 +224,7 @@ def plot_gp_fit_2D(sm, ngrid=60, title="GP fit"):
             tt = np.array([X[i][j], Y[i][j]]).reshape(1,-1)
             Z[i][j] = sm.evaluate(tt)
         
+    fig = plt.figure()
     im = plt.contourf(X, Y, Z, 20, cmap='Blues_r')
     plt.colorbar(im)
     plt.scatter(sm.theta.T[0], sm.theta.T[1], color='red', edgecolor='none', 
@@ -218,6 +237,8 @@ def plot_gp_fit_2D(sm, ngrid=60, title="GP fit"):
     plt.savefig(f"{sm.savedir}/gp_fit_2D.png")
     plt.close()
 
+    return fig
+
 
 def plot_contour_2D(fn, bounds, savedir, save_name, title, ngrid=60, cmap='Blues_r'):
 
@@ -227,6 +248,7 @@ def plot_contour_2D(fn, bounds, savedir, save_name, title, ngrid=60, cmap='Blues
     X, Y = np.meshgrid(xarr, yarr)
     Z = np.zeros((ngrid, ngrid))
     
+    fig = plt.figure()
     for i in range(Z.shape[0]):
         for j in range(Z.shape[1]):
             tt = np.array([X[i][j], Y[i][j]])
@@ -241,11 +263,15 @@ def plot_contour_2D(fn, bounds, savedir, save_name, title, ngrid=60, cmap='Blues
     plt.savefig(f"{savedir}/{save_name}")
     plt.close()
 
+    return fig
+
 
 def plot_true_fit_2D(fn, bounds, savedir, ngrid=60):
 
-    plot_contour_2D(fn, bounds, savedir, save_name="true_function_2D.png", 
+    fig = plot_contour_2D(fn, bounds, savedir, save_name="true_function_2D.png", 
                     title="True function", ngrid=ngrid)
+
+    return fig
 
 
 def plot_utility_2D(sm, ngrid=60):
@@ -253,8 +279,10 @@ def plot_utility_2D(sm, ngrid=60):
     ut_fn = ut.assign_utility(sm.algorithm)
     fn = partial(ut_fn, y=sm.y, gp=sm.gp, bounds=sm.bounds)
 
-    plot_contour_2D(fn, sm.bounds, sm.savedir, save_name="objective_function.png", 
+    fig = plot_contour_2D(fn, sm.bounds, sm.savedir, save_name="objective_function.png", 
                     title=f"{sm.algorithm.upper()} function", ngrid=ngrid, cmap='Greens_r')
+
+    return fig
 
 
 def plot_corner(sm, samples, sampler=""):
@@ -265,12 +293,16 @@ def plot_corner(sm, samples, sampler=""):
                         title_kwargs={"fontsize": 20}, label_kwargs={"fontsize": 20})
     fig.savefig(f"{sm.savedir}/{sampler}posterior.png", bbox_inches="tight")
 
+    return fig
+
 
 def plot_corner_kde(sm):
 
     fig, axes = dyplot.cornerplot(sm.res, quantiles=[0.16, 0.5, 0.84], span=sm.bounds,
                                title_kwargs={"fontsize": 15}, label_kwargs={"fontsize": 15})
     fig.savefig(f"{sm.savedir}/dynesty_posterior_kde.png", bbox_inches="tight")
+
+    return fig
 
 
 def plot_emcee_walkers(sm):
@@ -287,6 +319,8 @@ def plot_emcee_walkers(sm):
 
     fig.savefig(f"{sm.savedir}/emcee_walkers.png", bbox_inches="tight")
 
+    return fig
+
 
 def plot_dynesty_traceplot(sm):
 
@@ -295,11 +329,15 @@ def plot_dynesty_traceplot(sm):
                                  label_kwargs={"fontsize": 22})
     fig.savefig(f"{sm.savedir}/dynesty_traceplot.png")
 
+    return fig
+
 
 def plot_dynesty_runplot(sm):
 
     fig, axes = dyplot.runplot(sm.res, label_kwargs={"fontsize": 22})
     fig.savefig(f"{sm.savedir}/dynesty_runplot.png")
+
+    return fig
 
 
 def plot_mcmc_comparison(sm):
@@ -326,8 +364,10 @@ def plot_mcmc_comparison(sm):
     
     fig.savefig(f"{sm.savedir}/mcmc_comparison.png")
 
+    return fig
 
-def plot_2D_panel4(savedir, save_name="panel.png"):
+
+def plot_2D_panel4(savedir, save_name=None):
 
     from PIL import Image
     img_01 = Image.open(f"{savedir}/gp_fit_2D.png")
@@ -342,4 +382,7 @@ def plot_2D_panel4(savedir, save_name="panel.png"):
     new_im.paste(img_03, (0, img_01.size[1]))
     new_im.paste(img_04, (img_01.size[0], img_01.size[1]))
 
-    new_im.save(f"{savedir}/{save_name}")
+    if save_name is not None:
+        new_im.save(f"{savedir}/{save_name}")
+
+    return new_im
