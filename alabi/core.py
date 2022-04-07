@@ -658,7 +658,7 @@ class SurrogateModel(object):
             self.save()
 
 
-    def lnprob(self, theta):
+    def lnprob_emcee(self, theta):
         """
         Log probability function used for ``emcee``, which sums the prior with the surrogate model likelihood
 
@@ -672,15 +672,13 @@ class SurrogateModel(object):
             Array of model input parameters to evaluate model probability at.
         """
 
-        if not hasattr(self, 'gp'):
-            raise NameError("GP has not been trained")
-
-        if not hasattr(self, 'lnprior'):
+        if not hasattr(self, "lnprior"):
             raise NameError("lnprior has not been specified")
 
-        theta = np.asarray(theta).reshape(1,-1)
+        if self.like_name.lower() != "true":
+            theta = np.asarray(theta).reshape(1,-1)
 
-        lnp = self.evaluate(theta) + self.lnprior(theta)
+        lnp = self.like_fn(theta) + self.lnprior(theta)
 
         return lnp
 
@@ -690,7 +688,7 @@ class SurrogateModel(object):
         raise NotImplementedError("Not implemented.")
 
 
-    def run_emcee(self, lnprior=None, nwalkers=None, nsteps=int(5e4), sampler_kwargs={}, run_kwargs={},
+    def run_emcee(self, like_fn="surrogate", lnprior=None, nwalkers=None, nsteps=int(5e4), sampler_kwargs={}, run_kwargs={},
                   opt_init=True, multi_proc=True, lnprior_comment=None):
         """
         Use the ``emcee`` affine-invariant MCMC package to sample the trained GP surrogate model.
@@ -718,7 +716,17 @@ class SurrogateModel(object):
         :param lnprior_comment: (*str, optional*) 
         """
 
-        import emcee
+        # specify likelihood function (true function or surrogate model)
+        if like_fn.lower() == "true":
+            print("Initializing emcee with self.fn as likelihood.")
+            self.like_fn = self.fn
+        else:
+            print("Initializing emcee with self.evaluate surrogate model as likelihood.")
+            if not hasattr(self, "gp"):
+                raise NameError("GP has not been trained")
+            else:
+                self.like_fn = self.evaluate
+        self.like_name = like_fn
 
         if lnprior is None:
             print(f"No lnprior specified. Defaulting to uniform prior with bounds {self.bounds}")
@@ -770,7 +778,7 @@ class SurrogateModel(object):
         emcee_t0 = time.time()
         self.sampler = emcee.EnsembleSampler(self.nwalkers, 
                                              self.ndim, 
-                                             self.lnprob, 
+                                             self.lnprob_emcee, 
                                              pool=pool,
                                              **sampler_kwargs)
 
@@ -843,7 +851,11 @@ class SurrogateModel(object):
             self.like_fn = self.fn
         else:
             print("Initializing dynesty with self.evaluate surrogate model as likelihood.")
-            self.like_fn = self.evaluate
+            if not hasattr(self, "gp"):
+                raise NameError("GP has not been trained")
+            else:
+                self.like_fn = self.evaluate
+        self.like_name = like_fn
 
         # set up prior transform
         if ptform is None:
