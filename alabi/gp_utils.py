@@ -8,6 +8,9 @@ hyperparameters.
 """
 
 import numpy as np
+import jax.numpy as jnp
+from tinygp import kernels, transforms
+from tinygp import GaussianProcess
 import george
 from scipy.optimize import minimize
 from sklearn.model_selection import KFold
@@ -15,9 +18,26 @@ from sklearn.metrics import mean_squared_error
 from functools import partial
 import copy
 
-__all__ = ["default_hyper_prior", 
+__all__ = ["build_gp",
+           "default_hyper_prior", 
            "configure_gp", 
            "optimize_gp"]
+
+
+def build_gp(params, theta):
+        
+    amp   = jnp.exp(params["log_amp"])
+    scale = jnp.exp(params["log_scale"])
+    # if params["log_diag"] != None:
+    #     diag = jnp.exp(params["log_diag"])
+    # else:
+    #     diag = None
+                    
+    kernel = amp * transforms.Linear(scale, kernels.ExpSquared())
+
+    gp = GaussianProcess(kernel, theta, mean=params["mean"])
+
+    return gp
 
 
 def default_hyper_prior(p, hp_rng=20, mu=None, sigma=None, sigma_level=3):

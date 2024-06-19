@@ -29,7 +29,7 @@ def test1d_fn(theta):
     theta = np.asarray(theta)
     return -np.sin(3*theta) - theta**2 + 0.7*theta
 
-test1d_bounds = [(-2,1)]
+test1d_bounds = [(-2,3)]
 
 test1d = {"fn": test1d_fn,
           "bounds": test1d_bounds}
@@ -98,6 +98,23 @@ multimodal_bounds = [(0,5), (0,5)]
 multimodal = {"fn": multimodal_fn,
               "bounds": multimodal_bounds}
 
+
+# ================================
+# Ring (ND)
+# ================================
+
+def gaussian_ring(x, R=1, sigma=0.2):
+    r = np.sqrt(np.sum(np.square(x), axis=0))
+    A = 1 / ((2 * np.pi) ** (len(x) / 2))  # Normalization constant
+    exponent = -0.5 * ((r - R) / sigma) ** 2
+    return A * np.exp(exponent)
+
+def double_ring(x):
+    r1 = gaussian_ring(x, R=1.0, sigma=0.2)
+    r2 = gaussian_ring(x, R=0.1, sigma=0.2)
+    return r1 + r2
+
+ring = {"fn": double_ring}
 
 # ================================
 # Logo (2D)

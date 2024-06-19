@@ -370,36 +370,6 @@ def assign_utility(algorithm):
     return utility
 
 
-# def check_validity():
-
-#     # If solution is finite and allowed by the prior, save
-#     if np.all(np.isfinite(x_opt)) and np.all(np.isfinite(f_opt)):
-#         if np.isfinite(lnprior_uniform(x_opt, bounds)):
-#             res.append(x_opt)
-#             objective.append(f_opt)
-
-#     return 0
-
-
-# def minimize_objective(t0, uf, bounds):
-
-#     sol = scipy.optimize.differential_evolution(uf, bounds)
-
-#     return sol["x"], sol["fun"]
-
-
-# def find_next_points(sm, npts=1):
-
-#     uf = partial(assign_utility(sm.algorithm), y=sm.y, gp=sm.gp, bounds=sm.bounds)
-
-#     if npts == 1:
-#         method = "shgo"
-#     else:
-#         method = "nelder-mead"
-
-#     return minimize_objective(uf, sm.bounds)
-
-
 def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
                        t0=None, ps=None, args=None, options=None, max_iter=100):
     """

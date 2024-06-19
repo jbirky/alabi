@@ -25,8 +25,8 @@ def load_model_cache(savedir, fname="surrogate_model.pkl"):
 def write_report_gp(self, file):
 
     # get hyperparameter names and values
-    hp_name = self.gp.get_parameter_names()
-    hp_vect = self.gp.get_parameter_vector()
+    hp_name = self.hparam.keys()
+    hp_vect = self.hparam.values()
 
     # print model summary to human-readable text file
     lines =  f"==================================================================\n"

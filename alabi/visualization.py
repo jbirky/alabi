@@ -6,6 +6,7 @@
 import alabi.utility as ut
 
 import numpy as np
+import jax.numpy as jnp
 import os
 import corner
 import warnings
@@ -55,9 +56,9 @@ def plot_error_vs_iteration(sm, log=False, title="GP fit"):
     plt.tight_layout()
     if log:
         plt.yscale('log')
-        plt.savefig(f"{sm.savedir}/gp_error_vs_iteration_log.png")
+        plt.savefig(f"{sm.savedir}/gp_error_vs_iteration_log.png", bbox_inches="tight")
     else:
-        plt.savefig(f"{sm.savedir}/gp_error_vs_iteration.png")
+        plt.savefig(f"{sm.savedir}/gp_error_vs_iteration.png", bbox_inches="tight")
     plt.close()
 
     return fig
@@ -96,7 +97,7 @@ def plot_hyperparam_vs_iteration(sm, title="GP fit"):
     ax1.legend(loc='best')
     ax1.set_title(title, fontsize=22)
     plt.tight_layout()
-    plt.savefig(f"{sm.savedir}/gp_hyperparameters_vs_iteration.png")
+    plt.savefig(f"{sm.savedir}/gp_hyperparameters_vs_iteration.png", bbox_inches="tight")
     plt.close()
 
     return fig
@@ -115,7 +116,7 @@ def plot_train_time_vs_iteration(sm, title="GP fit"):
     plt.title(title, fontsize=22)
     plt.minorticks_on()
     plt.tight_layout()
-    plt.savefig(f"{sm.savedir}/gp_train_time_vs_iteration.png")
+    plt.savefig(f"{sm.savedir}/gp_train_time_vs_iteration.png", bbox_inches="tight")
     plt.close()
 
     return fig
@@ -132,7 +133,7 @@ def plot_train_sample_vs_iteration(sm):
     plt.ylabel(r'$-\ln P$', fontsize=18)
     plt.minorticks_on()
     plt.tight_layout()
-    plt.savefig(f"{sm.savedir}/gp_train_sample_vs_iteration.png")
+    plt.savefig(f"{sm.savedir}/gp_train_sample_vs_iteration.png", bbox_inches="tight")
     plt.close()
 
     return fig
@@ -163,7 +164,7 @@ def plot_corner_lnp(sm):
     cb.set_label(r'$-\ln P$', fontsize=20, labelpad=-80)
     cb.set_ticks(cb_rng)
     cb.ax.tick_params(labelsize=18)
-    fig.savefig(f"{sm.savedir}/gp_training_sample_corner.png")
+    fig.savefig(f"{sm.savedir}/gp_training_sample_corner.png", bbox_inches="tight")
     plt.close()
 
     return fig
@@ -186,26 +187,27 @@ def plot_corner_scatter(sm):
                 label_kwargs={"fontsize": 22}, data_kwargs={'alpha':1.0},
                 fig=fig)
 
-    fig.savefig(f"{sm.savedir}/gp_training_sample_scatter.png")
+    fig.savefig(f"{sm.savedir}/gp_training_sample_scatter.png", bbox_inches="tight")
     plt.close()
 
     return fig
 
 
-def plot_gp_fit_1D(sm, title="GP fit"):
+def plot_gp_fit_1D(sm, ngrid=30, title="GP fit"):
 
-    xarr = np.linspace(sm.bounds[0][0], sm.bounds[0][1], 30)
-    mu, var = sm.gp.predict(sm.y, xarr, return_var=True)
+    xarr = np.linspace(sm.bounds[0][0], sm.bounds[0][1], ngrid)
+    mu, var = sm.gp.predict(sm.y, xarr.reshape(-1,1), return_var=True)
 
-    fig, ax = plt.subplots()
-    plt.plot(xarr, fn(xarr), color='k', linestyle='--', linewidth=.5)
-    ax.fill_between(xarr, mu-var, mu+var, color='r', alpha=.8)
+    fig = plt.figure()
+    plt.plot(xarr, sm.fn(xarr), color='k', linestyle='--', linewidth=.5)
+    plt.fill_between(xarr, mu-var, mu+var, color='r', alpha=.8)
     plt.scatter(sm.theta, sm.y, color='r')
     plt.scatter(sm.theta_test, sm.y_test, color='g')
     plt.xlim(sm.bounds[0])
     plt.title(title, fontsize=22)
     plt.tight_layout()
-    plt.savefig(f"{sm.savedir}/gp_fit_1D.png")
+    plt.minorticks_on()
+    plt.savefig(f"{sm.savedir}/gp_fit_1D.png", bbox_inches="tight")
     plt.close()
 
     return fig
@@ -234,7 +236,7 @@ def plot_gp_fit_2D(sm, ngrid=60, title="GP fit"):
     plt.title(title, fontsize=22)
     plt.legend(loc='best')
     plt.tight_layout()
-    plt.savefig(f"{sm.savedir}/gp_fit_2D.png")
+    plt.savefig(f"{sm.savedir}/gp_fit_2D.png", bbox_inches="tight")
     plt.close()
 
     return fig
@@ -260,7 +262,7 @@ def plot_contour_2D(fn, bounds, savedir, save_name, title, ngrid=60, cmap='Blues
     if not os.path.exists(savedir):
         os.makedirs(savedir)
     plt.tight_layout()
-    plt.savefig(f"{savedir}/{save_name}")
+    plt.savefig(f"{savedir}/{save_name}", bbox_inches="tight")
     plt.close()
 
     return fig
@@ -327,7 +329,7 @@ def plot_dynesty_traceplot(sm):
     fig, axes = dyplot.traceplot(sm.res, trace_cmap='plasma',
                                  quantiles=None, show_titles=True,
                                  label_kwargs={"fontsize": 22})
-    fig.savefig(f"{sm.savedir}/dynesty_traceplot.png")
+    fig.savefig(f"{sm.savedir}/dynesty_traceplot.png", bbox_inches="tight")
 
     return fig
 
@@ -335,7 +337,7 @@ def plot_dynesty_traceplot(sm):
 def plot_dynesty_runplot(sm):
 
     fig, axes = dyplot.runplot(sm.res, label_kwargs={"fontsize": 22})
-    fig.savefig(f"{sm.savedir}/dynesty_runplot.png")
+    fig.savefig(f"{sm.savedir}/dynesty_runplot.png", bbox_inches="tight")
 
     return fig
 
@@ -362,7 +364,7 @@ def plot_mcmc_comparison(sm):
     fig.axes[1].text(2.2, 0.725, r"--- emcee posterior", fontsize=26, color=colors[0], ha='left')
     fig.axes[1].text(2.2, 0.55, r"--- dynesty posterior", fontsize=26, color=colors[1], ha='left')
     
-    fig.savefig(f"{sm.savedir}/mcmc_comparison.png")
+    fig.savefig(f"{sm.savedir}/mcmc_comparison.png", bbox_inches="tight")
 
     return fig
 

@@ -9,3 +9,4 @@ from .mcmc_utils import *
 from .cache_utils import *
 from .visualization import *
 from .benchmarks import *
+from .metrics import *
