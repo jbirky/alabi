@@ -428,7 +428,7 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
 
     # arguments for objective function
     if args is None:
-        args = ()
+        args = (y, gp, bounds)
 
     # Containers
     res = []
@@ -442,7 +442,7 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
         while True:
 
             if t0 is None:
-                t0 = ps(nsample=1)
+                t0 = ps(nsample=1).flatten()
 
             # Too many iterations
             if test_iter >= max_iter:
@@ -454,7 +454,7 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
 
             # Minimize the function
             try:
-                warnings.simplefilter("ignore")
+                # warnings.simplefilter("ignore")
                 tmp = minimize(obj_fn, t0, args=args, bounds=tuple(bounds),
                                method=method, options=options)
             except:
