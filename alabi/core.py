@@ -18,7 +18,6 @@ import george
 from george import kernels
 import multiprocessing as mp
 import time
-import emcee
 import os
 import warnings
 import tqdm
@@ -725,10 +724,10 @@ class SurrogateModel(object):
 
         # specify likelihood function (true function or surrogate model)
         if like_fn.lower() == "true":
-            print("Initializing dynesty with self.fn as likelihood.")
+            print("Initializing emcee with self.fn as likelihood.")
             self.like_fn = self.fn
         else:
-            print("Initializing dynesty with self.evaluate surrogate model as likelihood.")
+            print("Initializing emcee with self.evaluate surrogate model as likelihood.")
             self.like_fn = self.evaluate
 
         if lnprior is None:
