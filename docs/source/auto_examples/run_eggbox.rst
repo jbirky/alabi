@@ -10,8 +10,8 @@
     .. note::
         :class: sphx-glr-download-link-note
 
-        Click :ref:`here <sphx_glr_download_auto_examples_run_eggbox.py>`
-        to download the full example code
+        :ref:`Go to the end <sphx_glr_download_auto_examples_run_eggbox.py>`
+        to download the full example code.
 
 .. rst-class:: sphx-glr-example-title
 
@@ -28,7 +28,7 @@ Initialize training function
 
 .. GENERATED FROM PYTHON SOURCE LINES 9-20
 
-.. code-block:: default
+.. code-block:: Python
 
 
     from alabi.core import SurrogateModel
@@ -56,7 +56,7 @@ Initialize GP surrogate model
 
 .. GENERATED FROM PYTHON SOURCE LINES 30-35
 
-.. code-block:: default
+.. code-block:: Python
 
 
     sm = SurrogateModel(fn=eval(benchmark)["fn"], 
@@ -71,7 +71,7 @@ Train GP surrogate model
 
 .. GENERATED FROM PYTHON SOURCE LINES 38-44
 
-.. code-block:: default
+.. code-block:: Python
 
 
     sm.init_samples(ntrain=200, ntest=200)
@@ -87,7 +87,7 @@ Plot GP diagnostics
 
 .. GENERATED FROM PYTHON SOURCE LINES 47-50
 
-.. code-block:: default
+.. code-block:: Python
 
 
     sm.plot(plots=["gp_error", "gp_hyperparam", "gp_timing", "gp_fit_2D"])
@@ -139,7 +139,7 @@ Run MCMC using ``dynesty``
 
 .. GENERATED FROM PYTHON SOURCE LINES 89-93
 
-.. code-block:: default
+.. code-block:: Python
 
 
     sm.run_dynesty()
@@ -154,30 +154,23 @@ Run MCMC using ``dynesty``
    .. image:: ../../examples/results/eggbox/Matern52Kernel/dynesty_posterior_kde.png
 
 
-.. rst-class:: sphx-glr-timing
-
-   **Total running time of the script:** ( 0 minutes  0.000 seconds)
-
-
 .. _sphx_glr_download_auto_examples_run_eggbox.py:
 
+.. only:: html
 
-.. only :: html
+  .. container:: sphx-glr-footer sphx-glr-footer-example
 
- .. container:: sphx-glr-footer
-    :class: sphx-glr-footer-example
+    .. container:: sphx-glr-download sphx-glr-download-jupyter
 
+      :download:`Download Jupyter notebook: run_eggbox.ipynb <run_eggbox.ipynb>`
 
+    .. container:: sphx-glr-download sphx-glr-download-python
 
-  .. container:: sphx-glr-download sphx-glr-download-python
+      :download:`Download Python source code: run_eggbox.py <run_eggbox.py>`
 
-     :download:`Download Python source code: run_eggbox.py <run_eggbox.py>`
+    .. container:: sphx-glr-download sphx-glr-download-zip
 
-
-
-  .. container:: sphx-glr-download sphx-glr-download-jupyter
-
-     :download:`Download Jupyter notebook: run_eggbox.ipynb <run_eggbox.ipynb>`
+      :download:`Download zipped: run_eggbox.zip <run_eggbox.zip>`
 
 
 .. only:: html

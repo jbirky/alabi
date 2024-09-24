@@ -10,8 +10,8 @@
     .. note::
         :class: sphx-glr-download-link-note
 
-        Click :ref:`here <sphx_glr_download_auto_examples_run_rosenbrock.py>`
-        to download the full example code
+        :ref:`Go to the end <sphx_glr_download_auto_examples_run_rosenbrock.py>`
+        to download the full example code.
 
 .. rst-class:: sphx-glr-example-title
 
@@ -28,7 +28,7 @@ Initialize training function
 
 .. GENERATED FROM PYTHON SOURCE LINES 9-21
 
-.. code-block:: default
+.. code-block:: Python
 
 
     from alabi.core import SurrogateModel
@@ -57,7 +57,7 @@ Initialize GP surrogate model
 
 .. GENERATED FROM PYTHON SOURCE LINES 31-36
 
-.. code-block:: default
+.. code-block:: Python
 
 
     sm = SurrogateModel(fn=eval(benchmark)["fn"], 
@@ -72,7 +72,7 @@ Train GP surrogate model
 
 .. GENERATED FROM PYTHON SOURCE LINES 39-45
 
-.. code-block:: default
+.. code-block:: Python
 
 
     sm.init_samples(ntrain=50, ntest=50)
@@ -88,7 +88,7 @@ Plot GP diagnostics
 
 .. GENERATED FROM PYTHON SOURCE LINES 48-51
 
-.. code-block:: default
+.. code-block:: Python
 
 
     sm.plot(plots=["gp_error", "gp_hyperparam", "gp_timing", "gp_fit_2D"])
@@ -129,7 +129,7 @@ Run MCMC using ``emcee``
 
 .. GENERATED FROM PYTHON SOURCE LINES 79-84
 
-.. code-block:: default
+.. code-block:: Python
 
 
     sm.run_emcee(nwalkers=20, nsteps=5e4, opt_init=False)
@@ -151,7 +151,7 @@ Run MCMC using ``dynesty``
 
 .. GENERATED FROM PYTHON SOURCE LINES 94-98
 
-.. code-block:: default
+.. code-block:: Python
 
 
     sm.run_dynesty()
@@ -166,30 +166,23 @@ Run MCMC using ``dynesty``
    .. image:: ../../examples/results/rosenbrock/ExpSquaredKernel/dynesty_posterior.png
 
 
-.. rst-class:: sphx-glr-timing
-
-   **Total running time of the script:** ( 0 minutes  0.000 seconds)
-
-
 .. _sphx_glr_download_auto_examples_run_rosenbrock.py:
 
+.. only:: html
 
-.. only :: html
+  .. container:: sphx-glr-footer sphx-glr-footer-example
 
- .. container:: sphx-glr-footer
-    :class: sphx-glr-footer-example
+    .. container:: sphx-glr-download sphx-glr-download-jupyter
 
+      :download:`Download Jupyter notebook: run_rosenbrock.ipynb <run_rosenbrock.ipynb>`
 
+    .. container:: sphx-glr-download sphx-glr-download-python
 
-  .. container:: sphx-glr-download sphx-glr-download-python
+      :download:`Download Python source code: run_rosenbrock.py <run_rosenbrock.py>`
 
-     :download:`Download Python source code: run_rosenbrock.py <run_rosenbrock.py>`
+    .. container:: sphx-glr-download sphx-glr-download-zip
 
-
-
-  .. container:: sphx-glr-download sphx-glr-download-jupyter
-
-     :download:`Download Jupyter notebook: run_rosenbrock.ipynb <run_rosenbrock.ipynb>`
+      :download:`Download zipped: run_rosenbrock.zip <run_rosenbrock.zip>`
 
 
 .. only:: html

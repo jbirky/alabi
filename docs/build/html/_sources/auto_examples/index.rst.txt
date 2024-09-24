@@ -1,12 +1,14 @@
 :orphan:
 
-
-
-.. _sphx_glr_auto_examples:
-
 Example Gallery
 ===============
 
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbnails">
+
+.. thumbnail-parent-div-open
 
 .. raw:: html
 
@@ -14,10 +16,35 @@ Example Gallery
 
 .. only:: html
 
- .. figure:: /auto_examples/images/thumb/sphx_glr_run_eggbox_thumb.png
-     :alt: Eggbox (2D)
+  .. image:: /auto_examples/images/thumb/sphx_glr_run_eggbox_thumb.png
+    :alt:
 
-     :ref:`sphx_glr_auto_examples_run_eggbox.py`
+  :ref:`sphx_glr_auto_examples_run_eggbox.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Eggbox (2D)</div>
+    </div>
+
+
+.. raw:: html
+
+    <div class="sphx-glr-thumbcontainer" tooltip="Rosenbrock (2D)">
+
+.. only:: html
+
+  .. image:: /auto_examples/images/thumb/sphx_glr_run_rosenbrock_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_examples_run_rosenbrock.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Rosenbrock (2D)</div>
+    </div>
+
+
+.. thumbnail-parent-div-close
 
 .. raw:: html
 
@@ -28,30 +55,7 @@ Example Gallery
    :hidden:
 
    /auto_examples/run_eggbox
-
-.. raw:: html
-
-    <div class="sphx-glr-thumbcontainer" tooltip="Rosenbrock (2D)">
-
-.. only:: html
-
- .. figure:: /auto_examples/images/thumb/sphx_glr_run_rosenbrock_thumb.png
-     :alt: Rosenbrock (2D)
-
-     :ref:`sphx_glr_auto_examples_run_rosenbrock.py`
-
-.. raw:: html
-
-    </div>
-
-
-.. toctree::
-   :hidden:
-
    /auto_examples/run_rosenbrock
-.. raw:: html
-
-    <div class="sphx-glr-clear"></div>
 
 
 

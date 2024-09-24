@@ -1,0 +1,20 @@
+{
+ "SurrogateModel": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "alabi.core",
+   "module_short": "alabi.core",
+   "name": "SurrogateModel"
+  }
+ ],
+ "vis.plot_true_fit_2D": [
+  {
+   "is_class": false,
+   "is_explicit": false,
+   "module": "alabi.visualization",
+   "module_short": "alabi.visualization",
+   "name": "plot_true_fit_2D"
+  }
+ ]
+}
