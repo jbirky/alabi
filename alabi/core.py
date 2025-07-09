@@ -417,11 +417,24 @@ class SurrogateModel(object):
                 ``'RationalQuadraticKernel'``
         """
         
+        if hasattr(self, 'gp') and (overwrite == False):
+            raise AssertionError(
+                "GP kernel already assigned. Use overwrite=True to re-assign the kernel.")
+            
         # optional hyperparameter choices
         self.fit_amp = fit_amp
         self.fit_mean = fit_mean
         self.fit_white_noise = fit_white_noise
         self.white_noise = white_noise
+        
+        # count total optional hyperparameters
+        self.gp_nparam = self.ndim
+        if self.fit_mean:
+            self.gp_nparam += 1
+        if self.fit_amp:
+            self.gp_nparam += 1
+        if self.fit_white_noise:
+            self.gp_nparam += 1
 
         # GP hyperparameter optimization method
         self.gp_opt_method = gp_opt_method
@@ -435,60 +448,48 @@ class SurrogateModel(object):
         # set the bounds for scale length parameters
         metric_bounds = [(-self.gp_scale_rng, self.gp_scale_rng) for _ in range(self.ndim)]
         
-        # theta ranges between 0 and 1, so choose an initial scale length between [0,1] 
-        initial_lscale = np.random.uniform(0, 1, self.ndim)
+        valid_scales = False
         
-        if hasattr(self, 'gp') and (overwrite == False):
-            raise AssertionError("GP kernel already assigned. Use overwrite=True to re-assign the kernel.")
-        
-        # Initialize GP kernel
-        # Stationary kernels
-        if kernel == "ExpSquaredKernel":
-            # Guess initial metric, or scale length of the covariances (must be > 0)
-            self.kernel = kernels.ExpSquaredKernel(metric=initial_lscale, metric_bounds=metric_bounds, ndim=self.ndim)
-            self.kernel_name = kernel
-            print("Initialized GP with squared exponential kernel.")
-        elif kernel == "RationalQuadraticKernel":
-            self.kernel = kernels.RationalQuadraticKernel(log_alpha=1, metric=initial_lscale, metric_bounds=metric_bounds, ndim=self.ndim)
-            self.kernel_name = kernel
-            print("Initialized GP with rational quadratic kernel.")
-        elif kernel == "Matern32Kernel":
-            self.kernel = kernels.Matern32Kernel(metric=initial_lscale, metric_bounds=metric_bounds, ndim=self.ndim)
-            self.kernel_name = kernel
-            print("Initialized GP with squared matern-3/2 kernel.")
-        elif kernel == "Matern52Kernel":
-            self.kernel = kernels.Matern52Kernel(metric=initial_lscale, metric_bounds=metric_bounds, ndim=self.ndim)
-            self.kernel_name = kernel
-            print("Initialized GP with squared matern-5/2 kernel.")
-
-        # Custom george kernel
-        else:
-            try:
-                self.kernel = kernel
-                test_gp = george.GP(kernel)
-                self.kernel_name = "Custom Kernel"
-                print(f"Loaded custom kernel with parameters: {test_gp.get_parameter_names()}")
-            except:
-                print(f"kernel {kernel} is not valid.\n")
-                print("Enter either one of the following options, or a george kernel object.")
-                print(george.kernels.__all__)
-                
-        # set bounds for optional hyperparameters
-        self.gp_nparam = self.ndim
-        if self.fit_mean:
-            self.gp_nparam += 1
-        if self.fit_amp:
-            self.gp_nparam += 1
-        if self.fit_white_noise:
-            self.gp_nparam += 1
+        while valid_scales == False:
+            # theta ranges between 0 and 1, so choose an initial scale length between [0,1] 
+            initial_lscale = np.random.uniform(0, 1, self.ndim)
             
-        # create GP first time 
-        self.gp = gp_utils.configure_gp(self._theta, self._y, self.kernel, 
-                                        fit_amp=self.fit_amp, 
-                                        fit_mean=self.fit_mean,
-                                        fit_white_noise=self.fit_white_noise,
-                                        white_noise=self.white_noise)
-        
+            # Initialize GP kernel
+            try:
+                # Stationary kernels
+                if kernel == "ExpSquaredKernel":
+                    # Guess initial metric, or scale length of the covariances (must be > 0)
+                    self.kernel = kernels.ExpSquaredKernel(metric=initial_lscale, metric_bounds=metric_bounds, ndim=self.ndim)
+                    self.kernel_name = kernel
+                    print("Initialized GP with squared exponential kernel.")
+                elif kernel == "RationalQuadraticKernel":
+                    self.kernel = kernels.RationalQuadraticKernel(log_alpha=1, metric=initial_lscale, metric_bounds=metric_bounds, ndim=self.ndim)
+                    self.kernel_name = kernel
+                    print("Initialized GP with rational quadratic kernel.")
+                elif kernel == "Matern32Kernel":
+                    self.kernel = kernels.Matern32Kernel(metric=initial_lscale, metric_bounds=metric_bounds, ndim=self.ndim)
+                    self.kernel_name = kernel
+                    print("Initialized GP with squared matern-3/2 kernel.")
+                elif kernel == "Matern52Kernel":
+                    self.kernel = kernels.Matern52Kernel(metric=initial_lscale, metric_bounds=metric_bounds, ndim=self.ndim)
+                    self.kernel_name = kernel
+                    print("Initialized GP with squared matern-5/2 kernel.")
+                else:
+                    raise ValueError(f"kernel {kernel} is not valid.\n")
+                
+                # create GP first time 
+                self.gp = gp_utils.configure_gp(self._theta, self._y, self.kernel, 
+                                                fit_amp=self.fit_amp, 
+                                                fit_mean=self.fit_mean,
+                                                fit_white_noise=self.fit_white_noise,
+                                                white_noise=self.white_noise)
+                valid_scales = True
+            except Exception as e:
+                print(f"Error initializing GP with kernel {kernel} and initial scale {initial_lscale}.")
+                print(f"Exception: {e}")
+                print("Retrying with new initial scale length...")
+                continue
+
         # Fit GP with training sample and kernel
         self.gp, _ = self.fit_gp()
 
