@@ -14,6 +14,7 @@ from sklearn.model_selection import KFold
 from sklearn.metrics import mean_squared_error
 from functools import partial
 import copy
+import warnings
 
 __all__ = ["default_hyper_prior", 
            "configure_gp", 
@@ -111,7 +112,7 @@ def _grad_nll(p, gp, y, prior_fn=None):
     return -gp.grad_log_likelihood(y, quiet=True)
 
 
-def configure_gp(theta, y, kernel, gp_hyper_prior,  
+def configure_gp(theta, y, kernel, 
                  fit_amp=True, fit_mean=True, fit_white_noise=False,
                  white_noise=-12, hyperparameters=None):
 
@@ -137,8 +138,9 @@ def configure_gp(theta, y, kernel, gp_hyper_prior,
 
 
 def optimize_gp(gp, theta, y, gp_hyper_prior, p0,
-                nopt=3, method="powell", 
-                options=None, bounds=None):
+                method="nelder-mead", options=None, bounds=None):
+    
+    warnings.filterwarnings("ignore", category=RuntimeWarning)
     
     # Collapse arrays if 1D
     theta = theta.squeeze()
@@ -153,41 +155,60 @@ def optimize_gp(gp, theta, y, gp_hyper_prior, p0,
     else:
         jac = None
     
-    # Run the optimization routine nopt times
-    res = []
-    mll = []
+    nopt = p0.shape[1] 
+    if nopt > 1:
+        # Run the optimization routine nopt times
+        res = []
+        mll = []
 
-    # Optimize GP hyperparameters by maximizing marginal log_likelihood
-    for ii, x0 in enumerate(p0):
+        # Optimize GP hyperparameters by maximizing marginal log_likelihood
+        for ii, x0 in enumerate(p0):
 
-        resii = minimize(_nll, x0, args=(gp, y, gp_hyper_prior), method=method,
-                         jac=jac, bounds=bounds, options=options)["x"]
+            resii = minimize(_nll, x0, args=(gp, y, gp_hyper_prior), method=method,
+                            jac=jac, bounds=bounds, options=options)["x"]
 
-        # if hyperparameters allowed by prior
-        if np.isfinite(gp_hyper_prior(resii)):
-            res.append(resii)
+            # if hyperparameters allowed by prior
+            if np.isfinite(gp_hyper_prior(resii)):
+                res.append(resii)
 
-        else:
-            print("\nWarning: GP hyperparameter optimization failed. Solution failed prior bounds.\n")
-            res.append(init_hp)
+            else:
+                print("\nWarning: GP hyperparameter optimization failed. Solution failed prior bounds.\n")
+                res.append(init_hp)
 
-        # Compute marginal log likelihood for this set of kernel hyperparameters
-        op_gp = copy.copy(gp)
-        op_gp.set_parameter_vector(res[ii])
+            # Compute marginal log likelihood for this set of kernel hyperparameters
+            op_gp = copy.copy(gp)
+            op_gp.set_parameter_vector(res[ii])
+            try:
+                gp.recompute()
+                mll.append(op_gp.log_likelihood(y, quiet=True))
+            except:
+                print("\nWarning: GP hyperparameter optimization failed. Cannot recompute gp.\n")
+                mll.append(-np.inf)
+
+
+        # Pick result with largest marginal log likelihood
+        ind = np.argmax(mll)
         try:
+            gp.set_parameter_vector(res[ind])   
             gp.recompute()
-            mll.append(op_gp.log_likelihood(y, quiet=True))
+        except:
+            gp = None
+            
+    else:
+        # Optimize GP hyperparameters by maximizing marginal log_likelihood
+        res = minimize(_nll, p0, args=(gp, y, gp_hyper_prior), method=method,
+                       jac=jac, bounds=bounds, options=options)
+
+        if not res.success:
+            print("\nWarning: GP hyperparameter optimization failed.\n")
+            return None
+
+        # Set the optimized hyperparameters
+        try:
+            gp.set_parameter_vector(res.x)
+            gp.recompute()
         except:
             print("\nWarning: GP hyperparameter optimization failed. Cannot recompute gp.\n")
-            mll.append(-np.inf)
-
-
-    # Pick result with largest marginal log likelihood
-    ind = np.argmax(mll)
-    try:
-        gp.set_parameter_vector(res[ind])   
-        gp.recompute()
-    except:
-        gp = None
+            return None
 
     return gp

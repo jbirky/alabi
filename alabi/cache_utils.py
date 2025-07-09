@@ -59,7 +59,7 @@ def write_report_gp(self, file):
     if hasattr(self, 'train_runtime'):
         lines += f"Active learning train runtime (s): {np.round(self.train_runtime)} \n\n"
 
-    lines += f"Final test error: {self.training_results['test_error'][-1]} \n\n"
+    lines += f"Final test error (MSE): {self.training_results['test_mse'][-1]} \n\n"
 
     summary = open(file+".txt", "w")
     summary.write(lines)

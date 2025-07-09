@@ -39,31 +39,37 @@ __all__ = ["plot_error_vs_iteration",
            "plot_2D_panel4"]
 
 
-def plot_error_vs_iteration(sm, log=False, title="GP fit"):
+def plot_error_vs_iteration(iteration, train_error, test_error=None, log=False, 
+                            metric="Error", title="GP fit", show=False, 
+                            savedir=".", savename=None):
 
     fig = plt.figure()
-    plt.plot(sm.training_results["iteration"], sm.training_results["training_error"], 
-                label='train error')
-    plt.plot(sm.training_results["iteration"], sm.training_results["test_error"], 
-                label='test error')
+    plt.plot(iteration, train_error,  label='train error')
+    if test_error is not None:
+        plt.plot(iteration, test_error,  label='test error')
     plt.xlabel('iteration', fontsize=18)
-    plt.ylabel('Scaled MSE', fontsize=18)
+    plt.ylabel(metric, fontsize=18)
     plt.legend(loc='best', fontsize=14)
-    plt.xlim(1, max(sm.training_results["iteration"]))
+    plt.xlim(0, max(iteration))
     plt.minorticks_on()
     plt.title(title, fontsize=22)
     plt.tight_layout()
+    
+    if savename is None:
+        savename = "gp_error_vs_iteration_log.png" if log else "gp_error_vs_iteration.png"
+    
     if log:
         plt.yscale('log')
-        plt.savefig(f"{sm.savedir}/gp_error_vs_iteration_log.png")
-    else:
-        plt.savefig(f"{sm.savedir}/gp_error_vs_iteration.png")
+
+    plt.savefig(f"{savedir}/{savename}")
+    if show:
+        plt.show()
     plt.close()
 
     return fig
 
 
-def plot_hyperparam_vs_iteration(sm, title="GP fit"):
+def plot_hyperparam_vs_iteration(sm, title="GP fit", show=False):
 
     hp_names = sm.gp.get_parameter_names()
     hp_values = np.array(sm.training_results["gp_hyperparameters"])
@@ -76,6 +82,8 @@ def plot_hyperparam_vs_iteration(sm, title="GP fit"):
             ax1.plot(sm.training_results["iteration"], hp_values.T[ii], 
                     label=hp_names[ii].replace('_', ' '))
         ax1.tick_params(axis='y')
+        ax1.fill_between(sm.training_results["iteration"], -sm.gp_scale_rng,
+                         sm.gp_scale_rng, color="C2", alpha=0.1, label="GP scale range")
 
         # plot mean on separate axis
         ax2 = ax1.twinx()
@@ -86,23 +94,25 @@ def plot_hyperparam_vs_iteration(sm, title="GP fit"):
     else:
         for ii, name in enumerate(hp_names):
             ax1.plot(sm.training_results["iteration"], hp_values.T[ii], 
-                     label=name.replace('_', ' '))
+                     label=hp_names[ii].replace('_', ' '))
 
     ax1.set_xlabel('iteration', fontsize=18)
     ax1.set_ylabel('GP scale hyperparameters', fontsize=18)
     ax1.set_xlim(1, max(sm.training_results["iteration"]))
-    ax1.set_ylim(-20, 20)
+    # ax1.set_ylim(-1.2*sm.gp_scale_rng, 1.2*sm.gp_scale_rng)
     ax1.minorticks_on()
     ax1.legend(loc='best')
     ax1.set_title(title, fontsize=22)
     plt.tight_layout()
     plt.savefig(f"{sm.savedir}/gp_hyperparameters_vs_iteration.png")
+    if show:
+        plt.show()
     plt.close()
 
     return fig
 
 
-def plot_train_time_vs_iteration(sm, title="GP fit"):
+def plot_train_time_vs_iteration(sm, title="GP fit", show=False):
 
     fig = plt.figure()
     plt.plot(sm.training_results["iteration"], sm.training_results["gp_train_time"], 
@@ -116,16 +126,18 @@ def plot_train_time_vs_iteration(sm, title="GP fit"):
     plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(f"{sm.savedir}/gp_train_time_vs_iteration.png")
+    if show:
+        plt.show()
     plt.close()
 
     return fig
 
 
-def plot_train_sample_vs_iteration(sm):
+def plot_train_sample_vs_iteration(sm, show=False):
 
     fig = plt.figure()
-    
-    yy = -sm.y[sm.ninit_train:] 
+
+    yy = sm.y()[sm.ninit_train:]
     plt.scatter(sm.training_results["iteration"], yy)
     plt.yscale('log')
     plt.xlabel('iteration', fontsize=18)
@@ -133,17 +145,20 @@ def plot_train_sample_vs_iteration(sm):
     plt.minorticks_on()
     plt.tight_layout()
     plt.savefig(f"{sm.savedir}/gp_train_sample_vs_iteration.png")
+    if show:
+        plt.show()
     plt.close()
 
     return fig
 
 
-def plot_corner_lnp(sm):
+def plot_corner_lnp(sm, show=False):
 
-    yy = -sm.y 
+    theta = sm.theta()
+    yy = sm.y()
 
     warnings.simplefilter("ignore")
-    fig = corner.corner(sm.theta, c=yy, labels=sm.labels, 
+    fig = corner.corner(theta, c=yy, labels=sm.labels, 
             plot_datapoints=False, plot_density=False, plot_contours=False,
             show_titles=True, title_kwargs={"fontsize": 18}, 
             label_kwargs={"fontsize": 22}, data_kwargs={'alpha':1.0})
@@ -154,7 +169,7 @@ def plot_corner_lnp(sm):
     for yi in range(sm.ndim):
         for xi in range(yi):
             ax = axes[yi, xi]
-            im = ax.scatter(sm.theta.T[xi], sm.theta.T[yi], c=yy, s=2, cmap='coolwarm', 
+            im = ax.scatter(theta[xi], theta[yi], c=yy, s=2, cmap='coolwarm', 
                             norm=colors.LogNorm(vmin=min(cb_rng), vmax=max(cb_rng)),
                             alpha=1.0)
 
@@ -164,54 +179,69 @@ def plot_corner_lnp(sm):
     cb.set_ticks(cb_rng)
     cb.ax.tick_params(labelsize=18)
     fig.savefig(f"{sm.savedir}/gp_training_sample_corner.png")
+    if show:
+        plt.show()
     plt.close()
 
     return fig
 
 
-def plot_corner_scatter(sm):
+def plot_corner_scatter(sm, show=False):
 
-    yy = -sm.y 
+    theta = sm.theta()
+    yy = -sm.y()
 
     warnings.simplefilter("ignore")
-    fig = corner.corner(sm.theta[0:sm.ninit_train], labels=sm.labels, 
+    fig = corner.corner(theta[0:sm.ninit_train], labels=sm.labels, 
             plot_datapoints=True, plot_density=False, plot_contours=False,
             show_titles=True, title_kwargs={"fontsize": 18}, color='b',
             label_kwargs={"fontsize": 22}, data_kwargs={'alpha':1.0})
 
     if sm.nactive > sm.ndim:
-        fig = corner.corner(sm.theta[sm.ninit_train:], labels=sm.labels, 
+        fig = corner.corner(theta[sm.ninit_train:], labels=sm.labels, 
                 plot_datapoints=True, plot_density=False, plot_contours=False,
                 show_titles=True, title_kwargs={"fontsize": 18}, color='r',
                 label_kwargs={"fontsize": 22}, data_kwargs={'alpha':1.0},
                 fig=fig)
 
     fig.savefig(f"{sm.savedir}/gp_training_sample_scatter.png")
+    if show:
+        plt.show()
     plt.close()
 
     return fig
 
 
-def plot_gp_fit_1D(sm, title="GP fit"):
+def plot_gp_fit_1D(sm, title="GP fit", show=False):
 
+    theta = sm.theta()
+    yy = sm.y()
+    theta_test = sm.theta_scaler.inverse_transform(sm.theta_test)
+    yy_test = sm.y_scaler.inverse_transform(sm.y_test.reshape(-1, 1)).flatten()
+    
     xarr = np.linspace(sm.bounds[0][0], sm.bounds[0][1], 30)
     mu, var = sm.gp.predict(sm.y, xarr, return_var=True)
 
     fig, ax = plt.subplots()
     plt.plot(xarr, fn(xarr), color='k', linestyle='--', linewidth=.5)
     ax.fill_between(xarr, mu-var, mu+var, color='r', alpha=.8)
-    plt.scatter(sm.theta, sm.y, color='r')
-    plt.scatter(sm.theta_test, sm.y_test, color='g')
+    plt.scatter(theta, yy, color='r')
+    plt.scatter(theta_test, yy_test, color='g')
     plt.xlim(sm.bounds[0])
     plt.title(title, fontsize=22)
     plt.tight_layout()
     plt.savefig(f"{sm.savedir}/gp_fit_1D.png")
+    if show:
+        plt.show()
     plt.close()
 
     return fig
 
 
-def plot_gp_fit_2D(sm, ngrid=60, title="GP fit"):
+def plot_gp_fit_2D(sm, ngrid=60, title="GP fit", show=False):
+
+    theta = sm.theta() 
+    theta0 = sm.theta_scaler.inverse_transform(sm._theta0)
 
     xarr = np.linspace(sm.bounds[0][0], sm.bounds[0][1], ngrid)
     yarr = np.linspace(sm.bounds[1][0], sm.bounds[1][1], ngrid)
@@ -227,20 +257,22 @@ def plot_gp_fit_2D(sm, ngrid=60, title="GP fit"):
     fig = plt.figure()
     im = plt.contourf(X, Y, Z, 20, cmap='Blues_r')
     plt.colorbar(im)
-    plt.scatter(sm.theta.T[0], sm.theta.T[1], color='red', edgecolor='none', 
+    plt.scatter(theta.T[0], theta.T[1], color='red', edgecolor='none', 
                 s=12, label=f'{sm.algorithm} training')
-    plt.scatter(sm.theta0.T[0], sm.theta0.T[1], color='#1cc202', edgecolor='none', 
+    plt.scatter(theta0.T[0], theta0.T[1], color='#1cc202', edgecolor='none', 
                 s=12, label='initial training')
     plt.title(title, fontsize=22)
     plt.legend(loc='best')
     plt.tight_layout()
     plt.savefig(f"{sm.savedir}/gp_fit_2D.png")
+    if show:
+        plt.show()
     plt.close()
 
     return fig
 
 
-def plot_contour_2D(fn, bounds, savedir, save_name, title, ngrid=60, cmap='Blues_r'):
+def plot_contour_2D(fn, bounds, savedir, save_name, title, ngrid=60, cmap='Blues_r', show=False):
 
     xarr = np.linspace(bounds[0][0], bounds[0][1], ngrid)
     yarr = np.linspace(bounds[1][0], bounds[1][1], ngrid)
@@ -261,31 +293,38 @@ def plot_contour_2D(fn, bounds, savedir, save_name, title, ngrid=60, cmap='Blues
         os.makedirs(savedir)
     plt.tight_layout()
     plt.savefig(f"{savedir}/{save_name}")
+    if show:
+        plt.show()
     plt.close()
 
     return fig
 
 
-def plot_true_fit_2D(fn, bounds, savedir, ngrid=60):
+def plot_true_fit_2D(sm, ngrid=60, show=False):
 
-    fig = plot_contour_2D(fn, bounds, savedir, save_name="true_function_2D.png", 
+    fig = plot_contour_2D(sm.fn, sm.bounds, sm.savedir, save_name="true_function_2D.png", 
                     title="True function", ngrid=ngrid)
+    if show:
+        plt.show()
 
     return fig
 
 
-def plot_utility_2D(sm, ngrid=60):
+def plot_utility_2D(sm, ngrid=60, show=False):
 
     ut_fn = ut.assign_utility(sm.algorithm)
-    fn = partial(ut_fn, y=sm.y, gp=sm.gp, bounds=sm.bounds)
+    fn = partial(ut_fn, y=sm._y, gp=sm.gp, bounds=sm.bounds)
 
     fig = plot_contour_2D(fn, sm.bounds, sm.savedir, save_name="objective_function.png", 
                     title=f"{sm.algorithm.upper()} function", ngrid=ngrid, cmap='Greens_r')
 
+    if show:
+        plt.show()
+
     return fig
 
 
-def plot_corner(sm, samples, sampler=""):
+def plot_corner(sm, samples, sampler="", show=False):
 
     warnings.simplefilter("ignore")
     fig = corner.corner(samples, quantiles=[0.16, 0.5, 0.84], show_titles=True,
@@ -293,19 +332,25 @@ def plot_corner(sm, samples, sampler=""):
                         title_kwargs={"fontsize": 20}, label_kwargs={"fontsize": 20})
     fig.savefig(f"{sm.savedir}/{sampler}posterior.png", bbox_inches="tight")
 
+    if show:
+        plt.show()
+
     return fig
 
 
-def plot_corner_kde(sm):
+def plot_corner_kde(sm, show=False):
 
     fig, axes = dyplot.cornerplot(sm.res, quantiles=[0.16, 0.5, 0.84], span=sm.bounds,
                                title_kwargs={"fontsize": 15}, label_kwargs={"fontsize": 15})
     fig.savefig(f"{sm.savedir}/dynesty_posterior_kde.png", bbox_inches="tight")
 
+    if show:
+        plt.show()
+
     return fig
 
 
-def plot_emcee_walkers(sm):
+def plot_emcee_walkers(sm, show=False):
 
     fig, axes = plt.subplots(sm.ndim, figsize=(12, 3*sm.ndim), sharex=True)
     samples = sm.emcee_samples_full
@@ -319,28 +364,37 @@ def plot_emcee_walkers(sm):
 
     fig.savefig(f"{sm.savedir}/emcee_walkers.png", bbox_inches="tight")
 
+    if show:
+        plt.show()
+
     return fig
 
 
-def plot_dynesty_traceplot(sm):
+def plot_dynesty_traceplot(sm, show=False):
 
     fig, axes = dyplot.traceplot(sm.res, trace_cmap='plasma',
                                  quantiles=None, show_titles=True,
                                  label_kwargs={"fontsize": 22})
     fig.savefig(f"{sm.savedir}/dynesty_traceplot.png")
 
+    if show:
+        plt.show()
+
     return fig
 
 
-def plot_dynesty_runplot(sm):
+def plot_dynesty_runplot(sm, show=False):
 
     fig, axes = dyplot.runplot(sm.res, label_kwargs={"fontsize": 22})
     fig.savefig(f"{sm.savedir}/dynesty_runplot.png")
 
+    if show:
+        plt.show()
+
     return fig
 
 
-def plot_mcmc_comparison(sm):
+def plot_mcmc_comparison(sm, show=False):
 
     lw = 1.5
     colors = ["orange", "royalblue"]
@@ -363,6 +417,9 @@ def plot_mcmc_comparison(sm):
     fig.axes[1].text(2.2, 0.55, r"--- dynesty posterior", fontsize=26, color=colors[1], ha='left')
     
     fig.savefig(f"{sm.savedir}/mcmc_comparison.png")
+
+    if show:
+        plt.show()
 
     return fig
 

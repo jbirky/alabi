@@ -12,6 +12,7 @@ import scipy
 from scipy.optimize import minimize
 from scipy.stats import norm, truncnorm
 from skopt.space import Space
+from skopt.space.space import Real, Categorical
 from skopt.sampler import Sobol, Lhs, Halton, Hammersly, Grid
 import multiprocessing as mp
 from functools import partial
@@ -30,7 +31,54 @@ __all__ = ["agp_utility",
            "lnprior_uniform",
            "prior_transform_uniform",
            "lnprior_normal",
-           "prior_transform_normal"]
+           "prior_transform_normal",
+           "flatten_array"]
+
+
+def flatten_array(arr, method='flatten'):
+    """
+    Flatten a numpy array using different methods.
+    
+    :param arr: (*array, required*)
+        Input numpy array to flatten.
+    
+    :param method: (*str, optional*)
+        Method to use for flattening. Defaults to 'flatten'.
+        Options:
+            'flatten' - Returns a copy of the array collapsed into 1D
+            'ravel' - Returns a contiguous flattened array (view if possible)
+            'flat' - Returns a flat iterator over the array
+            'reshape' - Reshapes the array to 1D using reshape(-1)
+    
+    :returns flattened_array: (*array*)
+        Flattened numpy array.
+    
+    :example:
+        >>> import numpy as np
+        >>> arr = np.array([[1, 2, 3], [4, 5, 6]])
+        >>> flatten_array(arr)
+        array([1, 2, 3, 4, 5, 6])
+        >>> flatten_array(arr, method='ravel')
+        array([1, 2, 3, 4, 5, 6])
+    """
+    
+    arr = np.asarray(arr)
+    if arr.ndim == 1:
+        return arr
+    
+    if method == 'flatten':
+        return arr.flatten()
+    elif method == 'ravel':
+        return arr.ravel()
+    elif method == 'flat':
+        return np.array([x for x in arr.flat])
+    elif method == 'reshape':
+        return arr.reshape(-1)
+    else:
+        err_msg = f"Method '{method}' not implemented. "
+        err_msg += "Valid options for 'method' are: "
+        err_msg += "flatten, ravel, flat, reshape."
+        raise ValueError(err_msg)
 
 
 #===========================================================
@@ -60,7 +108,10 @@ def prior_sampler(bounds=None, nsample=1, sampler='uniform'):
     """
 
     ndim = len(bounds)
-    space = Space(np.array(bounds, dtype='float'))
+        
+    # space_bounds = [Categorical(categories=(np.float64(bounds[ii][0]), np.float64(bounds[ii][1]))) for ii in range(ndim)]
+    # space_bounds = [Real(bounds[ii][0], bounds[ii][1], dtype='float') for ii in range(ndim)]
+    space = Space(bounds)
     
     if sampler == 'uniform':
         samples = space.rvs(nsample)
@@ -370,41 +421,13 @@ def assign_utility(algorithm):
     return utility
 
 
-# def check_validity():
-
-#     # If solution is finite and allowed by the prior, save
-#     if np.all(np.isfinite(x_opt)) and np.all(np.isfinite(f_opt)):
-#         if np.isfinite(lnprior_uniform(x_opt, bounds)):
-#             res.append(x_opt)
-#             objective.append(f_opt)
-
-#     return 0
-
-
-# def minimize_objective(t0, uf, bounds):
-
-#     sol = scipy.optimize.differential_evolution(uf, bounds)
-
-#     return sol["x"], sol["fun"]
-
-
-# def find_next_points(sm, npts=1):
-
-#     uf = partial(assign_utility(sm.algorithm), y=sm.y, gp=sm.gp, bounds=sm.bounds)
-
-#     if npts == 1:
-#         method = "shgo"
-#     else:
-#         method = "nelder-mead"
-
-#     return minimize_objective(uf, sm.bounds)
-
-
 def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
                        t0=None, ps=None, args=None, options=None, max_iter=100):
     """
     Optimize the active learning objective function
     """
+    
+    warnings.filterwarnings("ignore", category=RuntimeWarning)
 
     # Initialize options
     if options is None:
@@ -429,6 +452,9 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
     # arguments for objective function
     if args is None:
         args = (y, gp, bounds)
+        
+    if t0 is None:
+        t0 = ps(nsample=1).flatten()
 
     # Containers
     res = []
@@ -441,9 +467,10 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
         test_iter = 0
         while True:
 
-            if t0 is None:
+            if test_iter > 0:
+                # Try a new initialization point
                 t0 = ps(nsample=1).flatten()
-
+                
             # Too many iterations
             if test_iter >= max_iter:
                 err_msg = "ERROR: Cannot find a valid solution to objective function minimization.\n" 
@@ -451,14 +478,18 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
                 err_msg += "Maximum iterations: %d\n" % max_iter
                 err_msg += "Try increasing the number of initial training samples.\n"
                 raise RuntimeError(err_msg)
+            
+            test_iter += 1
 
             # Minimize the function
             try:
                 # warnings.simplefilter("ignore")
-                tmp = minimize(obj_fn, t0, args=args, bounds=tuple(bounds),
-                               method=method, options=options)
-            except:
-                raise Warning("Objective function optimization failed")
+                tmp = minimize(obj_fn, np.array(t0).flatten(), args=args, bounds=tuple(bounds), method=method, options=options)
+            except Exception as e:
+                print("t0:", t0)
+                print("bounds:", tuple(bounds))
+                print(f"Error optimizing {obj_fn.__name__}: {e}")
+                break
 
             x_opt = tmp.x 
             f_opt = tmp.fun
@@ -468,17 +499,12 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
                 if np.isfinite(lnprior_uniform(x_opt, bounds)):
                     res.append(x_opt)
                     objective.append(f_opt)
-
                     break
                 else:
                     print("Warning: Utility function optimization prior fail", x_opt)
             else:
                 print("Warning: Utility function optimization infinite fail", x_opt, f_opt)
-
-            # Try a new initialization point
-            t0 = ps(nsample=1)
-            
-            test_iter += 1
+        
         # end loop
 
     # Return value that minimizes objective function out of all minimizations
