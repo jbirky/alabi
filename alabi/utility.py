@@ -31,54 +31,7 @@ __all__ = ["agp_utility",
            "lnprior_uniform",
            "prior_transform_uniform",
            "lnprior_normal",
-           "prior_transform_normal",
-           "flatten_array"]
-
-
-def flatten_array(arr, method='flatten'):
-    """
-    Flatten a numpy array using different methods.
-    
-    :param arr: (*array, required*)
-        Input numpy array to flatten.
-    
-    :param method: (*str, optional*)
-        Method to use for flattening. Defaults to 'flatten'.
-        Options:
-            'flatten' - Returns a copy of the array collapsed into 1D
-            'ravel' - Returns a contiguous flattened array (view if possible)
-            'flat' - Returns a flat iterator over the array
-            'reshape' - Reshapes the array to 1D using reshape(-1)
-    
-    :returns flattened_array: (*array*)
-        Flattened numpy array.
-    
-    :example:
-        >>> import numpy as np
-        >>> arr = np.array([[1, 2, 3], [4, 5, 6]])
-        >>> flatten_array(arr)
-        array([1, 2, 3, 4, 5, 6])
-        >>> flatten_array(arr, method='ravel')
-        array([1, 2, 3, 4, 5, 6])
-    """
-    
-    arr = np.asarray(arr)
-    if arr.ndim == 1:
-        return arr
-    
-    if method == 'flatten':
-        return arr.flatten()
-    elif method == 'ravel':
-        return arr.ravel()
-    elif method == 'flat':
-        return np.array([x for x in arr.flat])
-    elif method == 'reshape':
-        return arr.reshape(-1)
-    else:
-        err_msg = f"Method '{method}' not implemented. "
-        err_msg += "Valid options for 'method' are: "
-        err_msg += "flatten, ravel, flat, reshape."
-        raise ValueError(err_msg)
+           "prior_transform_normal",]
 
 
 #===========================================================
@@ -110,8 +63,8 @@ def prior_sampler(bounds=None, nsample=1, sampler='uniform'):
     ndim = len(bounds)
         
     # space_bounds = [Categorical(categories=(np.float64(bounds[ii][0]), np.float64(bounds[ii][1]))) for ii in range(ndim)]
-    # space_bounds = [Real(bounds[ii][0], bounds[ii][1], dtype='float') for ii in range(ndim)]
-    space = Space(bounds)
+    space_bounds = [Real(bounds[ii][0], bounds[ii][1], dtype='float') for ii in range(ndim)]
+    space = Space(space_bounds)
     
     if sampler == 'uniform':
         samples = space.rvs(nsample)
