@@ -6,6 +6,7 @@
 import numpy as np
 from scipy.optimize import rosen
 from scipy.interpolate import interp2d
+from scipy.stats import multivariate_normal
 import math
 
 __all__ = ["test1d",
@@ -13,7 +14,8 @@ __all__ = ["test1d",
            "gaussian_shells",
            "eggbox", 
            "multimodal",
-           "logo"]
+           "logo",
+           "random_gaussian_covariance"]
 
 
 # ================================
@@ -29,7 +31,7 @@ def test1d_fn(theta):
     theta = np.asarray(theta)
     return -np.sin(3*theta) - theta**2 + 0.7*theta
 
-test1d_bounds = [(-2,1)]
+test1d_bounds = [(-1,2)]
 
 test1d = {"fn": test1d_fn,
           "bounds": test1d_bounds}
@@ -60,6 +62,7 @@ def logcirc(theta, c):
     return const - (d - r)**2 / (2. * w**2)
 
 def gaussian_shells_fn(theta):
+    theta = np.asarray(theta).flatten()
     c1 = np.array([-3.5, 0.])  # center of shell 1
     c2 = np.array([3.5, 0.])  # center of shell 2
     return np.logaddexp(logcirc(theta, c1), logcirc(theta, c2))
@@ -75,6 +78,7 @@ gaussian_shells = {"fn": gaussian_shells_fn,
 # ================================
 
 def eggbox_fn(x):
+    x = np.asarray(x).flatten()
     tmax = 5.0 * np.pi
     t = 2.0 * tmax * x - tmax
     return (2.0 + np.cos(t[0] / 2.0) * np.cos(t[1] / 2.0)) ** 5.0
@@ -91,6 +95,7 @@ eggbox = {"fn": eggbox_fn,
 
 def multimodal_fn(x):
     "https://jakevdp.github.io/PythonDataScienceHandbook/04.04-density-and-contour-plots.html"
+    x = np.asarray(x).flatten()
     return -(np.sin(x[0]) ** 10 + np.cos(10 + x[1] * x[0]) * np.cos(x[0]))
 
 multimodal_bounds = [(0,5), (0,5)]
@@ -119,3 +124,21 @@ logo_bounds = [(0,355), (0,132)]
 
 logo = {"fn": logo_fn,
         "bounds": logo_bounds}
+
+
+# ================================
+# N-dimensional gaussian (ND)
+# ================================
+
+def random_gaussian_covariance(n_dims):
+    """
+    Generate a random positive definite covariance matrix.
+    """
+    eigenvals = np.random.exponential(scale=1.0, size=n_dims)
+    # Generate random orthogonal matrix (eigenvectors)
+    Q = np.random.randn(n_dims, n_dims)
+    Q, _ = np.linalg.qr(Q)  # QR decomposition gives orthogonal Q
+    
+    # Construct covariance matrix: C = Q * Λ * Q^T
+    cov = Q @ np.diag(eigenvals) @ Q.T
+    return cov

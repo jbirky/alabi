@@ -330,7 +330,7 @@ def plot_corner(sm, samples, sampler="", show=False):
     fig = corner.corner(samples, quantiles=[0.16, 0.5, 0.84], show_titles=True,
                         scale_hist=True, plot_contours=True, labels=sm.labels,
                         title_kwargs={"fontsize": 20}, label_kwargs={"fontsize": 20})
-    fig.savefig(f"{sm.savedir}/{sampler}posterior.png", bbox_inches="tight")
+    fig.savefig(f"{sm.savedir}/{sampler}_posterior_{sm.like_fn_name}.png", bbox_inches="tight")
 
     if show:
         plt.show()
@@ -342,7 +342,7 @@ def plot_corner_kde(sm, show=False):
 
     fig, axes = dyplot.cornerplot(sm.res, quantiles=[0.16, 0.5, 0.84], span=sm.bounds,
                                title_kwargs={"fontsize": 15}, label_kwargs={"fontsize": 15})
-    fig.savefig(f"{sm.savedir}/dynesty_posterior_kde.png", bbox_inches="tight")
+    fig.savefig(f"{sm.savedir}/dynesty_posterior_kde_{sm.like_fn_name}.png", bbox_inches="tight")
 
     if show:
         plt.show()
@@ -362,7 +362,7 @@ def plot_emcee_walkers(sm, show=False):
         ax.yaxis.set_label_coords(-0.1, 0.5)
     axes[-1].set_xlabel("step number", fontsize=20)
 
-    fig.savefig(f"{sm.savedir}/emcee_walkers.png", bbox_inches="tight")
+    fig.savefig(f"{sm.savedir}/emcee_walkers_{sm.like_fn_name}.png", bbox_inches="tight")
 
     if show:
         plt.show()
@@ -375,7 +375,7 @@ def plot_dynesty_traceplot(sm, show=False):
     fig, axes = dyplot.traceplot(sm.res, trace_cmap='plasma',
                                  quantiles=None, show_titles=True,
                                  label_kwargs={"fontsize": 22})
-    fig.savefig(f"{sm.savedir}/dynesty_traceplot.png")
+    fig.savefig(f"{sm.savedir}/dynesty_traceplot_{sm.like_fn_name}.png")
 
     if show:
         plt.show()
@@ -386,7 +386,7 @@ def plot_dynesty_traceplot(sm, show=False):
 def plot_dynesty_runplot(sm, show=False):
 
     fig, axes = dyplot.runplot(sm.res, label_kwargs={"fontsize": 22})
-    fig.savefig(f"{sm.savedir}/dynesty_runplot.png")
+    fig.savefig(f"{sm.savedir}/dynesty_runplot_{sm.like_fn_name}.png")
 
     if show:
         plt.show()
@@ -415,8 +415,8 @@ def plot_mcmc_comparison(sm, show=False):
 
     fig.axes[1].text(2.2, 0.725, r"--- emcee posterior", fontsize=26, color=colors[0], ha='left')
     fig.axes[1].text(2.2, 0.55, r"--- dynesty posterior", fontsize=26, color=colors[1], ha='left')
-    
-    fig.savefig(f"{sm.savedir}/mcmc_comparison.png")
+
+    fig.savefig(f"{sm.savedir}/mcmc_comparison_{sm.like_fn_name}.png")
 
     if show:
         plt.show()

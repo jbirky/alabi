@@ -16,7 +16,6 @@ from scipy.optimize import minimize
 from sklearn import preprocessing
 from skopt.space import Real
 from functools import partial
-import george
 from george import kernels
 import multiprocessing as mp
 import time
@@ -32,6 +31,11 @@ def nlog_inv(x): return -10**x
 def log_scale(x): return np.log10(x)
 def log_scale_inv(logx): return 10**logx
 def no_scale(x): return x
+
+nlog_scaler = preprocessing.FunctionTransformer(func=nlog, inverse_func=nlog_inv)
+log_scaler = preprocessing.FunctionTransformer(func=log_scale, inverse_func=log_scale_inv)
+minmax_scaler = preprocessing.MinMaxScaler()
+no_scaler = preprocessing.FunctionTransformer(func=no_scale, inverse_func=no_scale)
 
 
 class SurrogateModel(object):
@@ -64,46 +68,43 @@ class SurrogateModel(object):
                 - 'nlog' - log negative scale (for probability distributions logP -> log(-logP)
     """
 
-    def __init__(self, fn=None, bounds=None, labels=None, 
+    def __init__(self, lnlike_fn=None, bounds=None, labels=None, 
+                 theta_scaler=preprocessing.MinMaxScaler(), y_scaler=no_scaler,
                  cache=True, savedir="results/", model_name="surrogate_model",
-                 verbose=True, ncore=mp.cpu_count(), scale=None, ignore_warnings=True):
+                 verbose=True, ncore=mp.cpu_count(), ignore_warnings=True,
+                 random_seed=None):
 
         # Check all required inputs are specified
-        if fn is None:
-            raise ValueError("Must supply fn to train GP surrogate model.")
+        if lnlike_fn is None:
+            raise ValueError("Must supply lnlike_fn to train GP surrogate model.")
         if bounds is None:
             raise ValueError("Must supply prior bounds.")
 
+        # Set random seed for reproducibility
+        if random_seed is None:
+            random_seed = np.random.randint(0, 1000, size=1)[0]
+        np.random.seed(random_seed)
 
         # Set function for training the GP, and initial training samples
         # For bayesian inference problem this would be your log likelihood function
-        self.fn = fn
-        self.scale = scale
-        
-        # unscaled bounds for theta 
+        self.true_log_likelihood = lnlike_fn
+
+        # unscaled bounds for theta
         self.bounds = np.array(bounds)
         
         # Scale inputs between 0 and 1
-        self.theta_scaler = preprocessing.MinMaxScaler()
+        self.theta_scaler = theta_scaler
         self.theta_scaler.fit(self.bounds.T)
         
         # Scale bounds to [0, 1] for training
-        self._bounds = self.theta_scaler.transform(self.bounds)
-        
-        if scale == "nlog":
-            # If scale is nlog, define the nlog scaler
-            self.y_scaler = preprocessing.FunctionTransformer(func=nlog, inverse_func=nlog_inv)
-        elif scale == "log":
-            # If scale is log, define the log scaler
-            self.y_scaler = preprocessing.FunctionTransformer(func=log_scale, inverse_func=log_scale_inv)
-        elif scale == "minmax":
-            self.y_scaler = preprocessing.MinMaxScaler()
-        else:
-            self.y_scaler = preprocessing.FunctionTransformer(func=no_scale, inverse_func=no_scale)
+        self._bounds = self.theta_scaler.transform(self.bounds.T).T
+
+        # Output scaling function. Fit when initial training samples are created 
+        self.y_scaler = y_scaler
 
         # define prior sampler with scaled and unscaled bounds 
-        self._prior_sampler = partial(ut.prior_sampler, bounds=self._bounds)
-        self.prior_sampler = partial(ut.prior_sampler, bounds=self.bounds)
+        self._prior_sampler = partial(ut.prior_sampler, bounds=self._bounds, sampler="uniform")
+        self.prior_sampler = partial(ut.prior_sampler, bounds=self.bounds, sampler="uniform")
 
         # Determine dimensionality 
         self.ndim = len(self._bounds)
@@ -144,6 +145,18 @@ class SurrogateModel(object):
         # false if emcee and dynesty have not been run for this object
         self.emcee_run = False
         self.dynesty_run = False
+        
+        self.training_results = {"iteration" : [], 
+                                 "gp_hyperparameters" : [],  
+                                 "gp_hyperparameter_opt_iteration" : [],
+                                 "gp_hyperparam_opt_time" : [],
+                                 "training_mse" : [],
+                                 "test_mse" : [], 
+                                 "training_scaled_mse" : [],
+                                 "test_scaled_mse" : [],
+                                 "gp_kl_divergence" : [],
+                                 "gp_train_time" : [],
+                                 "obj_fn_opt_time" : []}
 
     
     def save(self):
@@ -167,16 +180,16 @@ class SurrogateModel(object):
         if self.dynesty_run == True:
             cache_utils.write_report_dynesty(self, file)
             
-    def _fn(self, _theta):
+    def _lnlike_fn(self, _theta):
         """
-        Internal function to evaluate the model function ``fn`` at scaled theta.
+        Internal function to evaluate the model function ``lnlike_fn`` at scaled theta.
         This is used to avoid scaling the theta in the main function call.
         """
         # Unscale theta
         theta = self.theta_scaler.inverse_transform(_theta).flatten()
         
         # Evaluate function
-        y = self.fn(theta)
+        y = self.true_log_likelihood(theta)
 
         # Scale y
         _y = self.y_scaler.transform(y.reshape(-1, 1)).flatten()
@@ -207,8 +220,9 @@ class SurrogateModel(object):
         _theta = self._prior_sampler(nsample=nsample, sampler=sampler)
         theta = self.theta_scaler.inverse_transform(_theta)
         
-        y = ut.eval_fn(self.fn, theta, ncore=self.ncore).reshape(-1, 1)
-        _y = self.y_scaler.fit_transform(y).flatten()
+        y = ut.eval_fn(self.true_log_likelihood, theta, ncore=self.ncore).reshape(-1, 1)
+        self.y_scaler.fit(y)
+        _y = self.y_scaler.transform(y).flatten()
 
         if self.cache:
             np.savez(f"{self.savedir}/{fname}", theta=theta, y=y)
@@ -223,6 +237,9 @@ class SurrogateModel(object):
         y = sims["y"]
         
         _theta = self.theta_scaler.transform(theta)
+        
+        # Fit and transform y scale 
+        self.y_scaler.fit(y.reshape(-1, 1))
         _y = self.y_scaler.transform(y.reshape(-1, 1)).flatten()
 
         if self.ndim != theta.shape[1]:
@@ -291,9 +308,17 @@ class SurrogateModel(object):
         self._theta = _theta
         self._y = _y
         
+        # Training dataset unscaled 
+        self.theta0 = self.theta_scaler.inverse_transform(self._theta0)
+        self.y0 = self.y_scaler.inverse_transform(self._y.reshape(-1, 1)).flatten()
+        
         # Test dataset scaled
         self._theta_test = _theta_test
         self._y_test = _y_test
+        
+        # Test dataset unscaled
+        self.theta_test = self.theta_scaler.inverse_transform(self._theta_test)
+        self.y_test = self.y_scaler.inverse_transform(self._y_test.reshape(-1, 1)).flatten()
 
         # record number of training samples
         self.ninit_train = len(self._theta0)
@@ -327,27 +352,27 @@ class SurrogateModel(object):
         self.gp_hyper_prior = partial(ut.lnprior_uniform, bounds=self.hp_bounds)
 
     
-    def fit_gp(self, theta=None, y=None):
+    def fit_gp(self, _theta=None, _y=None):
 
-        if theta is None:
-            theta = self._theta
+        if _theta is None:
+            _theta = self._theta
 
-        if y is None:
-            y = self._y
+        if _y is None:
+            _y = self._y
 
         t0 = time.time()
 
         self.set_hyperparam_prior_bounds()
-        gp = gp_utils.configure_gp(theta, y, self.kernel, 
+        gp = gp_utils.configure_gp(_theta, _y, self.kernel, 
                                     fit_amp=self.fit_amp, 
                                     fit_mean=self.fit_mean,
                                     fit_white_noise=self.fit_white_noise,
                                     white_noise=self.white_noise)
         if gp is None:
-            print(f"Warning: fit_gp failed with point {theta[-1]}. Reoptimizing hyperparameters...")
+            print(f"Warning: fit_gp failed with point {_theta[-1]}. Reoptimizing hyperparameters...")
             gp, _ = self.opt_gp()
             
-        gp.compute(theta)
+        gp.compute(_theta)
         
         timing = time.time() - t0
 
@@ -384,12 +409,10 @@ class SurrogateModel(object):
 
         tf = time.time()
         timing = tf - t0
+        self.training_results["gp_hyperparam_opt_time"].append(timing)
 
         if self.verbose:
-            print(f"Optimized hyperparameters: ({np.round(timing, 1)}s)")
-            print(self.gp.get_parameter_names(include_frozen=False))
-            print(self.gp.get_parameter_vector(include_frozen=False))
-            print('')
+            print(f"Optimized {len(self.gp.get_parameter_names(include_frozen=False))} hyperparameters: ({np.round(timing, 3)}s)")
 
         return op_gp, timing
 
@@ -402,7 +425,7 @@ class SurrogateModel(object):
                 white_noise=-12, 
                 gp_scale_rng=1,
                 overwrite=False,
-                gp_opt_method="nelder-mead", 
+                gp_opt_method="newton-cg", 
                 gp_nopt=3):
         """
         Initialize the Gaussian Process with specified kernel.
@@ -475,7 +498,7 @@ class SurrogateModel(object):
                     self.kernel_name = kernel
                     print("Initialized GP with squared matern-5/2 kernel.")
                 else:
-                    raise ValueError(f"kernel {kernel} is not valid.\n")
+                    raise ValueError(f"kernel {kernel} is not valid option.\n")
                 
                 # create GP first time 
                 self.gp = gp_utils.configure_gp(self._theta, self._y, self.kernel, 
@@ -495,9 +518,25 @@ class SurrogateModel(object):
 
         # Optimize GP hyperparameters
         self.gp, _ = self.opt_gp()
+        
+    
+    def eval_gp_at_iteration(self, iter):
+        
+        gp_iter = self.gp 
+        if len(self.training_results["iteration"]) == 0:
+            _theta_cond = self._theta
+            _y_cond = self._y
+        else:
+            _theta_cond = self._theta[:iter]
+            _y_cond = self._y[:iter]
+            gp_iter.set_parameter_vector(self.training_results["gp_hyperparameters"][iter])
+            
+        gp_iter.compute(_theta_cond)
+
+        return lambda x: self.y_scaler.inverse_transform(gp_iter.predict(_y_cond, x, return_var=False, return_cov=False))
 
 
-    def evaluate(self, theta_xs):
+    def surrogate_log_likelihood(self, theta_xs, iter=-1):
         """
         Evaluate predictive mean of the GP at point ``theta_xs``
 
@@ -505,23 +544,33 @@ class SurrogateModel(object):
 
         :returns ypred: (*float*) GP mean evaluated at ``theta_xs``.
         """
-
+            
         theta_xs = np.asarray(theta_xs).reshape(1,-1)
         _theta_xs = self.theta_scaler.transform(theta_xs)
 
         # apply the GP
-        _ypred = self.gp.predict(self._y, _theta_xs, return_cov=False)[0]
-        ypred = self.y_scaler.inverse_transform(_ypred.reshape(-1, 1)).flatten()
+        gp_ii = self.eval_gp_at_iteration(iter)
+            
+        _ypred = gp_ii(_theta_xs)
+        ypred = self.y_scaler.inverse_transform(_ypred.reshape(-1, 1)).flatten()[0]
 
         return ypred
+    
+    
+    def surrogate_likelihood(self, theta_xs):
+        """
+        Evaluate predictive probability (not log-probability) of the GP at point theta_xs
+        """
+        # Get log-probability from GP
+        log_prob = self.surrogate_log_likelihood(theta_xs)
+        
+        # Convert to probability
+        prob = np.exp(log_prob)
+        
+        return prob
 
 
-    def neg_evaluate(self, theta_xs):
-
-        return -1 * self.evaluate(theta_xs)
-
-
-    def find_next_point(self, nopt=3, opt_init=False):
+    def find_next_point(self, nopt=1):
         """
         Find next set of ``(theta, y)`` training points by maximizing the
         active learning utility function.
@@ -531,33 +580,33 @@ class SurrogateModel(object):
             Defaults to 1. Increase to avoid converging to local maxima.
         """
 
-        if opt_init:
-            p0 = self._prior_sampler(nsample=1)
-            t0 = minimize(self.neg_evaluate, p0, bounds=tuple(self._bounds), method="nelder-mead")["x"]
-        else:
-            t0 = None
-
         opt_timing_0 = time.time()
-            
-        _thetaN, _ = ut.minimize_objective(self.utility, self._y, self.gp,
-                                          bounds=self._bounds,
-                                          nopt=nopt,
-                                          t0=t0,
-                                          ps=self._prior_sampler,
-                                          args=(self._y, self.gp, self._bounds),
-                                          method=self.obj_opt_method)
+        
+        if not getattr(self, "grad_utility"):
+            raise ValueError("Gradient utility function is not defined.")
 
+        obj_fn = partial(self.utility, y=self._y, gp=self.gp, bounds=self._bounds)
+        grad_obj_fn = partial(self.grad_utility, y=self._y, gp=self.gp, bounds=self._bounds) 
+        
+        _thetaN, _ = ut.minimize_objective(obj_fn, 
+                                           grad_obj_fn,
+                                           bounds=self._bounds,
+                                           nopt=nopt,
+                                           ps=self._prior_sampler,
+                                           method=self.obj_opt_method,
+                                           ncore=self.ncore)
+        
         opt_timing = time.time() - opt_timing_0
 
         # evaluate function at the optimized theta
         _thetaN = _thetaN.reshape(1, -1)
-        _yN = self._fn(_thetaN)
+        _yN = self._lnlike_fn(_thetaN)
 
         return _thetaN, _yN, opt_timing
 
 
-    def active_train(self, niter=100, algorithm="bape", gp_opt_freq=10, save_progress=False,
-                     opt_init=False, obj_opt_method="nelder-mead"): 
+    def active_train(self, niter=100, algorithm="bape", gp_opt_freq=20, save_progress=False,
+                     obj_opt_method="l-bfsg-b", nopt=1): 
         """
         :param niter: (*int, optional*)
 
@@ -570,7 +619,9 @@ class SurrogateModel(object):
 
         # Set algorithm
         self.algorithm = str(algorithm).lower()
-        self.utility = ut.assign_utility(self.algorithm)
+        self.utility, self.grad_utility = ut.assign_utility(self.algorithm)
+        if self.grad_utility is None:
+            obj_opt_method = "nelder-mead"
 
         # GP hyperparameter optimization frequency
         self.gp_opt_freq = gp_opt_freq
@@ -578,16 +629,7 @@ class SurrogateModel(object):
         # Objective function optimization method
         self.obj_opt_method = obj_opt_method
 
-        if hasattr(self, 'training_results') == False:
-            self.training_results = {"iteration" : [], 
-                                     "gp_hyperparameters" : [],  
-                                     "training_mse" : [],
-                                     "test_mse" : [], 
-                                     "training_scaled_mse" : [],
-                                     "test_scaled_mse" : [],
-                                     "gp_kl_divergence" : [],
-                                     "gp_train_time" : [],
-                                     "obj_fn_opt_time" : []}
+        if len(self.training_results["iteration"]) == 0:
             first_iter = 0
         else:
             first_iter = self.training_results["iteration"][-1]
@@ -600,28 +642,21 @@ class SurrogateModel(object):
 
         for ii in tqdm.tqdm(range(1, niter+1)):
 
-            # AGP on even, BAPE on odd
-            if self.algorithm == "alternate":
-                if ii % 2 == 0:
-                    self.utility = ut.agp_utility
-                else:
-                    self.utility = ut.bape_utility
-
             # Find next training point!
-            thetaN, yN, opt_timing = self.find_next_point(opt_init=opt_init)
+            thetaN, yN, opt_timing = self.find_next_point(nopt=nopt)
             
             # add theta and y to training samples
             theta_prop = np.append(self._theta, thetaN, axis=0)
             y_prop = np.append(self._y, yN)
 
             # Fit GP with new training point
-            self.gp, fit_gp_timing = self.fit_gp(theta=theta_prop, y=y_prop)
-            
+            self.gp, fit_gp_timing = self.fit_gp(_theta=theta_prop, _y=y_prop)
+
             # If proposed (theta, y) did not cause fitting issues, save to surrogate model obj
             self._theta = theta_prop
             self._y = y_prop
 
-            print("Total training samples:", len(self._theta))
+            # print("Total training samples:", len(self._theta))
 
             # record active learning train runtime
             self.train_runtime = time.time() - train_t0 
@@ -670,6 +705,9 @@ class SurrogateModel(object):
                 # re-optimize hyperparamters
                 self.gp, _ = self.opt_gp()
                 
+                # record which iteration hyperparameters were optimized
+                self.training_results["gp_hyperparameter_opt_iteration"].append(ii + first_iter)
+                
                 if (save_progress == True) and (ii != 0):
                     self.save()
                     self.plot(plots=["gp_error", "gp_hyperparam"])
@@ -703,7 +741,7 @@ class SurrogateModel(object):
             raise NameError("lnprior has not been specified")
         
         if not hasattr(self, 'like_fn'):
-            self.like_fn = self.evaluate
+            self.like_fn = self.surrogate_log_likelihood
 
         theta = np.asarray(theta).reshape(1,-1)
 
@@ -717,8 +755,8 @@ class SurrogateModel(object):
         raise NotImplementedError("Not implemented.")
 
 
-    def run_emcee(self, like_fn="surrogate", lnprior=None, nwalkers=None, nsteps=int(5e4), sampler_kwargs={}, run_kwargs={},
-                  opt_init=False, multi_proc=True, lnprior_comment=None):
+    def run_emcee(self, like_fn=None, lnprior=None, nwalkers=None, nsteps=int(5e4), sampler_kwargs={}, run_kwargs={},
+                  opt_init=False, multi_proc=True, lnprior_comment=None, burn=None, thin=None):
         """
         Use the ``emcee`` affine-invariant MCMC package to sample the trained GP surrogate model.
         https://github.com/dfm/emcee
@@ -747,13 +785,13 @@ class SurrogateModel(object):
 
         import emcee
 
-        # specify likelihood function (true function or surrogate model)
-        if like_fn.lower() == "true":
-            print("Initializing emcee with self.fn as likelihood.")
-            self.like_fn = self.fn
+        if like_fn is None:
+            print("Initializing emcee with self.surrogate_log_likelihood surrogate model as likelihood.")
+            self.like_fn_name = "surrogate"
+            self.like_fn = self.surrogate_log_likelihood
         else:
-            print("Initializing emcee with self.evaluate surrogate model as likelihood.")
-            self.like_fn = self.evaluate
+            self.like_fn = like_fn
+            self.like_fn_name = "likelihood"
 
         if lnprior is None:
             print(f"No lnprior specified. Defaulting to uniform prior with bounds {self.bounds}")
@@ -793,7 +831,7 @@ class SurrogateModel(object):
             p0 = self.find_map(lnprior=self.lnprior)
         else:
             # start walkers at random points in the prior space
-            p0 = ut.prior_sampler(nsample=self.nwalkers, bounds=self._bounds, sampler="uniform")
+            p0 = ut.prior_sampler(nsample=self.nwalkers, bounds=self.bounds, sampler="uniform")
 
         # set up multiprocessing pool
         if multi_proc == True:
@@ -817,7 +855,23 @@ class SurrogateModel(object):
         # burn, thin, and flatten samples
         self.iburn, self.ithin = mcmc_utils.estimate_burnin(self.sampler, verbose=self.verbose)
         self.emcee_samples_full = self.sampler.get_chain()
-        self.emcee_samples = self.sampler.get_chain(discard=self.iburn, flat=True, thin=self.ithin) 
+
+        if burn is None:
+            self.burn = self.iburn
+        else:
+            self.burn = burn
+
+        if thin is None:
+            self.thin = self.ithin
+        else:
+            self.thin = thin
+        
+        self.emcee_samples = self.sampler.get_chain(discard=self.burn, flat=True, thin=self.thin) 
+        
+        if self.like_fn_name == "true":
+            self.emcee_samples_true = self.emcee_samples
+        elif self.like_fn_name == "surrogate":
+            self.emcee_samples_gp = self.emcee_samples
 
         # get acceptance fraction and autocorrelation time
         self.acc_frac = np.mean(self.sampler.acceptance_fraction)
@@ -835,12 +889,22 @@ class SurrogateModel(object):
             pool.close()
 
         if self.cache:
-            self.save()
+            try:
+                self.save()
+            except:
+                pass
 
-            np.savez(f"{self.savedir}/emcee_samples_final.npz", samples=self.emcee_samples)
+            if self.like_fn_name == "true":
+                np.savez(f"{self.savedir}/emcee_samples_final_{self.like_fn_name}.npz", samples=self.emcee_samples)
+            else:
+                if len(self.training_results["iteration"]) == 0:
+                    current_iter = 0
+                else:   
+                    current_iter = self.training_results["iteration"][-1]
+                np.savez(f"{self.savedir}/emcee_samples_final_{self.like_fn_name}_iter_{current_iter}.npz", samples=self.emcee_samples)
+                
 
-    
-    def run_dynesty(self, like_fn="surrogate", ptform=None, mode="dynamic", sampler_kwargs={}, run_kwargs={},
+    def run_dynesty(self, like_fn=None, ptform=None, mode="dynamic", sampler_kwargs=None, run_kwargs=None,
                     multi_proc=False, save_iter=None, ptform_comment=None):
         """
         Use the ``dynesty`` nested-sampling MCMC package to sample the trained GP surrogate model.
@@ -864,22 +928,45 @@ class SurrogateModel(object):
         from dynesty import NestedSampler
         from dynesty import DynamicNestedSampler
         from dynesty import utils as dyfunc
-
-        # set up multiprocessing pool
-        if multi_proc == True:
-            pool = mp.Pool(self.ncore)
-            pool.size = self.ncore
+        
+        # Determine likelihood function and name
+        if like_fn is None:
+            print("Initializing dynesty with self.surrogate_log_likelihood surrogate model as likelihood.")
+            self.like_fn_name = "surrogate"
+            self.like_fn = self.surrogate_log_likelihood
+        elif callable(like_fn):
+            # like_fn is a function/callable
+            if like_fn == self.surrogate_log_likelihood:
+                print("Initializing dynesty with self.surrogate_log_likelihood surrogate model as likelihood.")
+                self.like_fn_name = "surrogate"
+                self.like_fn = self.surrogate_log_likelihood
+            elif like_fn == self.true_log_likelihood:
+                print("Initializing dynesty with self.true_log_likelihood as likelihood.")
+                self.like_fn_name = "true"
+                self.like_fn = like_fn
+            else:
+                # Custom function provided
+                print("Initializing dynesty with user-provided likelihood function.")
+                self.like_fn_name = "custom"
+                self.like_fn = like_fn
+        elif isinstance(like_fn, str):
+            # like_fn is a string
+            like_fn_lower = like_fn.lower()
+            if like_fn_lower in ["surrogate", "gp", "surrogate_log_likelihood"]:
+                print("Initializing dynesty with self.surrogate_log_likelihood surrogate model as likelihood.")
+                self.like_fn_name = "surrogate"
+                self.like_fn = self.surrogate_log_likelihood
+            elif like_fn_lower in ["true", "true_log_likelihood"]:
+                print("Initializing dynesty with self.true_log_likelihood as likelihood.")
+                self.like_fn_name = "true"
+                self.like_fn = self.true_log_likelihood
+            else:
+                raise ValueError(f"Unknown string identifier for like_fn: '{like_fn}'. "
+                                f"Valid options: 'surrogate', 'true', 'gp', 'surrogate_log_likelihood', 'true_log_likelihood'")
         else:
-            pool = None
-
-        # specify likelihood function (true function or surrogate model)
-        if like_fn.lower() == "true":
-            print("Initializing dynesty with self.fn as likelihood.")
-            self.like_fn = self.fn
-        else:
-            print("Initializing dynesty with self.evaluate surrogate model as likelihood.")
-            self.like_fn = self.evaluate
-
+            raise TypeError(f"like_fn must be None, a string, or a callable function. "
+                        f"Received type: {type(like_fn)}")
+            
         # set up prior transform
         if ptform is None:
             self.ptform = partial(ut.prior_transform_uniform, bounds=self.bounds)
@@ -904,24 +991,42 @@ class SurrogateModel(object):
 
         # start timing dynesty
         dynesty_t0 = time.time()
+        
+        # set up sampler kwargs
+        if sampler_kwargs is None:
+            sampler_kwargs = {"bound": "multi"}
+        
+        # set up multiprocessing pool
+        if multi_proc == True:
+            pool = mp.Pool(self.ncore)
+            pool.size = self.ncore
+            sampler_kwargs["pool"] = pool
+            sampler_kwargs["queue_size"] = self.ncore
+        else:
+            sampler_kwargs["pool"] = None
 
         # initialize our nested sampler
-        if mode == 'dynamic':
+        if mode == "dynamic":
             dsampler = DynamicNestedSampler(self.like_fn, 
                                             self.ptform, 
                                             self.ndim,
-                                            pool=pool,
                                             **sampler_kwargs)
             print("Initialized dynesty DynamicNestedSampler.")
-        elif mode == 'static':
+        elif mode == "static":
             dsampler = NestedSampler(self.like_fn, 
                                      self.ptform, 
                                      self.ndim,
-                                     pool=pool,
                                      **sampler_kwargs)
             print("Initialized dynesty NestedSampler.")
         else:
             raise ValueError(f"mode {mode} is not a valid option. Choose 'dynamic' or 'static'.")
+        
+        # set up run kwargs. default: 100% weight on posterior, 0% evidence
+        if run_kwargs is None:
+            run_kwargs = {"wt_kwargs": {'pfrac': 1.0},
+                          "stop_kwargs": {'pfrac': 1.0},
+                          "maxiter": int(5e4),
+                          "dlogz_init": 0.5}
 
         # Pickle sampler?
         if save_iter is not None:
@@ -931,7 +1036,7 @@ class SurrogateModel(object):
                 dsampler.run_nested(maxiter=save_iter, **run_kwargs)
                 self.res = dsampler.results
 
-                file = os.path.join(self.savedir, "dynesty_sampler.pkl")
+                file = os.path.join(self.savedir, f"dynesty_sampler_{self.like_fn_name}.pkl")
 
                 # pickle dynesty sampler object
                 print(f"Caching model to {file}...")
@@ -947,27 +1052,42 @@ class SurrogateModel(object):
         else:
             dsampler.run_nested(**run_kwargs)
 
-        # record dynesty runtime
-        self.dynesty_runtime = time.time() - dynesty_t0
-
         self.res = dsampler.results
         samples = self.res.samples  # samples
         weights = np.exp(self.res.logwt - self.res.logz[-1])
 
         # Resample weighted samples.
         self.dynesty_samples = dyfunc.resample_equal(samples, weights)
+        
+        if self.like_fn_name == "true":
+            self.dynesty_samples_true = self.dynesty_samples
+        elif self.like_fn_name == "surrogate":
+            self.dynesty_samples_gp = self.dynesty_samples  
 
         # record that dynesty has been run
         self.dynesty_run = True
+        
+        # record dynesty runtime
+        self.dynesty_runtime = time.time() - dynesty_t0
 
         # close pool
-        if pool is not None:
-            pool.close()
+        if sampler_kwargs["pool"] is not None:
+            sampler_kwargs["pool"].close()
 
         if self.cache:
-            self.save()
+            try:
+                self.save()
+            except:
+                pass
 
-            np.savez(f"{self.savedir}/dynesty_samples_final.npz", samples=self.dynesty_samples)
+            if self.like_fn_name == "true":
+                np.savez(f"{self.savedir}/dynesty_samples_final_{self.like_fn_name}.npz", samples=self.dynesty_samples)
+            else:
+                if len(self.training_results["iteration"]) == 0:
+                    current_iter = 0
+                else:
+                    current_iter = self.training_results["iteration"][-1]
+                np.savez(f"{self.savedir}/dynesty_samples_final_{self.like_fn_name}_iter_{current_iter}.npz", samples=self.dynesty_samples)
 
 
     def plot(self, plots=None, save=True, show=False):

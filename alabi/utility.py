@@ -19,6 +19,7 @@ from functools import partial
 import warnings
 import time
 import tqdm
+from .gp_utils import grad_gp_mean_prediction, grad_gp_var_prediction
 
 __all__ = ["agp_utility", 
            "bape_utility", 
@@ -240,11 +241,10 @@ def agp_utility(theta, y, gp, bounds):
     if not np.isfinite(lnprior_uniform(theta, bounds)):
         return np.inf
 
-    # Only works if the GP object has been computed, otherwise you messed up
-    if gp.computed:
-        mu, var = gp.predict(y, theta.reshape(1,-1), return_var=True)
-    else:
-        raise RuntimeError("ERROR: Need to compute GP before using it!")
+    if not gp.computed:
+        gp.compute(theta)
+        
+    mu, var = gp.predict(y, theta.reshape(1,-1), return_var=True)
 
     try:
         util = -(mu + 0.5*np.log(2.0*np.pi*np.e*var))
@@ -252,7 +252,20 @@ def agp_utility(theta, y, gp, bounds):
         print("Invalid util value.  Negative variance or inf mu?")
         raise ValueError("util: %e. mu: %e. var: %e" % (util, mu, var))
 
-    return util
+    return float(util)
+
+
+def grad_agp_utility(theta, y, gp, bounds):
+    
+    if not np.isfinite(lnprior_uniform(theta, bounds)):
+        return np.inf
+    
+    d_mu = grad_gp_mean_prediction(theta, gp)
+    d_var = grad_gp_var_prediction(theta, gp)
+
+    d_agp = -(d_mu + 0.5 * d_var)
+
+    return d_agp
 
 
 def bape_utility(theta, y, gp, bounds):
@@ -280,14 +293,13 @@ def bape_utility(theta, y, gp, bounds):
     """
     # If guess isn't allowed by prior, we don't care what the value of the
     # utility function is
-    if not np.isfinite(lnprior_uniform(theta, bounds)):
+    if not np.isfinite(lnprior_uniform(theta.flatten(), bounds)):
         return np.inf
 
-    # Only works if the GP object has been computed, otherwise you messed up
-    if gp.computed:
-        mu, var = gp.predict(y, theta.reshape(1,-1), return_var=True)
-    else:
-        raise RuntimeError("ERROR: Need to compute GP before using it!")
+    if not gp.computed:
+        gp.compute(theta)
+        
+    mu, var = gp.predict(y, theta.reshape(1,-1), return_var=True)
 
     try:
         util = -((2.0 * mu + var) + logsubexp(var, 0.0))
@@ -296,7 +308,27 @@ def bape_utility(theta, y, gp, bounds):
         print("Invalid util value.  Negative variance or inf mu?")
         raise ValueError("util: %e. mu: %e. var: %e" % (util, mu, var))
 
-    return util
+    return float(util)
+
+
+def grad_bape_utility(theta, y, gp, bounds):
+    
+    if not np.isfinite(lnprior_uniform(theta.flatten(), bounds)):
+        return np.inf
+    
+    if not gp.computed:
+        gp.compute(theta)
+        
+    mu, var = gp.predict(y, theta.reshape(1,-1), return_var=True)
+
+    bape = float(-((2.0 * mu + var) + logsubexp(var, 0.0)))
+
+    d_mu = grad_gp_mean_prediction(theta, gp)
+    d_var = grad_gp_var_prediction(theta, gp)
+
+    d_bape = -((2 * d_mu + d_var) * bape + np.exp(2*mu + 2*var) * d_var)
+    
+    return d_bape 
 
 
 def jones_utility(theta, y, gp, bounds, zeta=0.01):
@@ -352,7 +384,7 @@ def jones_utility(theta, y, gp, bounds, zeta=0.01):
         print("Invalid util value.  Negative variance or inf mu?")
         raise ValueError("util: %e. mu: %e. var: %e" % (util, mu, var))
 
-    return util
+    return float(util)
 
 
 def assign_utility(algorithm):
@@ -360,24 +392,76 @@ def assign_utility(algorithm):
     # Assign utility function
     if algorithm == "bape":
         utility = bape_utility
+        grad_utility = grad_bape_utility
     elif algorithm == "agp":
         utility = agp_utility
+        grad_utility = None
     elif algorithm == "alternate":
         # If alternate, AGP on even, BAPE on odd
         utility = agp_utility
+        grad_utility = None
     elif algorithm == "jones":
         utility = jones_utility
+        grad_utility = None
     else:
         errMsg = "Unknown algorithm. Valid options: bape, agp, jones, or alternate."
         raise ValueError(errMsg)
 
-    return utility
+    return utility, grad_utility
 
 
-def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
-                       t0=None, ps=None, args=None, options=None, max_iter=100):
+def minimize_objective_single(idx, obj_fn, grad_obj_fn, bounds, ps, method, options, max_iter):
     """
-    Optimize the active learning objective function
+    Single optimization run - used for parallelization
+    """
+    t0 = ps(nsample=1).flatten()
+    
+    # Keep minimizing until a valid solution is found
+    test_iter = 0
+    while True:
+        if test_iter > 0:
+            # Try a new initialization point
+            t0 = ps(nsample=1).flatten()
+            
+        # Too many iterations
+        if test_iter >= max_iter:
+            err_msg = "ERROR: Cannot find a valid solution to objective function minimization.\n" 
+            err_msg += "Current iterations: %d\n" % test_iter
+            err_msg += "Maximum iterations: %d\n" % max_iter
+            err_msg += "Try increasing the number of initial training samples.\n"
+            raise RuntimeError(err_msg)
+        
+        test_iter += 1
+        
+        # Minimize the function
+        tmp = minimize(fun=obj_fn, 
+                           x0=np.array(t0).flatten(), 
+                           jac=grad_obj_fn, 
+                           bounds=bounds, 
+                           method=method, 
+                           options=options)
+
+        x_opt = tmp.x 
+        f_opt = tmp.fun
+
+        # If solution is finite and allowed by the prior, save
+        if np.all(np.isfinite(x_opt)) and np.all(np.isfinite(f_opt)):
+            if np.isfinite(lnprior_uniform(x_opt, bounds)):
+                return x_opt, f_opt
+            else:
+                print("Warning: Utility function optimization prior fail", x_opt)
+        else:
+            print("Warning: Utility function optimization infinite fail", x_opt, f_opt)
+
+
+def minimize_objective(obj_fn, grad_obj_fn, bounds=None, nopt=1, method="l-bfgs-b",
+                       ps=None, options=None, max_iter=100, ncore=1):
+    """
+    Optimize the active learning objective function with optional parallelization
+    
+    :param ncore: (*int, optional*)
+        Number of cores to use for parallel optimization. Defaults to 1 (serial).
+        If ncore > 1, will run nopt optimizations in parallel.
     """
     
     warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -387,82 +471,51 @@ def minimize_objective(obj_fn, y, gp, bounds=None, nopt=1, method="nelder-mead",
         options = {}
     if str(method).lower() == "nelder-mead":
         options["adaptive"] = True
-    # options["maxiter"] = 20
-    # options["disp"] = True
 
     # Get prior sampler
     if ps is None:
         ps = partial(prior_sampler, bounds=bounds)
 
-    bound_methods = ["nelder-mead", "l-bfgs", "tnc", "slsqp", "powell", "trust-constr"]
-    # scipy >= 1.5 should be installed to use bounds in optimization
+    bound_methods = ["nelder-mead", "l-bfgs-b", "tnc", "slsqp", "powell", "trust-constr"]
     if str(method).lower() not in bound_methods:
         msg = f"Optimization method {method} does not allow bounds."
         msg += "Recommended bound optimization methods: "
         msg += "Nelder-Mead, L-BFGS-B, TNC, SLSQP, Powell, and trust-constr."
         print(msg)
 
-    # arguments for objective function
-    if args is None:
-        args = (y, gp, bounds)
+    # Serial execution 
+    if ncore <= 1:
+        res = []
+        objective = []
         
-    if t0 is None:
-        t0 = ps(nsample=1).flatten()
+        for ii in range(nopt):
+            x_opt, f_opt = minimize_objective_single(ii, obj_fn, grad_obj_fn, bounds, ps, method, options, max_iter)
+            if x_opt is not None:
+                res.append(x_opt)
+                objective.append(f_opt)
+    
+    # Parallel execution
+    else:
+        # Create partial function for multiprocessing
+        minimize_function = partial(minimize_objective_single, obj_fn=obj_fn, grad_obj_fn=grad_obj_fn, bounds=bounds, ps=ps, method=method, options=options, max_iter=max_iter)
 
-    # Containers
-    res = []
-    objective = []
-
-    # Loop over optimization calls
-    for ii in range(nopt):
-
-        # Keep minimizing until a valid solution is found
-        test_iter = 0
-        while True:
-
-            if test_iter > 0:
-                # Try a new initialization point
-                t0 = ps(nsample=1).flatten()
-                
-            # Too many iterations
-            if test_iter >= max_iter:
-                err_msg = "ERROR: Cannot find a valid solution to objective function minimization.\n" 
-                err_msg += "Current iterations: %d\n" % test_iter
-                err_msg += "Maximum iterations: %d\n" % max_iter
-                err_msg += "Try increasing the number of initial training samples.\n"
-                raise RuntimeError(err_msg)
-            
-            test_iter += 1
-
-            # Minimize the function
-            try:
-                # warnings.simplefilter("ignore")
-                tmp = minimize(obj_fn, np.array(t0).flatten(), args=args, bounds=tuple(bounds), method=method, options=options)
-            except Exception as e:
-                print("t0:", t0)
-                print("bounds:", tuple(bounds))
-                print(f"Error optimizing {obj_fn.__name__}: {e}")
-                break
-
-            x_opt = tmp.x 
-            f_opt = tmp.fun
-
-            # If solution is finite and allowed by the prior, save
-            if np.all(np.isfinite(x_opt)) and np.all(np.isfinite(f_opt)):
-                if np.isfinite(lnprior_uniform(x_opt, bounds)):
-                    res.append(x_opt)
-                    objective.append(f_opt)
-                    break
-                else:
-                    print("Warning: Utility function optimization prior fail", x_opt)
-            else:
-                print("Warning: Utility function optimization infinite fail", x_opt, f_opt)
+        with mp.Pool(min(ncore, nopt)) as pool:
+            results = pool.map(minimize_function, range(nopt))
         
-        # end loop
+        # Extract results
+        res = []
+        objective = []
+        for x_opt, f_opt in results:
+            if x_opt is not None:
+                res.append(x_opt)
+                objective.append(f_opt)
+
+    if len(res) == 0:
+        raise RuntimeError("ERROR: No valid solutions found in any optimization runs!")
 
     # Return value that minimizes objective function out of all minimizations
     best_ind = np.argmin(objective)
-    theta_best = np.array(res)[best_ind]
+    theta_best = res[best_ind]  
     obj_best = objective[best_ind]
 
     return theta_best, obj_best
