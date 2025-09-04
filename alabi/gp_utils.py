@@ -16,36 +16,11 @@ from functools import partial
 import copy
 import warnings
 
-__all__ = ["default_hyper_prior", 
-           "configure_gp", 
+__all__ = ["configure_gp", 
            "optimize_gp",
            "grad_gp_mean_prediction",
-           "grad_gp_var_prediction"]
-
-
-def default_hyper_prior(p, hp_rng=20, mu=None, sigma=None, sigma_level=3):
-    """
-    Default prior function for GP hyperparameters. This prior also keeps the
-    hyperparameters within a reasonable huge range ``[-20, 20]``. Note that george
-    operates on the *log* hyperparameters, except for the mean function.
-
-    :param p: (*array, required*) 
-        Array of GP hyperparameters
-
-    :returns lnprior: (*float*) 
-        log prior value 
-    """
-
-    # Restrict range of hyperparameters (ignoring mean term)
-    if np.any(np.fabs(p)[1:] > hp_rng):
-        return -np.inf
-
-    # Restrict mean hyperparameter to +/- sigma_level * sigma
-    if (mu is not None) and (sigma is not None):
-        if (p[0] < mu - sigma_level*sigma) or (p[0] > mu + sigma_level*sigma):
-            return -np.inf
-
-    return 0.0
+           "grad_gp_var_prediction",
+           "grad_gp_kernel"]
 
 
 def _nll(p, gp, y, prior_fn=None):
@@ -114,6 +89,155 @@ def _grad_nll(p, gp, y, prior_fn=None):
     return -gp.grad_log_likelihood(y, quiet=True)
 
 
+def grad_gp_kernel(x1, x2, gp, wrt='x1'):
+    """
+    Compute the gradient of the GP kernel k(x1, x2) with respect to x1 or x2.
+    
+    For a GP kernel k(x1, x2), this function computes:
+    - If wrt='x1': ∇_{x1} k(x1, x2) 
+    - If wrt='x2': ∇_{x2} k(x1, x2)
+    
+    This is useful for computing derivatives of covariance functions and
+    can be used in active learning acquisition functions that require
+    kernel gradients.
+    
+    Parameters
+    ----------
+    x1 : array_like, shape (n1, d) or (d,)
+        First input points. If 1D, will be reshaped to (1, d).
+    x2 : array_like, shape (n2, d) or (d,)  
+        Second input points. If 1D, will be reshaped to (1, d).
+    gp : george.GP
+        Fitted George Gaussian Process object with kernel
+    wrt : str, optional
+        Variable to take gradient with respect to. Either 'x1' or 'x2'.
+        Default is 'x1'.
+        
+    Returns
+    -------
+    grad_k : ndarray, shape (n2, d) for single x1, or (n1, n2, d) for multiple x1
+        Gradient of kernel k(x1, x2) with respect to the specified variable.
+        
+    Notes
+    -----
+    This function uses George's built-in gradient capabilities which are
+    analytically computed for supported kernels (ExpSquared, Matern, etc.).
+    
+    For kernel k(x1, x2), the gradient with respect to x1 is typically:
+    ∇_{x1} k(x1, x2) = -∇_{x2} k(x1, x2)
+    
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from george import kernels, GP
+    >>> 
+    >>> # Create GP with ExpSquared kernel
+    >>> kernel = kernels.ExpSquaredKernel(1.0, ndim=2)
+    >>> gp = GP(kernel)
+    >>> 
+    >>> # Compute kernel gradient
+    >>> x1 = np.array([[0.0, 0.0]])  # shape (1, 2)
+    >>> x2 = np.array([[1.0, 0.5], [0.5, 1.0]])  # shape (2, 2)
+    >>> grad_k = grad_gp_kernel(x1, x2, gp, wrt='x1')
+    >>> print(grad_k.shape)  # (2, 2) - gradient for each x2 point
+    """
+    
+    # Ensure inputs are properly shaped
+    x1 = np.atleast_2d(x1)
+    x2 = np.atleast_2d(x2)
+    
+    if x1.shape[1] != x2.shape[1]:
+        raise ValueError(f"x1 and x2 must have same number of dimensions. "
+                        f"Got x1: {x1.shape[1]}, x2: {x2.shape[1]}")
+    
+    if wrt not in ['x1', 'x2']:
+        raise ValueError(f"wrt must be 'x1' or 'x2', got {wrt}")
+    
+    # Get kernel gradients using George's built-in methods
+    if wrt == 'x1':
+        # Gradient with respect to first argument
+        # George's get_gradient computes ∇_{x1} k(x1, x2)
+        grad_k = gp.kernel.get_gradient(x1, x2)
+    else:
+        # Gradient with respect to second argument  
+        # For symmetric kernels: ∇_{x2} k(x1, x2) = -∇_{x1} k(x2, x1)
+        grad_k = -gp.kernel.get_gradient(x2, x1)
+        # Need to transpose to get correct shape
+        if grad_k.ndim == 3:
+            grad_k = grad_k.transpose(1, 0, 2)
+    
+    # Extract only spatial gradients (first ndim components)
+    # George's gradient includes both spatial and hyperparameter gradients
+    ndim = x1.shape[1]
+    
+    # Get the spatial part of the gradient
+    if grad_k.ndim == 3:
+        grad_k_spatial = grad_k[:, :, :ndim]
+    else:
+        grad_k_spatial = grad_k[:, :ndim]
+    
+    # For single x1 point, return shape (n2, d)
+    if x1.shape[0] == 1:
+        if grad_k_spatial.ndim == 3:
+            return grad_k_spatial[0]  # shape (n2, d)
+        else:
+            return grad_k_spatial  # already (n2, d)
+    else:
+        # Multiple x1 points - return full gradient array (n1, n2, d)
+        return grad_k_spatial
+
+
+def numerical_kernel_gradient(xs, x_train, gp, h=1e-6):
+    """
+    Compute numerical gradient of GP kernel k(xs, x_train) with respect to xs.
+    
+    Parameters:
+    -----------
+    xs : array_like, shape (d,) or (1, d)
+        Query point(s) to compute gradient at
+    x_train : array_like, shape (n, d) 
+        Training points
+    gp : george.GP
+        Gaussian Process object with kernel
+    h : float, default=1e-6
+        Step size for finite differences
+        
+    Returns:
+    --------
+    grad_k : ndarray, shape (n, d)
+        Numerical gradient of kernel k(xs, x_train) w.r.t. xs
+        Each row corresponds to gradient w.r.t. one training point
+    """
+    xs = np.atleast_2d(xs)
+    x_train = np.atleast_2d(x_train)
+    
+    if xs.shape[0] != 1:
+        raise ValueError("This function handles single query point only")
+    
+    n_train, d = x_train.shape
+    xs_flat = xs.flatten()
+    
+    # Initialize gradient array
+    grad_k = np.zeros((n_train, d))
+    
+    # Compute gradient for each dimension
+    for i in range(d):
+        # Create perturbed points
+        xs_plus = xs_flat.copy()
+        xs_minus = xs_flat.copy()
+        xs_plus[i] += h
+        xs_minus[i] -= h
+        
+        # Evaluate kernel at perturbed points
+        k_plus = gp.kernel.get_value(xs_plus.reshape(1, -1), x_train).flatten()
+        k_minus = gp.kernel.get_value(xs_minus.reshape(1, -1), x_train).flatten()
+        
+        # Central difference
+        grad_k[:, i] = (k_plus - k_minus) / (2 * h)
+    
+    return grad_k
+
+
 def grad_gp_mean_prediction(xs, gp):
     """
     Compute the gradient of the GP mean prediction with respect to the input
@@ -129,9 +253,22 @@ def grad_gp_mean_prediction(xs, gp):
         The gradient of the GP mean prediction at the input locations.
     """
     xs = np.asarray(xs).reshape(1, -1)
-    grad_ks = gp.kernel.get_gradient(xs, gp._x)[0]
     
-    return np.dot(grad_ks.T, gp._alpha)
+    # Ensure GP is computed
+    if not hasattr(gp, '_alpha') or gp._alpha is None:
+        raise ValueError("GP must be computed before computing gradients")
+    
+    # Use the grad_gp_kernel function to get kernel gradients
+    # grad_ks shape: (n_train_points, n_dims) for single query point
+    # grad_ks = grad_gp_kernel(xs, gp._x, gp, wrt='x1')
+
+    grad_ks = numerical_kernel_gradient(xs, gp._x, gp, h=1e-6)
+
+    # The GP mean gradient is: ∇μ(x) = ∇k(x, X_train)^T @ α
+    # where α = K^{-1} @ y_train
+    grad_mean = np.dot(grad_ks.T, gp._alpha)
+    
+    return grad_mean.flatten()
 
 
 def grad_gp_var_prediction(xs, gp):
@@ -149,12 +286,31 @@ def grad_gp_var_prediction(xs, gp):
         The gradient of the GP variance prediction at the input locations.
     """
     xs = np.array(xs).reshape(1, -1)
-    grad_ks = gp.kernel.get_gradient(xs, gp._x)[0]
-    grad_kss = gp.kernel.get_gradient(xs, xs).flatten() 
-    ks = gp.kernel.get_value(xs, gp._x).flatten()
-    Kinv = gp.solver.get_inverse()
     
-    return grad_kss - 2 * np.dot(grad_ks.T, np.dot(Kinv, ks))
+    # Ensure GP is computed
+    if not hasattr(gp, '_alpha') or gp._alpha is None:
+        raise ValueError("GP must be computed before computing gradients")
+    
+    # Get kernel gradients: ∇k(x*, X_train)
+    # grad_ks shape: (n_train_points, n_dims) for single query point
+    grad_ks = numerical_kernel_gradient(xs, gp._x, gp, h=1e-6)
+
+    # Get kernel values: k(x*, X_train)
+    ks = gp.kernel.get_value(xs, gp._x).flatten()  # shape: (n_train_points,)
+    
+    # Get inverse covariance matrix
+    Kinv = gp.solver.get_inverse()  # shape: (n_train_points, n_train_points)
+    
+    # For stationary kernels, ∇k(x*, x*) = 0, so the variance gradient is:
+    # ∇σ²(x*) = -2 * ∇k(x*, X_train)^T @ K^{-1} @ k(x*, X_train)
+    # 
+    # grad_ks.T shape: (n_dims, n_train_points)
+    # Kinv @ ks shape: (n_train_points,)
+    # Result shape: (n_dims,)
+    
+    grad_var = -2.0 * np.dot(grad_ks.T, np.dot(Kinv, ks))
+    
+    return grad_var.flatten()
 
 
 def configure_gp(theta, y, kernel, 
@@ -182,8 +338,8 @@ def configure_gp(theta, y, kernel,
     return gp
 
 
-def optimize_gp(gp, theta, y, gp_hyper_prior, p0,
-                method="l-bfgs-b", options=None, bounds=None):
+def optimize_gp(gp, theta, y, gp_hyper_prior, p0, bounds=None,
+                method="l-bfgs-b", optimizer_kwargs=None, max_iter=50):
 
     warnings.filterwarnings("ignore", category=RuntimeWarning)
     
@@ -194,10 +350,14 @@ def optimize_gp(gp, theta, y, gp_hyper_prior, p0,
     # initial hyperparameters
     init_hp = gp.get_parameter_vector()
         
-    valid_methods = ["newton-cg", "l-bfgs-b", "powell"]
+    valid_methods = ["newton-cg", "bfgs", "l-bfgs-b", "powell"]
     if method not in valid_methods:
         print(f"Warning: {method} not in valid methods {valid_methods}. Using 'l-bfgs-b' optimizer instead.")
         method = "l-bfgs-b"
+        
+    # methods without bounds arg 
+    if method in ["bfgs"]:
+        bounds = None
 
     # Minimize GP nll, save result, evaluate marginal likelihood
     if method in ["newton-cg", "l-bfgs-b"]:
@@ -205,14 +365,15 @@ def optimize_gp(gp, theta, y, gp_hyper_prior, p0,
     else:
         jac = None
         
-    # Set improved default options for faster convergence
-    if options is None:
-        default_options = {
-            'newton-cg': {'maxiter': 50, 'xtol': 1e-4, 'gtol': 1e-4},
-            'l-bfgs-b': {'maxiter': 50, 'gtol': 1e-4, 'ftol': 1e-6},
-            'powell': {'maxiter': 100, 'xtol': 1e-4, 'ftol': 1e-6},
+    # Set improved default optimizer_kwargs for faster convergence
+    if optimizer_kwargs is None:
+        default_optimizer_kwargs = {
+            'newton-cg': {'maxiter': max_iter},
+            'bfgs': {'maxiter': max_iter},
+            'l-bfgs-b': {'maxiter': max_iter, 'factr': 1e12},
+            'powell': {'maxiter': max_iter},
         }
-        options = default_options.get(method.lower(), {})
+        optimizer_kwargs = default_optimizer_kwargs.get(method.lower(), {})
     
     nopt = p0.shape[0] if p0.ndim > 1 else 1
     if nopt > 1:
@@ -223,7 +384,7 @@ def optimize_gp(gp, theta, y, gp_hyper_prior, p0,
         for ii, x0 in enumerate(p0):
             try:
                 result = minimize(_nll, x0, args=(gp, y, gp_hyper_prior), method=method,
-                                jac=jac, bounds=bounds, options=options)
+                                jac=jac, bounds=bounds, options=optimizer_kwargs)
                 
                 if result.success and np.isfinite(gp_hyper_prior(result.x)):
                     # Compute marginal log likelihood for this set of kernel hyperparameters

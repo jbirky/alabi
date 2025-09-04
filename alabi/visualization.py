@@ -82,8 +82,8 @@ def plot_hyperparam_vs_iteration(sm, title="GP fit", show=False):
             ax1.plot(sm.training_results["iteration"], hp_values.T[ii], 
                     label=hp_names[ii].replace('_', ' '))
         ax1.tick_params(axis='y')
-        ax1.fill_between(sm.training_results["iteration"], -sm.gp_scale_rng,
-                         sm.gp_scale_rng, color="C2", alpha=0.1, label="GP scale range")
+        ax1.fill_between(sm.training_results["iteration"], min(sm.gp_scale_rng),
+                         max(sm.gp_scale_rng), color="C2", alpha=0.1, label="GP scale range")
 
         # plot mean on separate axis
         ax2 = ax1.twinx()
@@ -252,7 +252,7 @@ def plot_gp_fit_2D(sm, ngrid=60, title="GP fit", show=False):
     for i in range(Z.shape[0]):
         for j in range(Z.shape[1]):
             tt = np.array([X[i][j], Y[i][j]]).reshape(1,-1)
-            Z[i][j] = sm.evaluate(tt)
+            Z[i][j] = sm.surrogate_log_likelihood(tt)
         
     fig = plt.figure()
     im = plt.contourf(X, Y, Z, 20, cmap='Blues_r')

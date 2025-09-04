@@ -23,6 +23,7 @@ from .gp_utils import grad_gp_mean_prediction, grad_gp_var_prediction
 
 __all__ = ["agp_utility", 
            "bape_utility", 
+           "grad_bape_utility",
            "jones_utility",
            "assign_utility",
            "minimize_objective", 
@@ -257,15 +258,27 @@ def agp_utility(theta, y, gp, bounds):
 
 def grad_agp_utility(theta, y, gp, bounds):
     
+    # Ensure theta is properly shaped
+    theta = np.asarray(theta).flatten()
+    
     if not np.isfinite(lnprior_uniform(theta, bounds)):
-        return np.inf
+        return np.full(len(theta), np.inf)  # Return array of infs with correct shape
     
     d_mu = grad_gp_mean_prediction(theta, gp)
     d_var = grad_gp_var_prediction(theta, gp)
+    
+    # Ensure d_mu and d_var are arrays with correct shape
+    d_mu = np.asarray(d_mu).flatten()
+    d_var = np.asarray(d_var).flatten()
+    
+    # Check dimension consistency
+    if len(d_mu) != len(theta) or len(d_var) != len(theta):
+        raise ValueError(f"Dimension mismatch: theta has {len(theta)} dims, "
+                        f"d_mu has {len(d_mu)} dims, d_var has {len(d_var)} dims")
 
     d_agp = -(d_mu + 0.5 * d_var)
 
-    return d_agp
+    return d_agp.flatten()  # Ensure output is 1D array
 
 
 def bape_utility(theta, y, gp, bounds):
@@ -291,15 +304,18 @@ def bape_utility(theta, y, gp, bounds):
     :param util: (*float*)
         utility of theta under the gp
     """
-    # If guess isn't allowed by prior, we don't care what the value of the
-    # utility function is
-    if not np.isfinite(lnprior_uniform(theta.flatten(), bounds)):
+    
+    # Ensure theta is properly shaped
+    theta = np.asarray(theta).flatten()
+    
+    # Check that theta is in bounds
+    if not np.isfinite(lnprior_uniform(theta, bounds)):
         return np.inf
 
-    if not gp.computed:
-        gp.compute(theta)
-        
-    mu, var = gp.predict(y, theta.reshape(1,-1), return_var=True)
+    if gp.computed:
+        mu, var = gp.predict(y, theta.reshape(1,-1), return_var=True)
+    else:
+        raise RuntimeError("ERROR: Need to compute GP before using it!")
 
     try:
         util = -((2.0 * mu + var) + logsubexp(var, 0.0))
@@ -313,22 +329,45 @@ def bape_utility(theta, y, gp, bounds):
 
 def grad_bape_utility(theta, y, gp, bounds):
     
-    if not np.isfinite(lnprior_uniform(theta.flatten(), bounds)):
-        return np.inf
+    # Ensure theta is properly shaped
+    theta = np.asarray(theta).flatten()
     
-    if not gp.computed:
-        gp.compute(theta)
-        
-    mu, var = gp.predict(y, theta.reshape(1,-1), return_var=True)
-
-    bape = float(-((2.0 * mu + var) + logsubexp(var, 0.0)))
+    if not np.isfinite(lnprior_uniform(theta, bounds)):
+        return np.full(len(theta), np.inf)  # Return array of infs with correct shape
+    
+    if gp.computed:
+        mu, var = gp.predict(y, theta.reshape(1,-1), return_var=True)
+    else:
+        raise RuntimeError("ERROR: Need to compute GP before using it!")
 
     d_mu = grad_gp_mean_prediction(theta, gp)
     d_var = grad_gp_var_prediction(theta, gp)
-
-    d_bape = -((2 * d_mu + d_var) * bape + np.exp(2*mu + 2*var) * d_var)
     
-    return d_bape 
+    # Check dimension consistency
+    if len(d_mu) != len(theta) or len(d_var) != len(theta):
+        raise ValueError(f"Dimension mismatch: theta has {len(theta)} dims, "
+                        f"d_mu has {len(d_mu)} dims, d_var has {len(d_var)} dims")
+
+    # Gradient of BAPE utility in log form:
+    # bape_util = -((2.0 * mu + var) + logsubexp(var, 0.0))
+    #           = -(2*mu + var + log(exp(var) - 1))
+    # 
+    # ∇bape_util/∇μ = -2
+    # ∇bape_util/∇σ² = -(1 + exp(σ²)/(exp(σ²) - 1))
+    #
+    # Using chain rule:
+    # ∇bape_util/∇θ = (∇bape_util/∇μ)(∇μ/∇θ) + (∇bape_util/∇σ²)(∇σ²/∇θ)
+    
+    exp_var = np.exp(var)
+    
+    # Partial derivatives of the log-form BAPE utility
+    d_bape_d_mu = -2.0
+    d_bape_d_var = -(1.0 + exp_var / (exp_var - 1.0))
+    
+    # Apply chain rule
+    d_bape = d_bape_d_mu * d_mu + d_bape_d_var * d_var
+    
+    return d_bape
 
 
 def jones_utility(theta, y, gp, bounds, zeta=0.01):
@@ -410,7 +449,7 @@ def assign_utility(algorithm):
     return utility, grad_utility
 
 
-def minimize_objective_single(idx, obj_fn, grad_obj_fn, bounds, ps, method, options, max_iter):
+def minimize_objective_single(idx, obj_fn, grad_obj_fn, bounds, set_bounds, ps, method, options, n_attempts):
     """
     Single optimization run - used for parallelization
     """
@@ -424,20 +463,20 @@ def minimize_objective_single(idx, obj_fn, grad_obj_fn, bounds, ps, method, opti
             t0 = ps(nsample=1).flatten()
             
         # Too many iterations
-        if test_iter >= max_iter:
+        if test_iter >= n_attempts:
             err_msg = "ERROR: Cannot find a valid solution to objective function minimization.\n" 
             err_msg += "Current iterations: %d\n" % test_iter
-            err_msg += "Maximum iterations: %d\n" % max_iter
+            err_msg += "Maximum iterations: %d\n" % n_attempts
             err_msg += "Try increasing the number of initial training samples.\n"
             raise RuntimeError(err_msg)
         
         test_iter += 1
-        
+
         # Minimize the function
         tmp = minimize(fun=obj_fn, 
                            x0=np.array(t0).flatten(), 
                            jac=grad_obj_fn, 
-                           bounds=bounds, 
+                           bounds=set_bounds, 
                            method=method, 
                            options=options)
 
@@ -455,7 +494,7 @@ def minimize_objective_single(idx, obj_fn, grad_obj_fn, bounds, ps, method, opti
 
 
 def minimize_objective(obj_fn, grad_obj_fn, bounds=None, nopt=1, method="l-bfgs-b",
-                       ps=None, options=None, max_iter=100, ncore=1):
+                       ps=None, options=None, ncore=1, n_attempts=5):
     """
     Optimize the active learning objective function with optional parallelization
     
@@ -468,7 +507,7 @@ def minimize_objective(obj_fn, grad_obj_fn, bounds=None, nopt=1, method="l-bfgs-
 
     # Initialize options
     if options is None:
-        options = {}
+        options = {"max_iter": 50}
     if str(method).lower() == "nelder-mead":
         options["adaptive"] = True
 
@@ -478,10 +517,9 @@ def minimize_objective(obj_fn, grad_obj_fn, bounds=None, nopt=1, method="l-bfgs-
 
     bound_methods = ["nelder-mead", "l-bfgs-b", "tnc", "slsqp", "powell", "trust-constr"]
     if str(method).lower() not in bound_methods:
-        msg = f"Optimization method {method} does not allow bounds."
-        msg += "Recommended bound optimization methods: "
-        msg += "Nelder-Mead, L-BFGS-B, TNC, SLSQP, Powell, and trust-constr."
-        print(msg)
+        set_bounds = None
+    else:
+        set_bounds = bounds
 
     # Serial execution 
     if ncore <= 1:
@@ -489,7 +527,7 @@ def minimize_objective(obj_fn, grad_obj_fn, bounds=None, nopt=1, method="l-bfgs-
         objective = []
         
         for ii in range(nopt):
-            x_opt, f_opt = minimize_objective_single(ii, obj_fn, grad_obj_fn, bounds, ps, method, options, max_iter)
+            x_opt, f_opt = minimize_objective_single(ii, obj_fn, grad_obj_fn, bounds, set_bounds, ps, method, options, n_attempts)
             if x_opt is not None:
                 res.append(x_opt)
                 objective.append(f_opt)
@@ -497,7 +535,15 @@ def minimize_objective(obj_fn, grad_obj_fn, bounds=None, nopt=1, method="l-bfgs-
     # Parallel execution
     else:
         # Create partial function for multiprocessing
-        minimize_function = partial(minimize_objective_single, obj_fn=obj_fn, grad_obj_fn=grad_obj_fn, bounds=bounds, ps=ps, method=method, options=options, max_iter=max_iter)
+        minimize_function = partial(minimize_objective_single, 
+                                    obj_fn=obj_fn, 
+                                    grad_obj_fn=grad_obj_fn, 
+                                    bounds=bounds, 
+                                    set_bounds=set_bounds, 
+                                    ps=ps, 
+                                    method=method, 
+                                    options=options, 
+                                    n_attempts=n_attempts)
 
         with mp.Pool(min(ncore, nopt)) as pool:
             results = pool.map(minimize_function, range(nopt))

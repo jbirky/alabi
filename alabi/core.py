@@ -399,10 +399,10 @@ class SurrogateModel(object):
             op_gp = gp_utils.optimize_gp(self.gp, self._theta, self._y,
                                         self.gp_hyper_prior, p0,
                                         method=self.gp_opt_method,
-                                        bounds=self.hp_bounds)
+                                        bounds=self.hp_bounds,
+                                        optimizer_kwargs=self.optimizer_kwargs)
             if op_gp is None:
                 print("Warning: opt_gp hyperparameter optimization failed. Reoptimizing hyperparameters...")
-                # op_gp = self.gp
                 failed = True 
             else:
                 failed = False
@@ -423,10 +423,11 @@ class SurrogateModel(object):
                 fit_mean=True, 
                 fit_white_noise=True, 
                 white_noise=-12, 
-                gp_scale_rng=1,
+                gp_scale_rng=[-2,2],
                 overwrite=False,
                 gp_opt_method="newton-cg", 
-                gp_nopt=3):
+                gp_nopt=3,
+                optimizer_kwargs={"max_iter": 50}):
         """
         Initialize the Gaussian Process with specified kernel.
 
@@ -465,12 +466,13 @@ class SurrogateModel(object):
         # GP hyperparameter number of opt restarts
         self.gp_nopt = gp_nopt
 
-        # assign GP hyperparameter prior
-        self.gp_scale_rng = gp_scale_rng
-        
+        # GP hyperparameter optimization kwargs
+        self.optimizer_kwargs = optimizer_kwargs
+
         # set the bounds for scale length parameters
-        metric_bounds = [(-self.gp_scale_rng, self.gp_scale_rng) for _ in range(self.ndim)]
-        
+        self.gp_scale_rng = gp_scale_rng
+        metric_bounds = [(min(gp_scale_rng), max(gp_scale_rng)) for _ in range(self.ndim)]
+
         valid_scales = False
         
         while valid_scales == False:
@@ -527,9 +529,16 @@ class SurrogateModel(object):
             _theta_cond = self._theta
             _y_cond = self._y
         else:
-            _theta_cond = self._theta[:iter]
-            _y_cond = self._y[:iter]
-            gp_iter.set_parameter_vector(self.training_results["gp_hyperparameters"][iter])
+            # Handle iter=-1 case to use all data instead of excluding last element
+            if iter == -1:
+                _theta_cond = self._theta
+                _y_cond = self._y
+                # Use the latest parameters (last in the list)
+                gp_iter.set_parameter_vector(self.training_results["gp_hyperparameters"][-1])
+            else:
+                _theta_cond = self._theta[:iter]
+                _y_cond = self._y[:iter]
+                gp_iter.set_parameter_vector(self.training_results["gp_hyperparameters"][iter])
             
         gp_iter.compute(_theta_cond)
 
@@ -570,7 +579,7 @@ class SurrogateModel(object):
         return prob
 
 
-    def find_next_point(self, nopt=1):
+    def find_next_point(self, nopt=1, n_attempts=5, optimizer_kwargs={}):
         """
         Find next set of ``(theta, y)`` training points by maximizing the
         active learning utility function.
@@ -581,12 +590,12 @@ class SurrogateModel(object):
         """
 
         opt_timing_0 = time.time()
-        
-        if not getattr(self, "grad_utility"):
-            raise ValueError("Gradient utility function is not defined.")
 
         obj_fn = partial(self.utility, y=self._y, gp=self.gp, bounds=self._bounds)
-        grad_obj_fn = partial(self.grad_utility, y=self._y, gp=self.gp, bounds=self._bounds) 
+        if self.grad_utility is not None:
+            grad_obj_fn = partial(self.grad_utility, y=self._y, gp=self.gp, bounds=self._bounds) 
+        else:
+            grad_obj_fn = None
         
         _thetaN, _ = ut.minimize_objective(obj_fn, 
                                            grad_obj_fn,
@@ -594,8 +603,10 @@ class SurrogateModel(object):
                                            nopt=nopt,
                                            ps=self._prior_sampler,
                                            method=self.obj_opt_method,
-                                           ncore=self.ncore)
-        
+                                           ncore=self.ncore,
+                                           options=optimizer_kwargs,
+                                           n_attempts=n_attempts)
+
         opt_timing = time.time() - opt_timing_0
 
         # evaluate function at the optimized theta
@@ -606,7 +617,7 @@ class SurrogateModel(object):
 
 
     def active_train(self, niter=100, algorithm="bape", gp_opt_freq=20, save_progress=False,
-                     obj_opt_method="l-bfsg-b", nopt=1): 
+                     obj_opt_method="l-bfsg-b", nopt=1, n_attempts=5, use_grad_opt=True, optimizer_kwargs={}): 
         """
         :param niter: (*int, optional*)
 
@@ -622,6 +633,8 @@ class SurrogateModel(object):
         self.utility, self.grad_utility = ut.assign_utility(self.algorithm)
         if self.grad_utility is None:
             obj_opt_method = "nelder-mead"
+        if use_grad_opt == False:
+            self.grad_utility = None
 
         # GP hyperparameter optimization frequency
         self.gp_opt_freq = gp_opt_freq
@@ -643,8 +656,8 @@ class SurrogateModel(object):
         for ii in tqdm.tqdm(range(1, niter+1)):
 
             # Find next training point!
-            thetaN, yN, opt_timing = self.find_next_point(nopt=nopt)
-            
+            thetaN, yN, opt_timing = self.find_next_point(nopt=nopt, n_attempts=n_attempts, optimizer_kwargs=optimizer_kwargs)
+
             # add theta and y to training samples
             theta_prop = np.append(self._theta, thetaN, axis=0)
             y_prop = np.append(self._y, yN)
@@ -997,6 +1010,7 @@ class SurrogateModel(object):
             sampler_kwargs = {"bound": "multi"}
         
         # set up multiprocessing pool
+        # default to false. multiprocessing usually slower for some reason
         if multi_proc == True:
             pool = mp.Pool(self.ncore)
             pool.size = self.ncore

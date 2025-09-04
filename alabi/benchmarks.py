@@ -31,7 +31,7 @@ def test1d_fn(theta):
     theta = np.asarray(theta)
     return -np.sin(3*theta) - theta**2 + 0.7*theta
 
-test1d_bounds = [(-1,2)]
+test1d_bounds = [(-2,1)]
 
 test1d = {"fn": test1d_fn,
           "bounds": test1d_bounds}
@@ -81,7 +81,7 @@ def eggbox_fn(x):
     x = np.asarray(x).flatten()
     tmax = 5.0 * np.pi
     t = 2.0 * tmax * x - tmax
-    return (2.0 + np.cos(t[0] / 2.0) * np.cos(t[1] / 2.0)) ** 5.0
+    return -(2.0 + np.cos(t[0] / 2.0) * np.cos(t[1] / 2.0)) ** 5.0
 
 eggbox_bounds = [(0,1), (0,1)]
 
