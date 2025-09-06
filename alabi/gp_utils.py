@@ -332,8 +332,50 @@ def configure_gp(theta, y, kernel,
 
     try:
         gp.compute(theta)
-    except:
-        gp = None
+    except np.linalg.LinAlgError as e:
+        print(f"LinAlgError during GP computation: {e}")
+        print(f"This usually indicates numerical issues. Trying fixes:")
+        
+        # Fix 1: Add more white noise (jitter) to diagonal
+        original_white_noise = white_noise
+        for jitter_level in [-10, -8, -6, -4]:
+            try:
+                print(f"  Trying with white_noise={jitter_level}")
+                gp = george.GP(kernel=kernel, fit_mean=fit_mean, mean=np.median(y),
+                              white_noise=jitter_level, fit_white_noise=fit_white_noise)
+                if hyperparameters is not None:
+                    gp.set_parameter_vector(hyperparameters)
+                gp.compute(theta)
+                print(f"  ✓ Success with white_noise={jitter_level}")
+                break
+            except np.linalg.LinAlgError:
+                continue
+        else:
+            # Fix 2: Check for duplicate points
+            unique_theta, unique_indices = np.unique(theta, axis=0, return_index=True)
+            if len(unique_theta) < len(theta):
+                print(f"  Found {len(theta) - len(unique_theta)} duplicate points, removing them")
+                theta = unique_theta
+                y = y[unique_indices]
+                try:
+                    gp = george.GP(kernel=kernel, fit_mean=fit_mean, mean=np.median(y),
+                                  white_noise=original_white_noise, fit_white_noise=fit_white_noise)
+                    if hyperparameters is not None:
+                        gp.set_parameter_vector(hyperparameters)
+                    gp.compute(theta)
+                    print(f"  ✓ Success after removing duplicates")
+                except np.linalg.LinAlgError:
+                    print(f"  Still failed after removing duplicates")
+                    return None
+            else:
+                print(f"  All fixes failed. This might indicate:")
+                print(f"    - Inappropriate kernel parameters")
+                print(f"    - Poorly scaled data")
+                print(f"    - Pathological likelihood surface")
+                return None
+    except Exception as e:
+        print(f"Other error during GP computation: {e}")
+        return None
 
     return gp
 

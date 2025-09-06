@@ -3,8 +3,6 @@
 -------------------------------------
 """
 
-__all__ = ["SurrogateModel"]
-
 from alabi import utility as ut
 from alabi import visualization as vis
 from alabi import gp_utils
@@ -12,9 +10,7 @@ from alabi import mcmc_utils
 from alabi import cache_utils
 
 import numpy as np
-from scipy.optimize import minimize
 from sklearn import preprocessing
-from skopt.space import Real
 from functools import partial
 from george import kernels
 import multiprocessing as mp
@@ -37,6 +33,8 @@ log_scaler = preprocessing.FunctionTransformer(func=log_scale, inverse_func=log_
 minmax_scaler = preprocessing.MinMaxScaler()
 no_scaler = preprocessing.FunctionTransformer(func=no_scale, inverse_func=no_scale)
 
+__all__ = ["SurrogateModel",
+           "nlog_scaler", "log_scaler", "minmax_scaler", "no_scaler"]
 
 class SurrogateModel(object):
 
@@ -68,7 +66,7 @@ class SurrogateModel(object):
                 - 'nlog' - log negative scale (for probability distributions logP -> log(-logP)
     """
 
-    def __init__(self, lnlike_fn=None, bounds=None, labels=None, 
+    def __init__(self, lnlike_fn=None, bounds=None, param_names=None,
                  theta_scaler=preprocessing.MinMaxScaler(), y_scaler=no_scaler,
                  cache=True, savedir="results/", model_name="surrogate_model",
                  verbose=True, ncore=mp.cpu_count(), ignore_warnings=True,
@@ -82,8 +80,7 @@ class SurrogateModel(object):
 
         # Set random seed for reproducibility
         if random_seed is None:
-            random_seed = np.random.randint(0, 1000, size=1)[0]
-        np.random.seed(random_seed)
+            np.random.seed(random_seed)
 
         # Set function for training the GP, and initial training samples
         # For bayesian inference problem this would be your log likelihood function
@@ -108,6 +105,16 @@ class SurrogateModel(object):
 
         # Determine dimensionality 
         self.ndim = len(self._bounds)
+        
+        # Set parameter names
+        if param_names is not None:
+            if len(param_names) != len(bounds):
+                raise ValueError("Length of param_names must match length of bounds.")
+            self.param_names = param_names
+            self.labels = param_names
+        else:
+            self.param_names = [r"$\theta_%s$"%(i) for i in range(self.ndim)]
+            self.labels = ["theta_{i}" for i in range(self.ndim)]
 
         # Cache surrogate model as pickle
         self.cache = cache 
@@ -135,12 +142,6 @@ class SurrogateModel(object):
             self.ncore = 1
         else:
             self.ncore = ncore
-
-        # Names of input parameters, used for plots
-        if labels is None:
-            self.labels = [r"$\theta_%s$"%(i) for i in range(self.ndim)]
-        else:
-            self.labels = labels
 
         # false if emcee and dynesty have not been run for this object
         self.emcee_run = False
@@ -191,8 +192,9 @@ class SurrogateModel(object):
         # Evaluate function
         y = self.true_log_likelihood(theta)
 
-        # Scale y
-        _y = self.y_scaler.transform(y.reshape(-1, 1)).flatten()
+        # Scale y - ensure y is a numpy array
+        y = np.asarray(y).reshape(-1, 1)
+        _y = self.y_scaler.transform(y).flatten()
 
         return _y
             
@@ -249,8 +251,8 @@ class SurrogateModel(object):
         return _theta, _y
 
 
-    def init_samples(self, train_file=None, test_file=None, reload=False,
-                     ntrain=None, ntest=None, sampler="uniform"):
+    def init_samples(self, ntrain=100, ntest=0, reload=False, sampler="uniform",
+                     train_file="initial_training_sample.npz", test_file="initial_test_sample.npz"):
         """
         Draw set of initial training samples and test samples. 
         To load cached samples from a numpy zip file from a previous run, 
@@ -281,28 +283,16 @@ class SurrogateModel(object):
         # Load or create training sample
         if reload == True:
             try:
-                cache_file = f"{self.savedir}/initial_training_sample.npz"
+                cache_file = f"{self.savedir}/{train_file}"
                 print(f"Loading training sample from {cache_file}...")
                 _theta, _y = self.load_train(cache_file)
                 
             except:
                 print(f"Unable to reload {cache_file}. Computing new samples...")
-                _theta, _y = self.init_train(nsample=ntrain, sampler=sampler, fname="initial_training_sample.npz")
+                _theta, _y = self.init_train(nsample=ntrain, sampler=sampler, fname=train_file)
         else:
             _theta, _y = self.init_train(nsample=ntrain, sampler=sampler)
-
-        # Load or create test sample
-        if reload == True:
-            try:
-                cache_file = f"{self.savedir}/initial_test_sample.npz"
-                print(f"Loading test sample from {cache_file}...")
-                _theta_test, _y_test = self.load_test(cache_file)
-            except:
-                print(f"Unable to reload {cache_file}. Computing new samples...")
-                _theta_test, _y_test = self.init_train(nsample=ntest, sampler=sampler, fname="initial_test_sample.npz")
-        else:
-            _theta_test, _y_test = self.init_train(nsample=ntest, sampler=sampler, fname="initial_test_sample.npz")
-
+            
         # Training dataset scaled
         self._theta0 = _theta
         self._theta = _theta
@@ -312,21 +302,41 @@ class SurrogateModel(object):
         self.theta0 = self.theta_scaler.inverse_transform(self._theta0)
         self.y0 = self.y_scaler.inverse_transform(self._y.reshape(-1, 1)).flatten()
         
-        # Test dataset scaled
-        self._theta_test = _theta_test
-        self._y_test = _y_test
-        
-        # Test dataset unscaled
-        self.theta_test = self.theta_scaler.inverse_transform(self._theta_test)
-        self.y_test = self.y_scaler.inverse_transform(self._y_test.reshape(-1, 1)).flatten()
-
         # record number of training samples
         self.ninit_train = len(self._theta0)
         self.ntrain = self.ninit_train
         self.nactive = 0
 
-        # record number of test samples
-        self.ntest = len(self._theta_test)
+        # --------------------------------------------------------
+        # Load or create test sample
+        if ntest > 0:
+            if reload == True:
+                try:
+                    cache_file = f"{self.savedir}/{test_file}"
+                    print(f"Loading test sample from {cache_file}...")
+                    _theta_test, _y_test = self.load_test(cache_file)
+                except:
+                    print(f"Unable to reload {cache_file}. Computing new samples...")
+                    _theta_test, _y_test = self.init_train(nsample=ntest, sampler=sampler, fname=test_file)
+            else:
+                _theta_test, _y_test = self.init_train(nsample=ntest, sampler=sampler, fname=test_file)
+
+            # Test dataset scaled
+            self._theta_test = _theta_test
+            self._y_test = _y_test
+            
+            # Test dataset unscaled
+            self.theta_test = self.theta_scaler.inverse_transform(self._theta_test)
+            self.y_test = self.y_scaler.inverse_transform(self._y_test.reshape(-1, 1)).flatten()
+
+            # record number of test samples
+            self.ntest = len(self._theta_test)
+        else:
+            self._theta_test = []
+            self._y_test = []
+            self.theta_test = []
+            self.y_test = []
+            self.ntest = 0
 
 
     def set_hyperparam_prior_bounds(self):
@@ -429,16 +439,90 @@ class SurrogateModel(object):
                 gp_nopt=3,
                 optimizer_kwargs={"max_iter": 50}):
         """
-        Initialize the Gaussian Process with specified kernel.
+        Initialize the Gaussian Process surrogate model with specified kernel and hyperparameters.
 
-        :param kernel: (*str/george kernel obj, optional*) 
-            ``george`` kernel object. Defaults to "ExpSquaredKernel". 
+        This function sets up a Gaussian Process (GP) using the george library with the specified 
+        kernel type and configuration. The GP is initialized with random scale lengths and then
+        fitted to the current training data.
+
+        :param kernel: (*str or george kernel object, optional*) 
+            Kernel type for the Gaussian Process. Can be either a string specifying one of the 
+            built-in kernels or a george kernel object. Default is "ExpSquaredKernel".
+            
+            Built-in options:
+                - ``'ExpSquaredKernel'``: Squared exponential (RBF) kernel, smooth functions
+                - ``'Matern32Kernel'``: Matérn kernel with ν=3/2, moderately smooth functions  
+                - ``'Matern52Kernel'``: Matérn kernel with ν=5/2, smooth functions
+                - ``'RationalQuadraticKernel'``: Rational quadratic kernel, scale mixture of RBF kernels
+                
             See https://george.readthedocs.io/en/latest/user/kernels/ for more details.
-            Options:
-                ``'ExpSquaredKernel'``,
-                ``'Matern32Kernel'``,
-                ``'Matern52Kernel'``,
-                ``'RationalQuadraticKernel'``
+
+        :param fit_amp: (*bool, optional*) 
+            Whether to optimize the amplitude (overall scale) hyperparameter of the kernel.
+            If True, the GP will learn the optimal amplitude from data. Default is True.
+
+        :param fit_mean: (*bool, optional*) 
+            Whether to optimize the mean function hyperparameter. If True, the GP will learn
+            a constant mean offset. If False, assumes zero mean. Default is True.
+
+        :param fit_white_noise: (*bool, optional*) 
+            Whether to optimize the white noise (nugget) hyperparameter. If True, the GP will
+            learn the optimal noise level. If False, uses the fixed value from white_noise.
+            Default is True.
+
+        :param white_noise: (*float, optional*) 
+            Log-scale white noise parameter. If fit_white_noise=False, this fixed value is used.
+            If fit_white_noise=True, this serves as the initial guess. Typical values are 
+            between -15 (very low noise) and -5 (high noise). Default is -12.
+
+        :param gp_scale_rng: (*list of two floats, optional*) 
+            Log-scale bounds for the characteristic length scale parameters of the kernel.
+            Format: [log_min_scale, log_max_scale]. These bounds apply to all input dimensions.
+            Default is [-2, 2], corresponding to scales between ~0.14 and ~7.4 in original units.
+
+        :param overwrite: (*bool, optional*) 
+            If True, allows reinitializing the GP even if one already exists. If False and a GP
+            already exists, raises an AssertionError. Default is False.
+
+        :param gp_opt_method: (*str, optional*) 
+            Optimization method for GP hyperparameter optimization. Passed to scipy.optimize.minimize.
+            Common options: 'newton-cg', 'l-bfgs-b', 'bfgs', 'cg'. Default is 'newton-cg'.
+
+        :param gp_nopt: (*int, optional*) 
+            Number of optimization restarts for GP hyperparameter optimization. Multiple restarts
+            help avoid local minima. Default is 3.
+
+        :param optimizer_kwargs: (*dict, optional*) 
+            Additional keyword arguments passed to the scipy optimizer. Common options include
+            'max_iter' (maximum iterations) and convergence tolerances. 
+            Default is {"max_iter": 50}.
+
+        :raises AssertionError: 
+            If a GP already exists and overwrite=False.
+        :raises ValueError: 
+            If an invalid kernel name is provided.
+        :raises Exception: 
+            If GP initialization fails after multiple attempts with different scale lengths.
+
+        :note: 
+            This function must be called after init_samples() since it requires training data
+            to initialize the GP. The function will automatically retry initialization with
+            different random scale lengths if the initial attempt fails.
+
+        :example:
+            >>> # Basic initialization with default settings
+            >>> sm.init_gp()
+            
+            >>> # Custom kernel with specific hyperparameter settings
+            >>> sm.init_gp(kernel="Matern52Kernel", 
+            ...            fit_white_noise=False, 
+            ...            white_noise=-10,
+            ...            gp_scale_rng=[-1, 1])
+            
+            >>> # High-precision optimization
+            >>> sm.init_gp(gp_opt_method="l-bfgs-b",
+            ...            gp_nopt=5,
+            ...            optimizer_kwargs={"max_iter": 100, "ftol": 1e-9})
         """
         
         if hasattr(self, 'gp') and (overwrite == False):
@@ -471,36 +555,49 @@ class SurrogateModel(object):
 
         # set the bounds for scale length parameters
         self.gp_scale_rng = gp_scale_rng
-        metric_bounds = [(min(gp_scale_rng), max(gp_scale_rng)) for _ in range(self.ndim)]
+        # metric_bounds expects log-scale bounds
+        log_metric_bounds = [(min(gp_scale_rng), max(gp_scale_rng)) for _ in range(self.ndim)]
+        metric_bounds = [(np.e**min(gp_scale_rng), np.e**max(gp_scale_rng)) for _ in range(self.ndim)]
 
         valid_scales = False
+        max_attempts = 10  # Prevent infinite loops
+        attempt = 0
         
-        while valid_scales == False:
-            # theta ranges between 0 and 1, so choose an initial scale length between [0,1] 
-            initial_lscale = np.random.uniform(0, 1, self.ndim)
+        while valid_scales == False and attempt < max_attempts:
+            attempt += 1
+            # Generate initial scale length in linear scale (metric parameter expects linear scale)
+            # gp_scale_rng is in log scale, so convert to linear scale for initial guess
+            log_initial_lscale = np.random.uniform(min(gp_scale_rng), max(gp_scale_rng), self.ndim)
+            initial_lscale = np.exp(log_initial_lscale)
+
+            # if self.verbose:
+            #     print(f"Attempt {attempt}: Trying initial scale lengths: {initial_lscale} (log: {log_initial_lscale})")
+            
+            # Note: metric is linear scale, but metric_bounds are log scale!
+            # https://github.com/dfm/george/issues/150
             
             # Initialize GP kernel
             try:
                 # Stationary kernels
                 if kernel == "ExpSquaredKernel":
                     # Guess initial metric, or scale length of the covariances (must be > 0)
-                    self.kernel = kernels.ExpSquaredKernel(metric=initial_lscale, metric_bounds=metric_bounds, ndim=self.ndim)
+                    self.kernel = kernels.ExpSquaredKernel(metric=initial_lscale, metric_bounds=log_metric_bounds, ndim=self.ndim)
                     self.kernel_name = kernel
                     print("Initialized GP with squared exponential kernel.")
                 elif kernel == "RationalQuadraticKernel":
-                    self.kernel = kernels.RationalQuadraticKernel(log_alpha=1, metric=initial_lscale, metric_bounds=metric_bounds, ndim=self.ndim)
+                    self.kernel = kernels.RationalQuadraticKernel(log_alpha=1, metric=initial_lscale, metric_bounds=log_metric_bounds, ndim=self.ndim)
                     self.kernel_name = kernel
                     print("Initialized GP with rational quadratic kernel.")
                 elif kernel == "Matern32Kernel":
-                    self.kernel = kernels.Matern32Kernel(metric=initial_lscale, metric_bounds=metric_bounds, ndim=self.ndim)
+                    self.kernel = kernels.Matern32Kernel(metric=initial_lscale, metric_bounds=log_metric_bounds, ndim=self.ndim)
                     self.kernel_name = kernel
-                    print("Initialized GP with squared matern-3/2 kernel.")
+                    print("Initialized GP with Matérn-3/2 kernel.")
                 elif kernel == "Matern52Kernel":
-                    self.kernel = kernels.Matern52Kernel(metric=initial_lscale, metric_bounds=metric_bounds, ndim=self.ndim)
+                    self.kernel = kernels.Matern52Kernel(metric=initial_lscale, metric_bounds=log_metric_bounds, ndim=self.ndim)
                     self.kernel_name = kernel
-                    print("Initialized GP with squared matern-5/2 kernel.")
+                    print("Initialized GP with Matérn-5/2 kernel.")
                 else:
-                    raise ValueError(f"kernel {kernel} is not valid option.\n")
+                    raise ValueError(f"Kernel '{kernel}' is not a valid option. Valid options: ExpSquaredKernel, Matern32Kernel, Matern52Kernel, RationalQuadraticKernel")
                 
                 # create GP first time 
                 self.gp = gp_utils.configure_gp(self._theta, self._y, self.kernel, 
@@ -508,12 +605,31 @@ class SurrogateModel(object):
                                                 fit_mean=self.fit_mean,
                                                 fit_white_noise=self.fit_white_noise,
                                                 white_noise=self.white_noise)
-                valid_scales = True
+                if self.gp is None:
+                    print(f"Warning: configure_gp returned None.")
+                    print(f"Data shape: theta={self._theta.shape}, y={self._y.shape}")
+                    print(f"Scale lengths: {initial_lscale} (log: {log_initial_lscale})")
+                    print(f"Scale bounds: {metric_bounds} (log: {log_metric_bounds})")
+                    print(f"Retrying with new initial scale length...\n")
+                    continue
+                else:
+                    valid_scales = True
+                    print(f"Successfully initialized GP on attempt {attempt}")
+                    
             except Exception as e:
-                print(f"Error initializing GP with kernel {kernel} and initial scale {initial_lscale}.")
-                print(f"Exception: {e}")
-                print("Retrying with new initial scale length...")
+                print(f"Exception during GP initialization on attempt {attempt}:")
+                print(f"  Kernel: {kernel}")
+                print(f"  Initial scales: {initial_lscale}")
+                print(f"  Scale bounds: {log_metric_bounds}")
+                print(f"  Data shape: theta={self._theta.shape}, y={self._y.shape}")
+                print(f"  Exception: {type(e).__name__}: {e}")
+                print("Retrying with new initial scale length...\n")
                 continue
+        
+        if not valid_scales:
+            raise RuntimeError(f"Failed to initialize GP after {max_attempts} attempts. "
+                             f"Check your data, kernel choice, and scale bounds. "
+                             f"Current settings: kernel={kernel}, gp_scale_rng={gp_scale_rng}")
 
         # Fit GP with training sample and kernel
         self.gp, _ = self.fit_gp()
@@ -542,7 +658,7 @@ class SurrogateModel(object):
             
         gp_iter.compute(_theta_cond)
 
-        return lambda x: self.y_scaler.inverse_transform(gp_iter.predict(_y_cond, x, return_var=False, return_cov=False))
+        return lambda x: gp_iter.predict(_y_cond, x, return_var=False, return_cov=False)
 
 
     def surrogate_log_likelihood(self, theta_xs, iter=-1):
@@ -617,7 +733,7 @@ class SurrogateModel(object):
 
 
     def active_train(self, niter=100, algorithm="bape", gp_opt_freq=20, save_progress=False,
-                     obj_opt_method="l-bfsg-b", nopt=1, n_attempts=5, use_grad_opt=True, optimizer_kwargs={}): 
+                     obj_opt_method="l-bfgs-b", nopt=1, n_attempts=5, use_grad_opt=True, optimizer_kwargs={}, show_progress=True): 
         """
         :param niter: (*int, optional*)
 
@@ -626,6 +742,8 @@ class SurrogateModel(object):
         :param gp_opt_freq: (*int, optional*)
 
         :param save_progress: (*bool, optional*)
+        
+        :param show_progress: (*bool, optional*) Whether to display progress bar during training. Default is True.
         """
 
         # Set algorithm
@@ -653,7 +771,10 @@ class SurrogateModel(object):
         # start timing active learning 
         train_t0 = time.time()
 
-        for ii in tqdm.tqdm(range(1, niter+1)):
+        # Create iterator with or without progress bar based on show_progress parameter
+        iterator = tqdm.tqdm(range(1, niter+1)) if show_progress else range(1, niter+1)
+        
+        for ii in iterator:
 
             # Find next training point!
             thetaN, yN, opt_timing = self.find_next_point(nopt=nopt, n_attempts=n_attempts, optimizer_kwargs=optimizer_kwargs)
@@ -690,8 +811,10 @@ class SurrogateModel(object):
                     test_scaled_mse = test_mse / np.var(self.y())
                 else:
                     test_mse = np.nan
+                    test_scaled_mse = np.nan
             else:
                 test_mse = np.nan
+                test_scaled_mse = np.nan
 
             # evaluate convergence criteria
             gp_kl_divergence = np.nan
@@ -750,33 +873,33 @@ class SurrogateModel(object):
         if not hasattr(self, 'gp'):
             raise NameError("GP has not been trained")
 
-        if not hasattr(self, 'lnprior'):
-            raise NameError("lnprior has not been specified")
+        if not hasattr(self, 'prior_fn'):
+            raise NameError("prior_fn has not been specified")
         
         if not hasattr(self, 'like_fn'):
             self.like_fn = self.surrogate_log_likelihood
 
         theta = np.asarray(theta).reshape(1,-1)
 
-        lnp = self.like_fn(theta) + self.lnprior(theta)
+        lnp = self.like_fn(theta) + self.prior_fn(theta)
 
         return lnp
 
 
-    def find_map(self, theta0=None, lnprior=None, method="nelder-mead", nRestarts=15, options=None):
+    def find_map(self, theta0=None, prior_fn=None, method="nelder-mead", nRestarts=15, options=None):
 
         raise NotImplementedError("Not implemented.")
 
 
-    def run_emcee(self, like_fn=None, lnprior=None, nwalkers=None, nsteps=int(5e4), sampler_kwargs={}, run_kwargs={},
-                  opt_init=False, multi_proc=True, lnprior_comment=None, burn=None, thin=None):
+    def run_emcee(self, like_fn=None, prior_fn=None, nwalkers=None, nsteps=int(5e4), sampler_kwargs={}, run_kwargs={},
+                  opt_init=False, multi_proc=True, prior_fn_comment=None, burn=None, thin=None):
         """
         Use the ``emcee`` affine-invariant MCMC package to sample the trained GP surrogate model.
         https://github.com/dfm/emcee
 
-        :param lnprior: (*function, optional*) 
+        :param prior_fn: (*function, optional*) 
             Log-prior function.
-            Defaults to uniform prior using the function ``utility.lnprior_uniform`` 
+            Defaults to uniform prior using the function ``utility.prior_fn_uniform`` 
             with bounds ``self.bounds``.
 
         :param nwalkers: (*int, optional*) 
@@ -793,7 +916,7 @@ class SurrogateModel(object):
 
         :param multi_proc: (*bool, optional*) 
 
-        :param lnprior_comment: (*str, optional*) 
+        :param prior_fn_comment: (*str, optional*) 
         """
 
         import emcee
@@ -806,27 +929,27 @@ class SurrogateModel(object):
             self.like_fn = like_fn
             self.like_fn_name = "likelihood"
 
-        if lnprior is None:
-            print(f"No lnprior specified. Defaulting to uniform prior with bounds {self.bounds}")
-            self.lnprior = partial(ut.lnprior_uniform, bounds=self.bounds)
+        if prior_fn is None:
+            print(f"No prior_fn specified. Defaulting to uniform prior with bounds {self.bounds}")
+            self.prior_fn = partial(ut.lnprior_uniform_uniform, bounds=self.bounds)
 
             # Comment for output log file
-            self.lnprior_comment =  f"Default uniform prior. \n" 
-            self.lnprior_comment += f"Prior function: ut.lnprior_uniform\n"
-            self.lnprior_comment += f"\twith bounds {self.bounds}"
+            self.prior_fn_comment =  f"Default uniform prior. \n" 
+            self.prior_fn_comment += f"Prior function: ut.prior_fn_uniform\n"
+            self.prior_fn_comment += f"\twith bounds {self.bounds}"
 
         else:
-            self.lnprior = lnprior
+            self.prior_fn = prior_fn
 
             # Comment for output log file
-            if lnprior_comment is None:
-                self.lnprior_comment = f"User defined prior."
+            if prior_fn_comment is None:
+                self.prior_fn_comment = f"User defined prior."
                 try:
-                    self.lnprior_comment += f"Prior function: {self.lnprior.__name__}"
+                    self.prior_fn_comment += f"Prior function: {self.prior_fn.__name__}"
                 except:
-                    self.lnprior_comment += "Prior function: unrecorded"
+                    self.prior_fn_comment += "Prior function: unrecorded"
             else:
-                self.lnprior_comment = lnprior_comment
+                self.prior_fn_comment = prior_fn_comment
 
         # number of walkers, and number of steps per walker
         if nwalkers is None:
@@ -835,13 +958,10 @@ class SurrogateModel(object):
             self.nwalkers = int(nwalkers)
         self.nsteps = int(nsteps)
 
-        if self.verbose:
-            print(f"Running emcee with {self.nwalkers} walkers for {self.nsteps} steps...")
-
         # Optimize walker initialization?
         if opt_init == True:
             # start walkers near the estimated maximum
-            p0 = self.find_map(lnprior=self.lnprior)
+            p0 = self.find_map(prior_fn=self.prior_fn)
         else:
             # start walkers at random points in the prior space
             p0 = ut.prior_sampler(nsample=self.nwalkers, bounds=self.bounds, sampler="uniform")
@@ -849,8 +969,13 @@ class SurrogateModel(object):
         # set up multiprocessing pool
         if multi_proc == True:
             pool = mp.Pool(self.ncore)
+            emcee_ncore = self.ncore
         else:
             pool = None
+            emcee_ncore = 1
+            
+        if self.verbose:
+            print(f"Running emcee with {self.nwalkers} walkers for {self.nsteps} steps on {emcee_ncore} cores...")
 
         # Run the sampler!
         emcee_t0 = time.time()
@@ -917,13 +1042,13 @@ class SurrogateModel(object):
                 np.savez(f"{self.savedir}/emcee_samples_final_{self.like_fn_name}_iter_{current_iter}.npz", samples=self.emcee_samples)
                 
 
-    def run_dynesty(self, like_fn=None, ptform=None, mode="dynamic", sampler_kwargs=None, run_kwargs=None,
-                    multi_proc=False, save_iter=None, ptform_comment=None):
+    def run_dynesty(self, like_fn=None, prior_transform=None, mode="dynamic", sampler_kwargs={}, run_kwargs={},
+                    multi_proc=False, save_iter=None, prior_transform_comment=None):
         """
         Use the ``dynesty`` nested-sampling MCMC package to sample the trained GP surrogate model.
         https://github.com/joshspeagle/dynesty
 
-        :param ptform: (*function, optional*) 
+        :param prior_transform: (*function, optional*) 
             Log-prior transform function.
             Defaults to uniform prior using the function ``utility.prior_transform_uniform`` 
             with bounds ``self.bounds``.
@@ -934,7 +1059,7 @@ class SurrogateModel(object):
 
         :param multi_proc: (*bool, optional*) 
 
-        :param ptform_comment: (*str, optional*) 
+        :param prior_transform_comment: (*str, optional*) 
         """
 
         import dynesty
@@ -981,33 +1106,38 @@ class SurrogateModel(object):
                         f"Received type: {type(like_fn)}")
             
         # set up prior transform
-        if ptform is None:
-            self.ptform = partial(ut.prior_transform_uniform, bounds=self.bounds)
+        if prior_transform is None:
+            self.prior_transform = partial(ut.prior_transform_uniform, bounds=self.bounds)
 
             # Comment for output log file
-            self.ptform_comment =  f"Default uniform prior transform. \n" 
-            self.ptform_comment += f"Prior function: ut.prior_transform_uniform\n"
-            self.ptform_comment += f"\twith bounds {self.bounds}"
+            self.prior_transform_comment =  f"Default uniform prior transform. \n" 
+            self.prior_transform_comment += f"Prior function: ut.prior_transform_uniform\n"
+            self.prior_transform_comment += f"\twith bounds {self.bounds}"
         
         else:
-            self.ptform = ptform
+            self.prior_transform = prior_transform
 
             # Comment for output log file
-            if ptform_comment is None:
-                self.ptform_comment = f"User defined prior transform."
+            if prior_transform_comment is None:
+                self.prior_transform_comment = f"User defined prior transform."
                 try:
-                    self.ptform_comment += f"Prior function: {self.ptform.__name__}"
+                    self.prior_transform_comment += f"Prior function: {self.prior_transform.__name__}"
                 except:
-                    self.ptform_comment += "Prior function: unrecorded"
+                    self.prior_transform_comment += "Prior function: unrecorded"
             else:
-                self.ptform_comment = ptform_comment
+                self.prior_transform_comment = prior_transform_comment
 
         # start timing dynesty
         dynesty_t0 = time.time()
         
         # set up sampler kwargs
-        if sampler_kwargs is None:
-            sampler_kwargs = {"bound": "multi"}
+        default_sampler_kwargs = {"bound": "multi",
+                                  "nlive": 50*self.ndim,
+                                  "sample": "auto"}
+        
+        for key in default_sampler_kwargs:
+            if key not in sampler_kwargs:
+                sampler_kwargs[key] = default_sampler_kwargs[key]
         
         # set up multiprocessing pool
         # default to false. multiprocessing usually slower for some reason
@@ -1016,19 +1146,21 @@ class SurrogateModel(object):
             pool.size = self.ncore
             sampler_kwargs["pool"] = pool
             sampler_kwargs["queue_size"] = self.ncore
+            dynesty_ncore = self.ncore
         else:
             sampler_kwargs["pool"] = None
+            dynesty_ncore = 1
 
         # initialize our nested sampler
         if mode == "dynamic":
             dsampler = DynamicNestedSampler(self.like_fn, 
-                                            self.ptform, 
+                                            self.prior_transform, 
                                             self.ndim,
                                             **sampler_kwargs)
             print("Initialized dynesty DynamicNestedSampler.")
         elif mode == "static":
             dsampler = NestedSampler(self.like_fn, 
-                                     self.ptform, 
+                                     self.prior_transform, 
                                      self.ndim,
                                      **sampler_kwargs)
             print("Initialized dynesty NestedSampler.")
@@ -1036,11 +1168,16 @@ class SurrogateModel(object):
             raise ValueError(f"mode {mode} is not a valid option. Choose 'dynamic' or 'static'.")
         
         # set up run kwargs. default: 100% weight on posterior, 0% evidence
-        if run_kwargs is None:
-            run_kwargs = {"wt_kwargs": {'pfrac': 1.0},
-                          "stop_kwargs": {'pfrac': 1.0},
-                          "maxiter": int(5e4),
-                          "dlogz_init": 0.5}
+        default_run_kwargs = {"wt_kwargs": {'pfrac': 1.0},
+                              "stop_kwargs": {'pfrac': 1.0},
+                              "maxiter": int(5e4),
+                              "dlogz_init": 0.5}
+        for key in default_run_kwargs:
+            if key not in run_kwargs:
+                run_kwargs[key] = default_run_kwargs[key]
+            
+        if self.verbose:
+            print(f"Running dynesty with {sampler_kwargs['nlive']} live points on {dynesty_ncore} cores...")
 
         # Pickle sampler?
         if save_iter is not None:
@@ -1076,7 +1213,7 @@ class SurrogateModel(object):
         if self.like_fn_name == "true":
             self.dynesty_samples_true = self.dynesty_samples
         elif self.like_fn_name == "surrogate":
-            self.dynesty_samples_gp = self.dynesty_samples  
+            self.dynesty_samples_surrogate = self.dynesty_samples  
 
         # record that dynesty has been run
         self.dynesty_run = True
@@ -1104,18 +1241,18 @@ class SurrogateModel(object):
                 np.savez(f"{self.savedir}/dynesty_samples_final_{self.like_fn_name}_iter_{current_iter}.npz", samples=self.dynesty_samples)
 
 
-    def plot(self, plots=None, save=True, show=False):
+    def plot(self, plots=None, show=False, cb_rng=[None, None], log_scale=False):
         """
         Plot diagnostics for training sample, GP fit, MCMC, etc.
 
         :param plots: 
             List of plots to generate. Will return an exception if ``SurrogateModel`` 
             has not run the function which creates the data used for the plot. Options:
-                ``'gp_error'``
-                ``'gp_hyperparam'``
-                ``'gp_timing'``
+                ``'test_mse'``
+                ``'test_scaled_mse'``
+                ``'gp_hyperparameters'``
+                ``'gp_train_time'``
                 ``'gp_train_corner'``
-                ``'gp_train_iteration'``
                 ``'gp_fit_2D'``
                 ``'emcee_corner'``
                 ``'emcee_walkers'``
@@ -1126,74 +1263,100 @@ class SurrogateModel(object):
                 ``'mcmc_comparison'``
         :type plots: array, required
         """
-
+        
         # ================================
         # GP training plots
         # ================================
 
         if "gp_all" in plots:
-            gp_plots = ["gp_error", "gp_hyperparam", "gp_timing", "gp_train_scatter"]
+            gp_plots = ["test_mse", "test_scaled_mse", "test_log_mse", "gp_hyperparam", "gp_timing", "gp_train_scatter"]
             if self.ndim == 2:
                 gp_plots.append("gp_fit_2D")
             for pl in gp_plots:
                 plots.append(pl)
-
-        # Test error vs iteration
-        if "gp_error" in plots:
+                
+        # GP mean squared error vs iteration
+        if "test_mse" in plots:
+            
+            savename = "gp_mse_vs_iteration.png"
             if hasattr(self, "training_results"):
-                print("Plotting gp error...")
+                print(f"Plotting the gp mean squared error with {self.ntest} test samples...")
+                print(f"Saving to {self.savedir}/{savename}")
                 
                 iarray = np.array(self.training_results["iteration"])
                 
                 # MSE 
-                vis.plot_error_vs_iteration(iarray,
+                return vis.plot_error_vs_iteration(iarray,
                                             self.training_results["training_mse"],
                                             self.training_results["test_mse"],
                                             metric="Mean Squared Error",
                                             log=False,
                                             title=f"{self.kernel_name} surrogate",
                                             savedir=self.savedir,
-                                            savename="gp_mse_vs_iteration.png",
+                                            savename=savename,
                                             show=show)
+            else:
+                raise NameError("Must run active_train before plotting test_mse.")
+            
+        # GP scaled mean squared error vs iteration
+        if "test_scaled_mse" in plots:
+            
+            savename = "gp_scaled_mse_vs_iteration.png"
+            if hasattr(self, "training_results"):
+                print(f"Plotting the scaled gp mean squared error with {self.ntest} test samples...")
+                print(f"Saving to {self.savedir}/{savename}")
+
+                iarray = np.array(self.training_results["iteration"])
                 
                 # Scaled MSE
-                vis.plot_error_vs_iteration(iarray,
+                return vis.plot_error_vs_iteration(iarray,
                                             self.training_results["training_scaled_mse"],
                                             self.training_results["test_scaled_mse"],
                                             metric="Mean Squared Error / Variance",
                                             log=False,
                                             title=f"{self.kernel_name} surrogate",
                                             savedir=self.savedir,
-                                            savename="gp_scaled_mse_vs_iteration.png",
+                                            savename=savename,
                                             show=show)
+            else:
+                raise NameError("Must run active_train before plotting test_scaled_mse.")
+            
+        # GP mean squared error vs iteration
+        if "test_log_mse" in plots:
+            
+            savename = "gp_mse_vs_iteration_log.png"
+            if hasattr(self, "training_results"):
+                print(f"Plotting the log gp mean squared error with {self.ntest} test samples...")
+                print(f"Saving to {self.savedir}/{savename}")
+
+                iarray = np.array(self.training_results["iteration"])
                 
                 # Log MSE
-                vis.plot_error_vs_iteration(iarray,
+                return vis.plot_error_vs_iteration(iarray,
                                             self.training_results["training_mse"],
                                             self.training_results["test_mse"],
                                             metric="Log(Mean Squared Error)",
                                             log=True,
                                             title=f"{self.kernel_name} surrogate",
                                             savedir=self.savedir,
-                                            savename="gp_mse_vs_iteration_log.png",
+                                            savename=savename,
                                             show=show)
             else:
-                raise NameError("Must run active_train before plotting gp_error.")
-
+                raise NameError("Must run active_train before plotting test_log_mse.")
 
         # GP hyperparameters vs iteration
-        if "gp_hyperparam" in plots:
+        if "gp_hyperparameters" in plots:
             if hasattr(self, "training_results"):
                 print("Plotting gp hyperparameters...")
-                vis.plot_hyperparam_vs_iteration(self, title=f"{self.kernel_name} surrogate", show=show)
+                return vis.plot_hyperparam_vs_iteration(self, title=f"{self.kernel_name} surrogate", show=show)
             else:
-                raise NameError("Must run active_train before plotting gp_hyperparam.")
+                raise NameError("Must run active_train before plotting gp_hyperparameters.")
 
         # GP training time vs iteration
-        if "gp_timing" in plots:
+        if "gp_train_time" in plots:
             if hasattr(self, "training_results"):
                 print("Plotting gp timing...")
-                vis.plot_train_time_vs_iteration(self, title=f"{self.kernel_name} surrogate", show=show)
+                return vis.plot_train_time_vs_iteration(self, title=f"{self.kernel_name} surrogate", show=show)
             else:
                 raise NameError("Must run active_train before plotting gp_timing.")
 
@@ -1201,7 +1364,7 @@ class SurrogateModel(object):
         if "gp_train_corner" in plots:  
             if hasattr(self, "_theta") and hasattr(self, "_y"):
                 print("Plotting training sample corner plot...")
-                vis.plot_corner_lnp(self, show=show)
+                return vis.plot_corner_lnp(self, show=show);
             else:
                 raise NameError("Must run init_train and/or active_train before plotting gp_train_corner.")
 
@@ -1209,23 +1372,17 @@ class SurrogateModel(object):
         if "gp_train_scatter" in plots:  
             if hasattr(self, "_theta") and hasattr(self, "_y"):
                 print("Plotting training sample corner plot...")
-                vis.plot_corner_scatter(self, show=show)
+                return vis.plot_corner_scatter(self, show=show);
             else:
                 raise NameError("Must run init_train and/or active_train before plotting gp_train_corner.")
 
-        if "gp_train_iteration" in plots:  
-            if hasattr(self, "_theta") and hasattr(self, "_y"):
-                print("Plotting training sample corner plot...")
-                vis.plot_train_sample_vs_iteration(self, show=show)
-            else:
-                raise NameError("Must run init_train and/or active_train before plotting gp_train_iteration.")
-
-        # GP training time vs iteration
+        # GP fit (only for 2D functions)
         if "gp_fit_2D" in plots:
             if hasattr(self, "_theta") and hasattr(self, "_y"):
                 print("Plotting gp fit 2D...")
                 if self.ndim == 2:
-                    vis.plot_gp_fit_2D(self, ngrid=60, title=f"{self.kernel_name} surrogate", show=show)
+                    return vis.plot_gp_fit_2D(self, ngrid=60, title=f"{self.kernel_name} surrogate", show=show, 
+                                              vmin=cb_rng[0], vmax=cb_rng[1], log_scale=log_scale)
                 else:
                     print("theta must be 2D to use gp_fit_2D!")
             else:
@@ -1235,14 +1392,14 @@ class SurrogateModel(object):
         if "obj_fn_2D" in plots:
             if hasattr(self, "_theta") and hasattr(self, "_y") and hasattr(self, "gp"):
                 print("Plotting objective function contours 2D...")
-                vis.plot_utility_2D(self, ngrid=60, show=show)
+                return vis.plot_utility_2D(self, ngrid=60, show=show, vmin=cb_rng[0], vmax=cb_rng[1], log_scale=log_scale)
             else:
                 raise NameError("Must run init_train and init_gp before plotting obj_fn_2D.")
             
         if "true_fn_2D" in plots:
             if self.ndim == 2:
                 print("Plotting true function contours 2D...")
-                vis.plot_true_fit_2D(self, ngrid=60, show=show)
+                return vis.plot_true_fit_2D(self, ngrid=60, show=show, vmin=cb_rng[0], vmax=cb_rng[1], log_scale=log_scale)
             else:
                 raise print("theta must be 2D to use true_fn_2D!")
 
@@ -1259,7 +1416,7 @@ class SurrogateModel(object):
         if "emcee_corner" in plots:  
             if hasattr(self, "emcee_samples"):
                 print("Plotting emcee posterior...")
-                vis.plot_corner(self, self.emcee_samples, sampler="emcee_", show=show)
+                return vis.plot_corner(self, self.emcee_samples, sampler="emcee_", show=show);
             else:
                 raise NameError("Must run run_emcee before plotting emcee_corner.")
 
@@ -1267,7 +1424,7 @@ class SurrogateModel(object):
         if "emcee_walkers" in plots:  
             if hasattr(self, "emcee_samples"):
                 print("Plotting emcee walkers...")
-                vis.plot_emcee_walkers(self, show=show)
+                return vis.plot_emcee_walkers(self, show=show)
             else:
                 raise NameError("Must run run_emcee before plotting emcee_walkers.")
 
@@ -1285,28 +1442,28 @@ class SurrogateModel(object):
         if "dynesty_corner" in plots:  
             if hasattr(self, "res"):
                 print("Plotting dynesty posterior...")
-                vis.plot_corner(self, self.dynesty_samples, sampler="dynesty_", show=show)
+                return vis.plot_corner(self, self.dynesty_samples, sampler="dynesty_", show=show);
             else:
                 raise NameError("Must run run_dynesty before plotting dynesty_corner.")
 
         if "dynesty_corner_kde" in plots:  
             if hasattr(self, "dynesty_samples"):
                 print("Plotting dynesty posterior kde...")
-                vis.plot_corner_kde(self, show=show)
+                return vis.plot_corner_kde(self, show=show)
             else:
                 raise NameError("Must run run_dynesty before plotting dynesty_corner.")
 
         if "dynesty_traceplot" in plots:
             if hasattr(self, "res"):
                 print("Plotting dynesty traceplot...")
-                vis.plot_dynesty_traceplot(self, show=show)
+                return vis.plot_dynesty_traceplot(self, show=show)
             else:
                 raise NameError("Must run run_dynesty before plotting dynesty_traceplot.")
 
         if "dynesty_runplot" in plots:
             if hasattr(self, "res"):
                 print("Plotting dynesty runplot...")
-                vis.plot_dynesty_runplot(self, show=show)
+                return vis.plot_dynesty_runplot(self, show=show)
             else:
                 raise NameError("Must run run_dynesty before plotting dynesty_runplot.")
 
@@ -1317,6 +1474,563 @@ class SurrogateModel(object):
         if "mcmc_comparison" in plots:
             if hasattr(self, "emcee_samples") and hasattr(self, "res"):
                 print("Plotting emcee vs dynesty posterior comparison...")
-                vis.plot_mcmc_comparison(self, show=show)
+                return vis.plot_emcee_dynesty_comparison(self, show=show)
             else:
                 raise NameError("Must run run_emcee and run_dynesty before plotting emcee_comparison.")
+    
+
+    def _run_chain_worker(self, chain_id, niter=5, algorithm="bape", gp_opt_freq=1,
+                          obj_opt_method="lbfgsb", nopt=10, n_attempts=5,
+                          use_grad_opt=True, optimizer_kwargs=None, show_progress=True):
+        """
+        Worker function to run a single active learning chain.
+        This function is designed to be pickled for multiprocessing.
+        
+        Parameters
+        ----------
+        chain_id : int
+            Identifier for this chain
+        Other parameters same as active_train()
+        
+        Returns
+        -------
+        tuple or None
+            (new_theta, new_y, training_results) if successful, None if failed
+        """
+        try:
+            # Create a copy of the current model for this chain
+            chain = self._create_chain_copy(chain_id=chain_id)
+            
+            # Store initial state
+            initial_theta = chain._theta.copy()
+            initial_y = chain._y.copy()
+            
+            # Run active learning on this chain
+            chain.active_train(niter=niter, algorithm=algorithm, gp_opt_freq=gp_opt_freq,
+                              save_progress=False, obj_opt_method=obj_opt_method, 
+                              nopt=nopt, n_attempts=n_attempts, use_grad_opt=use_grad_opt,
+                              optimizer_kwargs=optimizer_kwargs, show_progress=show_progress)
+            
+            # Extract only the new samples (excluding initial training data)
+            initial_len = len(initial_theta)
+            new_theta = chain._theta[initial_len:]
+            new_y = chain._y[initial_len:]
+            
+            return new_theta, new_y, chain.training_results
+            
+        except Exception as e:
+            print(f"Chain {chain_id} failed with error: {e}")
+            return None
+
+
+    def active_train_parallel(self, niter=100, nchains=4, algorithm="bape", gp_opt_freq=20, 
+                             save_progress=False, obj_opt_method="nelder-mead", nopt=1, 
+                             n_attempts=5, use_grad_opt=True, optimizer_kwargs={}, 
+                             combine_frequency=None, show_progress=True):
+        """
+        Run multiple active learning chains in parallel and combine their training samples.
+        
+        :param niter: (*int, optional*) 
+            Number of iterations per chain. Default 100.
+            
+        :param nchains: (*int, optional*) 
+            Number of parallel chains to run. Default 4.
+            
+        :param algorithm: (*str, optional*) 
+            Active learning algorithm. Default "bape".
+            
+        :param gp_opt_freq: (*int, optional*)
+            Frequency of GP hyperparameter optimization. Default 20.
+            
+        :param save_progress: (*bool, optional*)
+            Whether to save progress during training. Default False.
+            
+        :param obj_opt_method: (*str, optional*)
+            Optimization method for acquisition function. Default "nelder-mead".
+            
+        :param nopt: (*int, optional*)
+            Number of restarts for acquisition optimization. Default 1.
+            
+        :param n_attempts: (*int, optional*)
+            Number of attempts for optimization. Default 5.
+            
+        :param use_grad_opt: (*bool, optional*)
+            Whether to use gradient-based optimization. Default True.
+            
+        :param optimizer_kwargs: (*dict, optional*)
+            Additional optimizer kwargs. Default {}.
+            
+        :param combine_frequency: (*int, optional*)
+            How often to combine chains (in iterations). If None, only combines at the end.
+            
+        :param show_progress: (*bool, optional*) 
+            Whether to display progress bar during parallel chain execution. When True, shows
+            a progress bar tracking chain completion. Individual active_train progress bars
+            are disabled to avoid clutter. Default is True.
+        """
+        
+        # Set algorithm attribute to avoid save issues
+        self.algorithm = str(algorithm).lower()
+        
+        # Initialize training results if not present
+        if not hasattr(self, 'training_results') or not self.training_results:
+            self.training_results = {"iteration" : [], 
+                                   "gp_hyperparameters" : [],  
+                                   "training_mse" : [],
+                                   "test_mse" : [],
+                                   "training_scaled_mse" : [],
+                                   "test_scaled_mse" : [],
+                                   "gp_kl_divergence" : [],
+                                   "gp_train_time" : [],
+                                   "obj_fn_opt_time" : [],
+                                   "gp_hyperparameter_opt_iteration" : [],
+                                   "gp_hyperparam_opt_time" : []}
+        
+        if self.verbose:
+            print(f"Running {nchains} parallel active learning chains for {niter} iterations each...")
+            print(f"Algorithm: {algorithm}, Method: {obj_opt_method}")
+        
+        # Store original training data
+        original_theta = self._theta.copy()
+        original_y = self._y.copy()
+        original_ntrain = self.ntrain
+        
+        # Track results from all chains
+        all_new_theta = []
+        all_new_y = []
+        chain_results = []
+        
+        # Run chains in parallel using multiprocessing
+        if nchains > 1 and self.ncore > 1:
+            if self.verbose:
+                print(f"Running {nchains} chains in parallel using {min(nchains, self.ncore)} processes...")
+            
+            try:
+                # Create process-safe copies of the chains first 
+                chain_copies = []
+                for i in range(nchains):
+                    chain_copy = self._create_chain_copy(chain_id=i)
+                    chain_copies.append(chain_copy)
+                
+                # Use threading for now instead of multiprocessing to avoid pickling issues
+                import threading
+                import queue
+                
+                results_queue = queue.Queue()
+                threads = []
+                completed_chains = 0
+                
+                # Progress tracking for parallel execution
+                if show_progress:
+                    progress_bar = tqdm.tqdm(total=nchains, desc="Running parallel chains")
+                
+                def run_chain_thread(chain, chain_id, results_q):
+                    nonlocal completed_chains
+                    try:
+                        # Store initial state
+                        initial_theta = chain._theta.copy()
+                        initial_y = chain._y.copy()
+                        
+                        # Run active learning on this chain (disable individual progress bars for parallel runs)
+                        chain.active_train(niter=niter, algorithm=algorithm, gp_opt_freq=gp_opt_freq,
+                                          save_progress=False, obj_opt_method=obj_opt_method, 
+                                          nopt=nopt, n_attempts=n_attempts, use_grad_opt=use_grad_opt,
+                                          optimizer_kwargs=optimizer_kwargs, show_progress=False)
+                        
+                        # Extract only the new samples (excluding initial training data)
+                        initial_len = len(initial_theta)
+                        new_theta = chain._theta[initial_len:]
+                        new_y = chain._y[initial_len:]
+                        
+                        results_q.put((chain_id, new_theta, new_y, chain.training_results))
+                        
+                        # Update progress bar
+                        if show_progress:
+                            completed_chains += 1
+                            progress_bar.update(1)
+                        
+                    except Exception as e:
+                        print(f"Chain {chain_id} failed with error: {e}")
+                        results_q.put((chain_id, None))
+                        
+                        # Update progress bar even for failed chains
+                        if show_progress:
+                            completed_chains += 1
+                            progress_bar.update(1)
+                
+                # Start all threads
+                for i, chain in enumerate(chain_copies):
+                    thread = threading.Thread(target=run_chain_thread, args=(chain, i, results_queue))
+                    thread.start()
+                    threads.append(thread)
+                
+                # Wait for all threads to complete
+                for thread in threads:
+                    thread.join()
+                
+                # Close progress bar
+                if show_progress:
+                    progress_bar.close()
+                
+                # Collect results from all threads
+                for _ in range(nchains):
+                    result = results_queue.get()
+                    if len(result) == 4:
+                        chain_id, new_theta, new_y, training_results = result
+                        all_new_theta.append(new_theta)
+                        all_new_y.append(new_y)
+                        chain_results.append(training_results)
+                    else:
+                        chain_id = result[0]
+                        if self.verbose:
+                            print(f"Chain {chain_id} failed")
+                        all_new_theta.append(np.array([]).reshape(0, self.ndim))
+                        all_new_y.append(np.array([]))
+                        chain_results.append({})
+                        
+            except Exception as e:
+                if self.verbose:
+                    print(f"Parallel execution failed ({e}), falling back to sequential...")
+                # Clear any partial results
+                all_new_theta = []
+                all_new_y = []
+                chain_results = []
+                
+                # Fallback to sequential execution
+                if show_progress:
+                    fallback_progress = tqdm.tqdm(total=nchains, desc="Running chains sequentially (fallback)")
+                
+                for i in range(nchains):
+                    if self.verbose:
+                        print(f"Running chain {i+1}/{nchains}...")
+                    
+                    result = self._run_chain_worker(i, niter=niter, algorithm=algorithm, 
+                                                  gp_opt_freq=gp_opt_freq, obj_opt_method=obj_opt_method,
+                                                  nopt=nopt, n_attempts=n_attempts, 
+                                                  use_grad_opt=use_grad_opt, 
+                                                  optimizer_kwargs=optimizer_kwargs, show_progress=False)
+                    
+                    if result is not None:
+                        new_theta, new_y, training_results = result
+                        all_new_theta.append(new_theta)
+                        all_new_y.append(new_y)
+                        chain_results.append(training_results)
+                    else:
+                        if self.verbose:
+                            print(f"Chain {i} failed")
+                        all_new_theta.append(np.array([]).reshape(0, self.ndim))
+                        all_new_y.append(np.array([]))
+                        chain_results.append({})
+                    
+                    # Update fallback progress bar
+                    if show_progress:
+                        fallback_progress.update(1)
+                
+                # Close fallback progress bar
+                if show_progress:
+                    fallback_progress.close()
+                    
+        else:
+            # Fallback to sequential execution
+            if self.verbose:
+                print("Running chains sequentially...")
+            
+            if show_progress:
+                sequential_progress = tqdm.tqdm(total=nchains, desc="Running chains sequentially")
+            
+            for i in range(nchains):
+                if self.verbose:
+                    print(f"Running chain {i+1}/{nchains}...")
+                
+                result = self._run_chain_worker(i, niter=niter, algorithm=algorithm, 
+                                              gp_opt_freq=gp_opt_freq, obj_opt_method=obj_opt_method,
+                                              nopt=nopt, n_attempts=n_attempts, 
+                                              use_grad_opt=use_grad_opt, 
+                                              optimizer_kwargs=optimizer_kwargs, show_progress=False)
+                
+                if result is not None:
+                    new_theta, new_y, training_results = result
+                    all_new_theta.append(new_theta)
+                    all_new_y.append(new_y)
+                    chain_results.append(training_results)
+                else:
+                    if self.verbose:
+                        print(f"Chain {i} failed")
+                    all_new_theta.append(np.array([]).reshape(0, self.ndim))
+                    all_new_y.append(np.array([]))
+                    chain_results.append({})
+                
+                # Update sequential progress bar
+                if show_progress:
+                    sequential_progress.update(1)
+            
+            # Close sequential progress bar
+            if show_progress:
+                sequential_progress.close()
+        
+        # Combine all new training samples
+        if self.verbose:
+            print("Combining training samples from all chains...")
+        
+        self._combine_chain_results(all_new_theta, all_new_y, chain_results)
+        
+        if self.verbose:
+            total_new_samples = sum(len(theta) for theta in all_new_theta)
+            print(f"Successfully combined {total_new_samples} new training samples from {nchains} chains")
+            print(f"Total training samples: {self.ntrain} (was {original_ntrain})")
+        
+        # Final GP optimization with all combined data
+        if self.verbose:
+            print("Performing final GP optimization with combined dataset...")
+        self.gp, _ = self.opt_gp()
+        
+        if self.cache:
+            self.save()
+    
+    
+    def _create_chain_copy(self, chain_id):
+        """Create a copy of the current SurrogateModel for a parallel chain."""
+        import copy
+        
+        # Create a deep copy of the current model
+        chain = copy.deepcopy(self)
+        
+        # Modify savedir to avoid conflicts
+        chain.savedir = f"{self.savedir}/chain_{chain_id}"
+        if not os.path.exists(chain.savedir):
+            os.makedirs(chain.savedir)
+        
+        # Reset training results for this chain
+        chain.training_results = {"iteration" : [], 
+                                 "gp_hyperparameters" : [],  
+                                 "training_mse" : [],
+                                 "test_mse" : [],
+                                 "training_scaled_mse" : [],
+                                 "test_scaled_mse" : [],
+                                 "gp_kl_divergence" : [],
+                                 "gp_train_time" : [],
+                                 "obj_fn_opt_time" : [],
+                                 "gp_hyperparameter_opt_iteration" : [],
+                                 "gp_hyperparam_opt_time" : []}
+        
+        return chain
+    
+    
+    def _run_single_chain(self, args):
+        """Run a single active learning chain."""
+        (chain_id, chain, niter, algorithm, gp_opt_freq, obj_opt_method, 
+         nopt, n_attempts, use_grad_opt, optimizer_kwargs, combine_frequency) = args
+        
+        try:
+            # Store initial state
+            initial_theta = chain._theta.copy()
+            initial_y = chain._y.copy()
+            
+            # Run active learning on this chain
+            chain.active_train(niter=niter, algorithm=algorithm, gp_opt_freq=gp_opt_freq,
+                              save_progress=False, obj_opt_method=obj_opt_method, 
+                              nopt=nopt, n_attempts=n_attempts, use_grad_opt=use_grad_opt,
+                              optimizer_kwargs=optimizer_kwargs)
+            
+            # Extract only the new samples (excluding initial training data)
+            initial_len = len(initial_theta)
+            new_theta = chain._theta[initial_len:]
+            new_y = chain._y[initial_len:]
+            
+            return chain_id, new_theta, new_y, chain.training_results
+            
+        except Exception as e:
+            print(f"Chain {chain_id} failed with error: {e}")
+            return chain_id, np.array([]).reshape(0, self.ndim), np.array([]), {}
+    
+    
+    def _combine_chain_results(self, all_new_theta, all_new_y, chain_results):
+        """Combine results from all chains into the main model."""
+        
+        # Concatenate all new training samples
+        if len(all_new_theta) > 0 and any(len(theta) > 0 for theta in all_new_theta):
+            combined_new_theta = np.vstack([theta for theta in all_new_theta if len(theta) > 0])
+            combined_new_y = np.hstack([y for y in all_new_y if len(y) > 0])
+            
+            # Add to main model
+            self._theta = np.vstack([self._theta, combined_new_theta])
+            self._y = np.hstack([self._y, combined_new_y])
+            
+            # Update counters
+            self.ntrain = len(self._theta)
+            self.nactive = self.ntrain - self.ninit_train
+            
+            # Refit GP with all combined data
+            self.gp, _ = self.fit_gp(_theta=self._theta, _y=self._y)
+        
+        # Combine training results from all chains
+        if chain_results:
+            self._merge_training_results(chain_results)
+        
+        # Ensure training results have at least one entry to avoid index errors
+        if not self.training_results.get("test_mse"):
+            self.training_results["test_mse"] = [np.nan]
+        if not self.training_results.get("training_mse"):
+            self.training_results["training_mse"] = [np.nan]
+        if not self.training_results.get("training_scaled_mse"):
+            self.training_results["training_scaled_mse"] = [np.nan]
+    
+    
+    def _merge_training_results(self, chain_results):
+        """Merge training results from multiple chains."""
+        
+        # Get the starting iteration number
+        if len(self.training_results["iteration"]) == 0:
+            start_iter = 0
+        else:
+            start_iter = max(self.training_results["iteration"]) + 1
+        
+        # Merge results from all chains
+        for chain_result in chain_results:
+            if not chain_result:  # Skip empty results
+                continue
+                
+            for key in self.training_results.keys():
+                if key in chain_result:
+                    if key == "iteration":
+                        # Adjust iteration numbers to be sequential
+                        adjusted_iters = [iter_num + start_iter for iter_num in chain_result[key]]
+                        self.training_results[key].extend(adjusted_iters)
+                        start_iter = max(adjusted_iters) + 1 if adjusted_iters else start_iter
+                    else:
+                        self.training_results[key].extend(chain_result[key])
+
+
+    def get_chain_diversity_metrics(self):
+        """
+        Calculate diversity metrics for the combined training samples.
+        Useful for assessing the effectiveness of parallel chains.
+        """
+        
+        if not hasattr(self, '_theta') or len(self._theta) <= self.ninit_train:
+            return {}
+        
+        # Get only the active learning samples (exclude initial training)
+        active_theta = self._theta[self.ninit_train:]
+        active_y = self._y[self.ninit_train:]
+        
+        # Calculate diversity metrics
+        metrics = {}
+        
+        # Parameter space coverage
+        for i in range(self.ndim):
+            param_range = active_theta[:, i].max() - active_theta[:, i].min()
+            bound_range = self._bounds[i][1] - self._bounds[i][0]
+            metrics[f'param_{i}_coverage'] = param_range / bound_range
+        
+        # Function value diversity
+        if len(active_y) > 1:
+            metrics['function_value_std'] = np.std(active_y)
+            metrics['function_value_range'] = active_y.max() - active_y.min()
+        
+        # Average pairwise distance in parameter space
+        if len(active_theta) > 1:
+            from scipy.spatial.distance import pdist
+            distances = pdist(active_theta)
+            metrics['avg_pairwise_distance'] = np.mean(distances)
+            metrics['min_pairwise_distance'] = np.min(distances)
+        
+        return metrics
+
+
+    def compare_parallel_vs_sequential(self, niter=50, nchains=4, algorithm="bape", 
+                                      obj_opt_method="nelder-mead", **kwargs):
+        """
+        Compare parallel vs sequential active learning performance.
+        
+        :param niter: Number of iterations for comparison
+        :param nchains: Number of chains for parallel version
+        :param algorithm: Active learning algorithm to use
+        :param obj_opt_method: Optimization method
+        :param kwargs: Additional arguments passed to active_train methods
+        
+        :returns: Dictionary with comparison results
+        """
+        import copy
+        import time
+        
+        if self.verbose:
+            print("Comparing parallel vs sequential active learning...")
+        
+        # Create copies for fair comparison
+        model_sequential = copy.deepcopy(self)
+        model_parallel = copy.deepcopy(self)
+        
+        # Run sequential active learning
+        if self.verbose:
+            print(f"Running sequential active learning ({niter} iterations)...")
+        
+        start_time = time.time()
+        model_sequential.active_train(niter=niter, algorithm=algorithm, 
+                                    obj_opt_method=obj_opt_method, **kwargs)
+        sequential_time = time.time() - start_time
+        
+        # Run parallel active learning
+        if self.verbose:
+            print(f"Running parallel active learning ({nchains} chains × {niter//nchains} iterations)...")
+        
+        start_time = time.time()
+        model_parallel.active_train_parallel(niter=niter//nchains, nchains=nchains, 
+                                            algorithm=algorithm, obj_opt_method=obj_opt_method, 
+                                            **kwargs)
+        parallel_time = time.time() - start_time
+        
+        # Calculate comparison metrics
+        results = {
+            'sequential': {
+                'total_samples': model_sequential.ntrain,
+                'new_samples': model_sequential.ntrain - model_sequential.ninit_train,
+                'runtime': sequential_time,
+                'final_gp_error': model_sequential.training_results['training_scaled_mse'][-1] if model_sequential.training_results['training_scaled_mse'] else np.nan
+            },
+            'parallel': {
+                'total_samples': model_parallel.ntrain,
+                'new_samples': model_parallel.ntrain - model_parallel.ninit_train,
+                'runtime': parallel_time,
+                'final_gp_error': model_parallel.training_results['training_scaled_mse'][-1] if model_parallel.training_results['training_scaled_mse'] else np.nan,
+                'diversity_metrics': model_parallel.get_chain_diversity_metrics()
+            },
+            'speedup': sequential_time / parallel_time if parallel_time > 0 else np.inf,
+            'efficiency': (model_parallel.ntrain - model_parallel.ninit_train) / (model_sequential.ntrain - model_sequential.ninit_train) if model_sequential.ntrain > model_sequential.ninit_train else 1.0
+        }
+        
+        if self.verbose:
+            print(f"\nComparison Results:")
+            print(f"Sequential: {results['sequential']['new_samples']} samples in {results['sequential']['runtime']:.2f}s")
+            print(f"Parallel: {results['parallel']['new_samples']} samples in {results['parallel']['runtime']:.2f}s")
+            print(f"Speedup: {results['speedup']:.2f}x")
+            print(f"Sample efficiency: {results['efficiency']:.2f}")
+        
+        return results
+
+
+    def _get_pickleable_state(self):
+        """
+        Get a pickleable representation of the model state for multiprocessing.
+        
+        Returns
+        -------
+        dict
+            Dictionary containing all necessary state information
+        """
+        import copy
+        
+        # Create a simplified state dictionary
+        state = {
+            'theta': self._theta.copy(),
+            'y': self._y.copy(),
+            'bounds': copy.deepcopy(self._bounds),
+            'ndim': self.ndim,
+            'ninit_train': self.ninit_train,
+            'ntrain': self.ntrain,
+            'function': self.true_log_likelihood,  # Use the correct function attribute
+            'verbose': self.verbose,
+            'ncore': self.ncore
+        }
+        
+        return state

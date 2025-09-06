@@ -27,7 +27,6 @@ __all__ = ["plot_error_vs_iteration",
            "plot_train_time_vs_iteration",
            "plot_corner_lnp",
            "plot_corner_scatter",
-           "plot_train_sample_vs_iteration",
            "plot_gp_fit_1D",
            "plot_gp_fit_2D",
            "plot_contour_2D",
@@ -36,6 +35,7 @@ __all__ = ["plot_error_vs_iteration",
            "plot_dynesty_traceplot",
            "plot_dynesty_runplot",
            "plot_mcmc_comparison",
+           "plot_emcee_dynesty_comparison",
            "plot_2D_panel4"]
 
 
@@ -61,7 +61,7 @@ def plot_error_vs_iteration(iteration, train_error, test_error=None, log=False,
     if log:
         plt.yscale('log')
 
-    plt.savefig(f"{savedir}/{savename}")
+    plt.savefig(f"{savedir}/{savename}", bbox_inches="tight", dpi=500)
     if show:
         plt.show()
     plt.close()
@@ -104,7 +104,10 @@ def plot_hyperparam_vs_iteration(sm, title="GP fit", show=False):
     ax1.legend(loc='best')
     ax1.set_title(title, fontsize=22)
     plt.tight_layout()
-    plt.savefig(f"{sm.savedir}/gp_hyperparameters_vs_iteration.png")
+    
+    savename = "gp_hyperparameters_vs_iteration.png"
+    print("Saving to ", f"{sm.savedir}/{savename}")
+    plt.savefig(f"{sm.savedir}/{savename}", bbox_inches="tight", dpi=500)
     if show:
         plt.show()
     plt.close()
@@ -125,26 +128,10 @@ def plot_train_time_vs_iteration(sm, title="GP fit", show=False):
     plt.title(title, fontsize=22)
     plt.minorticks_on()
     plt.tight_layout()
-    plt.savefig(f"{sm.savedir}/gp_train_time_vs_iteration.png")
-    if show:
-        plt.show()
-    plt.close()
-
-    return fig
-
-
-def plot_train_sample_vs_iteration(sm, show=False):
-
-    fig = plt.figure()
-
-    yy = sm.y()[sm.ninit_train:]
-    plt.scatter(sm.training_results["iteration"], yy)
-    plt.yscale('log')
-    plt.xlabel('iteration', fontsize=18)
-    plt.ylabel(r'$-\ln P$', fontsize=18)
-    plt.minorticks_on()
-    plt.tight_layout()
-    plt.savefig(f"{sm.savedir}/gp_train_sample_vs_iteration.png")
+    
+    savename = "gp_train_time_vs_iteration.png"
+    print("Saving to ", f"{sm.savedir}/{savename}")
+    plt.savefig(f"{sm.savedir}/{savename}", bbox_inches="tight", dpi=500)
     if show:
         plt.show()
     plt.close()
@@ -158,7 +145,7 @@ def plot_corner_lnp(sm, show=False):
     yy = sm.y()
 
     warnings.simplefilter("ignore")
-    fig = corner.corner(theta, c=yy, labels=sm.labels, 
+    fig = corner.corner(theta, c=yy, labels=sm.param_names, 
             plot_datapoints=False, plot_density=False, plot_contours=False,
             show_titles=True, title_kwargs={"fontsize": 18}, 
             label_kwargs={"fontsize": 22}, data_kwargs={'alpha':1.0})
@@ -178,7 +165,10 @@ def plot_corner_lnp(sm, show=False):
     cb.set_label(r'$-\ln P$', fontsize=20, labelpad=-80)
     cb.set_ticks(cb_rng)
     cb.ax.tick_params(labelsize=18)
-    fig.savefig(f"{sm.savedir}/gp_training_sample_corner.png")
+    
+    savename = "gp_training_sample_corner.png"
+    print("Saving to ", f"{sm.savedir}/{savename}")
+    fig.savefig(f"{sm.savedir}/{savename}", bbox_inches="tight", dpi=500)
     if show:
         plt.show()
     plt.close()
@@ -192,19 +182,21 @@ def plot_corner_scatter(sm, show=False):
     yy = -sm.y()
 
     warnings.simplefilter("ignore")
-    fig = corner.corner(theta[0:sm.ninit_train], labels=sm.labels, 
+    fig = corner.corner(theta[0:sm.ninit_train], labels=sm.param_names, 
             plot_datapoints=True, plot_density=False, plot_contours=False,
             show_titles=True, title_kwargs={"fontsize": 18}, color='b',
             label_kwargs={"fontsize": 22}, data_kwargs={'alpha':1.0})
 
     if sm.nactive > sm.ndim:
-        fig = corner.corner(theta[sm.ninit_train:], labels=sm.labels, 
+        fig = corner.corner(theta[sm.ninit_train:], labels=sm.param_names, 
                 plot_datapoints=True, plot_density=False, plot_contours=False,
                 show_titles=True, title_kwargs={"fontsize": 18}, color='r',
                 label_kwargs={"fontsize": 22}, data_kwargs={'alpha':1.0},
                 fig=fig)
 
-    fig.savefig(f"{sm.savedir}/gp_training_sample_scatter.png")
+    savename = "gp_training_sample_scatter.png"
+    print("Saving to ", f"{sm.savedir}/{savename}")
+    fig.savefig(f"{sm.savedir}/{savename}", bbox_inches="tight", dpi=500)
     if show:
         plt.show()
     plt.close()
@@ -230,7 +222,10 @@ def plot_gp_fit_1D(sm, title="GP fit", show=False):
     plt.xlim(sm.bounds[0])
     plt.title(title, fontsize=22)
     plt.tight_layout()
-    plt.savefig(f"{sm.savedir}/gp_fit_1D.png")
+    
+    savename = "gp_fit_1D.png"
+    print("Saving to ", f"{sm.savedir}/{savename}")
+    plt.savefig(f"{sm.savedir}/{savename}", bbox_inches="tight", dpi=500)
     if show:
         plt.show()
     plt.close()
@@ -238,7 +233,116 @@ def plot_gp_fit_1D(sm, title="GP fit", show=False):
     return fig
 
 
-def plot_gp_fit_2D(sm, ngrid=60, title="GP fit", show=False):
+def plot_contour_2D(fn, bounds, savedir, savename, title, 
+                    ngrid=60, cmap='Blues_r', show=False,
+                    xlabel=None, ylabel=None, vmin=None, vmax=None, log_scale=False):
+    """
+    Plot a 2D contour plot of a function.
+    
+    Parameters
+    ----------
+    fn : callable
+        Function to plot
+    bounds : list
+        Parameter bounds [[xmin, xmax], [ymin, ymax]]
+    savedir : str
+        Directory to save the plot
+    savename : str
+        Filename for the saved plot
+    title : str
+        Plot title
+    ngrid : int, optional
+        Grid resolution. Default is 60.
+    cmap : str, optional
+        Colormap name. Default is 'Blues_r'.
+    show : bool, optional
+        Whether to display the plot. Default is False.
+    xlabel : str, optional
+        X-axis label
+    ylabel : str, optional
+        Y-axis label
+    vmin : float, optional
+        Minimum value for colorbar range. If None, uses data minimum.
+    vmax : float, optional
+        Maximum value for colorbar range. If None, uses data maximum.
+    log_scale : bool, optional
+        Whether to use logarithmic scaling for the colorbar. Default is False.
+        Note: When using log_scale=True, all values must be positive.
+        
+    Returns
+    -------
+    fig : matplotlib.figure.Figure
+        The figure object
+    """
+
+    xarr = np.linspace(bounds[0][0], bounds[0][1], ngrid)
+    yarr = np.linspace(bounds[1][0], bounds[1][1], ngrid)
+
+    X, Y = np.meshgrid(xarr, yarr)
+    Z = np.zeros((ngrid, ngrid))
+    
+    fig = plt.figure()
+    for i in range(Z.shape[0]):
+        for j in range(Z.shape[1]):
+            tt = np.array([X[i][j], Y[i][j]])
+            Z[i][j] = fn(tt)
+    
+    # Use vmin and vmax if provided for colorbar range
+    # Handle log scale normalization
+    if log_scale:        
+        # Create log normalization
+        norm = colors.LogNorm(vmin=vmin, vmax=vmax)
+        im = plt.contourf(X, Y, Z, 20, cmap=cmap, norm=norm)
+    else:
+        im = plt.contourf(X, Y, Z, 20, cmap=cmap, vmin=vmin, vmax=vmax)
+    
+    plt.colorbar(im)
+    plt.title(title, fontsize=22)
+    if xlabel is not None:
+        plt.xlabel(xlabel, fontsize=18)
+    if ylabel is not None:
+        plt.ylabel(ylabel, fontsize=18)
+    if not os.path.exists(savedir):
+        os.makedirs(savedir)
+    plt.tight_layout()
+    plt.savefig(f"{savedir}/{savename}")
+    
+    print("Saving to ", f"{savedir}/{savename}")
+    if show:
+        plt.show()
+    plt.close()
+
+    return fig
+
+
+def plot_true_fit_2D(sm, ngrid=60, show=False, log_scale=False, vmin=None, vmax=None):
+
+    fig = plot_contour_2D(sm.true_log_likelihood, sm.bounds, sm.savedir, savename="true_function_2D.png", 
+                    title="True function", ngrid=ngrid, xlabel=sm.param_names[0], ylabel=sm.param_names[1],
+                    log_scale=log_scale, vmin=vmin, vmax=vmax)
+    
+    if show:
+        plt.show()
+
+    return fig
+
+
+def plot_utility_2D(sm, ngrid=60, show=False, log_scale=False, vmin=None, vmax=None):
+
+    obj_fn = partial(sm.utility, y=sm._y, gp=sm.gp, bounds=sm._bounds)
+
+    fig = plot_contour_2D(obj_fn, sm._bounds, sm.savedir, savename="objective_function.png", 
+                    title=f"{sm.algorithm.upper()} function", ngrid=ngrid, cmap='Greens_r',
+                    xlabel=sm.param_names[0]+" scaled", ylabel=sm.param_names[1]+" scaled",
+                    log_scale=log_scale, vmin=vmin, vmax=vmax)
+
+    if show:
+        plt.show()
+
+    return fig
+
+
+def plot_gp_fit_2D(sm, ngrid=60, title="GP fit", cmap="Blues_r", show=False, vmin=None, vmax=None, log_scale=False):
 
     theta = sm.theta() 
     theta0 = sm.theta_scaler.inverse_transform(sm._theta0)
@@ -255,7 +359,12 @@ def plot_gp_fit_2D(sm, ngrid=60, title="GP fit", show=False):
             Z[i][j] = sm.surrogate_log_likelihood(tt)
         
     fig = plt.figure()
-    im = plt.contourf(X, Y, Z, 20, cmap='Blues_r')
+    if log_scale:        
+        # Create log normalization
+        norm = colors.LogNorm(vmin=vmin, vmax=vmax)
+        im = plt.contourf(X, Y, Z, 20, cmap=cmap, norm=norm)
+    else:
+        im = plt.contourf(X, Y, Z, 20, cmap=cmap, vmin=vmin, vmax=vmax)
     plt.colorbar(im)
     plt.scatter(theta.T[0], theta.T[1], color='red', edgecolor='none', 
                 s=12, label=f'{sm.algorithm} training')
@@ -272,65 +381,16 @@ def plot_gp_fit_2D(sm, ngrid=60, title="GP fit", show=False):
     return fig
 
 
-def plot_contour_2D(fn, bounds, savedir, save_name, title, ngrid=60, cmap='Blues_r', show=False):
-
-    xarr = np.linspace(bounds[0][0], bounds[0][1], ngrid)
-    yarr = np.linspace(bounds[1][0], bounds[1][1], ngrid)
-
-    X, Y = np.meshgrid(xarr, yarr)
-    Z = np.zeros((ngrid, ngrid))
-    
-    fig = plt.figure()
-    for i in range(Z.shape[0]):
-        for j in range(Z.shape[1]):
-            tt = np.array([X[i][j], Y[i][j]])
-            Z[i][j] = fn(tt)
-        
-    im = plt.contourf(X, Y, Z, 20, cmap=cmap)
-    plt.colorbar(im)
-    plt.title(title, fontsize=22)
-    if not os.path.exists(savedir):
-        os.makedirs(savedir)
-    plt.tight_layout()
-    plt.savefig(f"{savedir}/{save_name}")
-    if show:
-        plt.show()
-    plt.close()
-
-    return fig
-
-
-def plot_true_fit_2D(sm, ngrid=60, show=False):
-
-    fig = plot_contour_2D(sm.fn, sm.bounds, sm.savedir, save_name="true_function_2D.png", 
-                    title="True function", ngrid=ngrid)
-    if show:
-        plt.show()
-
-    return fig
-
-
-def plot_utility_2D(sm, ngrid=60, show=False):
-
-    ut_fn = ut.assign_utility(sm.algorithm)
-    fn = partial(ut_fn, y=sm._y, gp=sm.gp, bounds=sm.bounds)
-
-    fig = plot_contour_2D(fn, sm.bounds, sm.savedir, save_name="objective_function.png", 
-                    title=f"{sm.algorithm.upper()} function", ngrid=ngrid, cmap='Greens_r')
-
-    if show:
-        plt.show()
-
-    return fig
-
-
 def plot_corner(sm, samples, sampler="", show=False):
 
     warnings.simplefilter("ignore")
     fig = corner.corner(samples, quantiles=[0.16, 0.5, 0.84], show_titles=True,
-                        scale_hist=True, plot_contours=True, labels=sm.labels,
+                        scale_hist=True, plot_contours=True, labels=sm.param_names,
                         title_kwargs={"fontsize": 20}, label_kwargs={"fontsize": 20})
-    fig.savefig(f"{sm.savedir}/{sampler}_posterior_{sm.like_fn_name}.png", bbox_inches="tight")
+    
+    savename = f"{sampler}_posterior_{sm.like_fn_name}.png" if sampler != "" else f"posterior_{sm.like_fn_name}.png"
+    print("Saving to ", f"{sm.savedir}/{savename}")
+    fig.savefig(f"{sm.savedir}/{savename}", bbox_inches="tight", dpi=500)
 
     if show:
         plt.show()
@@ -340,9 +400,12 @@ def plot_corner(sm, samples, sampler="", show=False):
 
 def plot_corner_kde(sm, show=False):
 
-    fig, axes = dyplot.cornerplot(sm.res, quantiles=[0.16, 0.5, 0.84], span=sm.bounds,
+    fig, _ = dyplot.cornerplot(sm.res, quantiles=[0.16, 0.5, 0.84], span=sm.bounds,
                                title_kwargs={"fontsize": 15}, label_kwargs={"fontsize": 15})
-    fig.savefig(f"{sm.savedir}/dynesty_posterior_kde_{sm.like_fn_name}.png", bbox_inches="tight")
+    
+    savename = f"dynesty_posterior_kde_{sm.like_fn_name}.png"
+    print("Saving to ", f"{sm.savedir}/{savename}")
+    fig.savefig(f"{sm.savedir}/{savename}", bbox_inches="tight", dpi=500)
 
     if show:
         plt.show()
@@ -358,11 +421,13 @@ def plot_emcee_walkers(sm, show=False):
         ax = axes[i]
         ax.plot(samples[:, :, i], "k", alpha=0.3)
         ax.set_xlim(0, len(samples))
-        ax.set_ylabel(sm.labels[i], fontsize=20)
+        ax.set_ylabel(sm.param_names[i], fontsize=20)
         ax.yaxis.set_label_coords(-0.1, 0.5)
     axes[-1].set_xlabel("step number", fontsize=20)
 
-    fig.savefig(f"{sm.savedir}/emcee_walkers_{sm.like_fn_name}.png", bbox_inches="tight")
+    savename = f"emcee_walkers_{sm.like_fn_name}.png"
+    print("Saving to ", f"{sm.savedir}/{savename}")
+    fig.savefig(f"{sm.savedir}/{savename}", bbox_inches="tight", dpi=500)
 
     if show:
         plt.show()
@@ -372,10 +437,13 @@ def plot_emcee_walkers(sm, show=False):
 
 def plot_dynesty_traceplot(sm, show=False):
 
-    fig, axes = dyplot.traceplot(sm.res, trace_cmap='plasma',
+    fig, _ = dyplot.traceplot(sm.res, trace_cmap='plasma',
                                  quantiles=None, show_titles=True,
                                  label_kwargs={"fontsize": 22})
-    fig.savefig(f"{sm.savedir}/dynesty_traceplot_{sm.like_fn_name}.png")
+    
+    savename = f"dynesty_traceplot_{sm.like_fn_name}.png"
+    print("Saving to ", f"{sm.savedir}/{savename}")
+    fig.savefig(f"{sm.savedir}/{savename}", bbox_inches="tight", dpi=500)
 
     if show:
         plt.show()
@@ -385,8 +453,11 @@ def plot_dynesty_traceplot(sm, show=False):
 
 def plot_dynesty_runplot(sm, show=False):
 
-    fig, axes = dyplot.runplot(sm.res, label_kwargs={"fontsize": 22})
-    fig.savefig(f"{sm.savedir}/dynesty_runplot_{sm.like_fn_name}.png")
+    fig, _ = dyplot.runplot(sm.res, label_kwargs={"fontsize": 22})
+    
+    savename = f"dynesty_runplot_{sm.like_fn_name}.png"
+    print("Saving to ", f"{sm.savedir}/{savename}")
+    fig.savefig(f"{sm.savedir}/{savename}", bbox_inches="tight", dpi=500)
 
     if show:
         plt.show()
@@ -394,19 +465,53 @@ def plot_dynesty_runplot(sm, show=False):
     return fig
 
 
-def plot_mcmc_comparison(sm, show=False):
+def plot_mcmc_comparison(samples1, samples2, bounds=None, param_names=None, 
+                         name1="sampler 1 posterior", name2="sampler 2 posterior",
+                         savedir=".", savename="mcmc_comparison.png",
+                         show=False, lw=1.5, colors=["orange", "royalblue"], **kwargs):
+    
+    default_kwargs = {"show_titles": True, "verbose": False, "max_n_ticks": 4,
+                      "plot_contours": True, "plot_datapoints": True, "plot_density": True,
+                      "no_fill_contours": False, "title_kwargs": {"fontsize": 16},
+                      "label_kwargs": {"fontsize": 22}, "hist_kwargs": {"linewidth":1.5, "density":True}}
+    for key, value in default_kwargs.items():
+        if key not in kwargs:
+            kwargs[key] = value
+
+    # Plot first sample with its histogram color
+    kwargs["hist_kwargs"]["color"] = colors[0]
+    fig = corner.corner(samples1,  labels=param_names, range=bounds, color=colors[0], **kwargs)
+
+    # Plot second sample with its histogram color
+    kwargs["hist_kwargs"]["color"] = colors[1]
+    fig = corner.corner(samples2, labels=param_names, range=bounds, color=colors[1], quantiles=[.16,.50,.84], fig=fig, **kwargs)
+
+    fig.axes[1].text(2.2, 0.725, f"--- {name1}", fontsize=26, color=colors[0], ha='left')
+    fig.axes[1].text(2.2, 0.55, f"--- {name2}", fontsize=26, color=colors[1], ha='left')
+
+    savename = f"mcmc_comparison_{name1}_{name2}.png"
+    print("Saving to ", f"{savedir}/{savename}")
+    fig.savefig(f"{savedir}/{savename}", bbox_inches="tight", dpi=500)
+
+    if show:
+        plt.show()
+
+    return fig
+
+
+def plot_emcee_dynesty_comparison(sm, show=False):
 
     lw = 1.5
     colors = ["orange", "royalblue"]
 
     warnings.simplefilter("ignore")
-    fig = corner.corner(sm.emcee_samples,  labels=sm.labels, range=sm.bounds,
+    fig = corner.corner(sm.emcee_samples,  labels=sm.param_names, range=sm.bounds,
                     show_titles=True, verbose=False, max_n_ticks=4,
                     plot_contours=True, plot_datapoints=True, plot_density=True,
                     color=colors[0], no_fill_contours=False, title_kwargs={"fontsize": 16},
                     label_kwargs={"fontsize": 22}, hist_kwargs={"linewidth":2.0, "density":True})
 
-    fig = corner.corner(sm.dynesty_samples, labels=sm.labels, range=sm.bounds, quantiles=[0.16, 0.5, 0.84],
+    fig = corner.corner(sm.dynesty_samples, labels=sm.param_names, range=sm.bounds, quantiles=[0.16, 0.5, 0.84],
                         show_titles=True, verbose=False, max_n_ticks=4, title_fmt='.3f',
                         plot_contours=True, plot_datapoints=True, plot_density=True,
                         color=colors[1], no_fill_contours=False, title_kwargs={"fontsize": 16},
@@ -416,7 +521,9 @@ def plot_mcmc_comparison(sm, show=False):
     fig.axes[1].text(2.2, 0.725, r"--- emcee posterior", fontsize=26, color=colors[0], ha='left')
     fig.axes[1].text(2.2, 0.55, r"--- dynesty posterior", fontsize=26, color=colors[1], ha='left')
 
-    fig.savefig(f"{sm.savedir}/mcmc_comparison_{sm.like_fn_name}.png")
+    savename = f"mcmc_comparison_{sm.like_fn_name}.png"
+    print("Saving to ", f"{sm.savedir}/{savename}")
+    fig.savefig(f"{sm.savedir}/{savename}", bbox_inches="tight", dpi=500)
 
     if show:
         plt.show()
@@ -424,7 +531,7 @@ def plot_mcmc_comparison(sm, show=False):
     return fig
 
 
-def plot_2D_panel4(savedir, save_name=None):
+def plot_2D_panel4(savedir, savename=None):
 
     from PIL import Image
     img_01 = Image.open(f"{savedir}/gp_fit_2D.png")
@@ -439,7 +546,7 @@ def plot_2D_panel4(savedir, save_name=None):
     new_im.paste(img_03, (0, img_01.size[1]))
     new_im.paste(img_04, (img_01.size[0], img_01.size[1]))
 
-    if save_name is not None:
-        new_im.save(f"{savedir}/{save_name}")
+    if savename is not None:
+        new_im.save(f"{savedir}/{savename}")
 
     return new_im
