@@ -1,0 +1,28 @@
+# Documentation dependencies for ReadTheDocs
+sphinx>=4.0.0
+furo
+myst-parser
+sphinx-copybutton
+sphinx-inline-tabs
+sphinx-togglebutton
+nbsphinx
+
+# Core package dependencies needed for autodoc
+numpy
+matplotlib>=2.0.0
+scipy
+scikit-learn
+scikit-optimize
+emcee>=3.0
+dynesty
+corner
+george
+h5py
+tqdm
+
+# Additional dependencies for documentation
+ipykernel
+jupyter
+
+# For building the package
+pybind11
