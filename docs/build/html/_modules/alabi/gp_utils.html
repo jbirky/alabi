@@ -1,29 +1,26 @@
 <!doctype html>
-<html class="no-js" lang="en" data-content_root="">
+<html class="no-js" lang="en" data-content_root="../../">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2024.08.06 -->
+    <!-- Generated with Sphinx 7.3.7 and Furo 2025.07.19 -->
         <title>alabi.gp_utils - alabi</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=362ab14a" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=25af2a20" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/tabs.css?v=4c969af8" />
     <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
-    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css?v=d2d258e8" />
-    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css?v=f4aeca0c" />
-    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
-    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=302659d7" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=a7f7f5d3" />
     
     
 
 
 <style>
   body {
-    --color-code-background: #f8f8f8;
-  --color-code-foreground: black;
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
   --font-stack: Roboto Light, sans-serif;
   --font-stack--monospace: Courier, monospace;
   --color-background-secondary: #eff1f6;
@@ -35,14 +32,14 @@
   }
   @media not print {
     body[data-theme="dark"] {
-      --color-code-background: #202020;
-  --color-code-foreground: #d0d0d0;
+      --color-code-background: #2b2b2b;
+  --color-code-foreground: #f8f8f2;
   
     }
     @media (prefers-color-scheme: dark) {
       body:not([data-theme="light"]) {
-        --color-code-background: #202020;
-  --color-code-foreground: #d0d0d0;
+        --color-code-background: #2b2b2b;
+  --color-code-foreground: #f8f8f2;
   
       }
     }
@@ -202,7 +199,6 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
   
-  
   <span class="sidebar-brand-text">alabi</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
@@ -211,19 +207,21 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+  <p class="caption" role="heading"><span class="caption-text">Intro</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../basic_usage/training.html">GP Training</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../basic_usage/mcmc.html">MCMC</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../auto_examples/index.html">Example Gallery</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Example Gallery</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/run_eggbox.html">Eggbox (2D)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/run_rosenbrock.html">Rosenbrock (2D)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gp_tutorial.html">GP Training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcmc_tutorial.html">MCMC sampling</a></li>
 </ul>
-</li>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../plot_function1d.html">Active Learning in 1D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plot_line_fit.html">Fit a line to data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plot_kl_divergence.html">KL Divergence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plot_demo.html">2D Benchmarks</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../modules.html">alabi</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of alabi</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../modules.html">alabi</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of alabi</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../alabi.html">alabi package</a></li>
 </ul>
 </li>
@@ -277,46 +275,24 @@
 
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">george</span>
-<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">minimize</span>
-<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">KFold</span>
-<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">mean_squared_error</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">george</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.model_selection</span><span class="w"> </span><span class="kn">import</span> <span class="n">KFold</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">mean_squared_error</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">copy</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;default_hyper_prior&quot;</span><span class="p">,</span> 
-           <span class="s2">&quot;configure_gp&quot;</span><span class="p">,</span> 
-           <span class="s2">&quot;optimize_gp&quot;</span><span class="p">]</span>
-
-
-<div class="viewcode-block" id="default_hyper_prior"><a class="viewcode-back" href="../../alabi.html#alabi.gp_utils.default_hyper_prior">[docs]</a><span class="k">def</span> <span class="nf">default_hyper_prior</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">hp_rng</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">mu</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sigma_level</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Default prior function for GP hyperparameters. This prior also keeps the</span>
-<span class="sd">    hyperparameters within a reasonable huge range ``[-20, 20]``. Note that george</span>
-<span class="sd">    operates on the *log* hyperparameters, except for the mean function.</span>
-
-<span class="sd">    :param p: (*array, required*) </span>
-<span class="sd">        Array of GP hyperparameters</span>
-
-<span class="sd">    :returns lnprior: (*float*) </span>
-<span class="sd">        log prior value </span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="c1"># Restrict range of hyperparameters (ignoring mean term)</span>
-    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fabs</span><span class="p">(</span><span class="n">p</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">&gt;</span> <span class="n">hp_rng</span><span class="p">):</span>
-        <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
-
-    <span class="c1"># Restrict mean hyperparameter to +/- sigma_level * sigma</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">mu</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">sigma</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">mu</span> <span class="o">-</span> <span class="n">sigma_level</span><span class="o">*</span><span class="n">sigma</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">sigma_level</span><span class="o">*</span><span class="n">sigma</span><span class="p">):</span>
-            <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
-
-    <span class="k">return</span> <span class="mf">0.0</span></div>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;configure_gp&quot;</span><span class="p">,</span> 
+           <span class="s2">&quot;optimize_gp&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;grad_gp_mean_prediction&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;grad_gp_var_prediction&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;grad_gp_kernel&quot;</span><span class="p">]</span>
 
 
-<span class="k">def</span> <span class="nf">_nll</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">prior_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_nll</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">prior_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given parameters and data, compute the negative log likelihood of the data</span>
 <span class="sd">    under the george Gaussian process.</span>
 
@@ -351,8 +327,8 @@
     <span class="k">return</span> <span class="o">-</span><span class="n">ll</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">ll</span><span class="p">)</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
 
 
-<span class="k">def</span> <span class="nf">_grad_nll</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">prior_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_grad_nll</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">prior_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Given parameters and data, compute the gradient of the negative log</span>
 <span class="sd">    likelihood of the data under the george Gaussian process.</span>
 
@@ -381,7 +357,242 @@
     <span class="k">return</span> <span class="o">-</span><span class="n">gp</span><span class="o">.</span><span class="n">grad_log_likelihood</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="configure_gp"><a class="viewcode-back" href="../../alabi.html#alabi.gp_utils.configure_gp">[docs]</a><span class="k">def</span> <span class="nf">configure_gp</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">gp_hyper_prior</span><span class="p">,</span>  
+<div class="viewcode-block" id="grad_gp_kernel">
+<a class="viewcode-back" href="../../alabi.html#alabi.gp_utils.grad_gp_kernel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">grad_gp_kernel</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">wrt</span><span class="o">=</span><span class="s1">&#39;x1&#39;</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the gradient of the GP kernel k(x1, x2) with respect to x1 or x2.</span>
+<span class="sd">    </span>
+<span class="sd">    For a GP kernel k(x1, x2), this function computes:</span>
+<span class="sd">    - If wrt=&#39;x1&#39;: ∇_{x1} k(x1, x2) </span>
+<span class="sd">    - If wrt=&#39;x2&#39;: ∇_{x2} k(x1, x2)</span>
+<span class="sd">    </span>
+<span class="sd">    This is useful for computing derivatives of covariance functions and</span>
+<span class="sd">    can be used in active learning acquisition functions that require</span>
+<span class="sd">    kernel gradients.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x1 : array_like, shape (n1, d) or (d,)</span>
+<span class="sd">        First input points. If 1D, will be reshaped to (1, d).</span>
+<span class="sd">    x2 : array_like, shape (n2, d) or (d,)  </span>
+<span class="sd">        Second input points. If 1D, will be reshaped to (1, d).</span>
+<span class="sd">    gp : george.GP</span>
+<span class="sd">        Fitted George Gaussian Process object with kernel</span>
+<span class="sd">    wrt : str, optional</span>
+<span class="sd">        Variable to take gradient with respect to. Either &#39;x1&#39; or &#39;x2&#39;.</span>
+<span class="sd">        Default is &#39;x1&#39;.</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    grad_k : ndarray, shape (n2, d) for single x1, or (n1, n2, d) for multiple x1</span>
+<span class="sd">        Gradient of kernel k(x1, x2) with respect to the specified variable.</span>
+<span class="sd">        </span>
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This function uses George&#39;s built-in gradient capabilities which are</span>
+<span class="sd">    analytically computed for supported kernels (ExpSquared, Matern, etc.).</span>
+<span class="sd">    </span>
+<span class="sd">    For kernel k(x1, x2), the gradient with respect to x1 is typically:</span>
+<span class="sd">    ∇_{x1} k(x1, x2) = -∇_{x2} k(x1, x2)</span>
+<span class="sd">    </span>
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt; from george import kernels, GP</span>
+<span class="sd">    &gt;&gt;&gt; </span>
+<span class="sd">    &gt;&gt;&gt; # Create GP with ExpSquared kernel</span>
+<span class="sd">    &gt;&gt;&gt; kernel = kernels.ExpSquaredKernel(1.0, ndim=2)</span>
+<span class="sd">    &gt;&gt;&gt; gp = GP(kernel)</span>
+<span class="sd">    &gt;&gt;&gt; </span>
+<span class="sd">    &gt;&gt;&gt; # Compute kernel gradient</span>
+<span class="sd">    &gt;&gt;&gt; x1 = np.array([[0.0, 0.0]])  # shape (1, 2)</span>
+<span class="sd">    &gt;&gt;&gt; x2 = np.array([[1.0, 0.5], [0.5, 1.0]])  # shape (2, 2)</span>
+<span class="sd">    &gt;&gt;&gt; grad_k = grad_gp_kernel(x1, x2, gp, wrt=&#39;x1&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; print(grad_k.shape)  # (2, 2) - gradient for each x2 point</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1"># Ensure inputs are properly shaped</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">x1</span><span class="p">)</span>
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">x2</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">x1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">x2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;x1 and x2 must have same number of dimensions. &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;Got x1: </span><span class="si">{</span><span class="n">x1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">, x2: </span><span class="si">{</span><span class="n">x2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">wrt</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;x1&#39;</span><span class="p">,</span> <span class="s1">&#39;x2&#39;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;wrt must be &#39;x1&#39; or &#39;x2&#39;, got </span><span class="si">{</span><span class="n">wrt</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Get kernel gradients using George&#39;s built-in methods</span>
+    <span class="k">if</span> <span class="n">wrt</span> <span class="o">==</span> <span class="s1">&#39;x1&#39;</span><span class="p">:</span>
+        <span class="c1"># Gradient with respect to first argument</span>
+        <span class="c1"># George&#39;s get_gradient computes ∇_{x1} k(x1, x2)</span>
+        <span class="n">grad_k</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">get_gradient</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Gradient with respect to second argument  </span>
+        <span class="c1"># For symmetric kernels: ∇_{x2} k(x1, x2) = -∇_{x1} k(x2, x1)</span>
+        <span class="n">grad_k</span> <span class="o">=</span> <span class="o">-</span><span class="n">gp</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">get_gradient</span><span class="p">(</span><span class="n">x2</span><span class="p">,</span> <span class="n">x1</span><span class="p">)</span>
+        <span class="c1"># Need to transpose to get correct shape</span>
+        <span class="k">if</span> <span class="n">grad_k</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">grad_k</span> <span class="o">=</span> <span class="n">grad_k</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    
+    <span class="c1"># Extract only spatial gradients (first ndim components)</span>
+    <span class="c1"># George&#39;s gradient includes both spatial and hyperparameter gradients</span>
+    <span class="n">ndim</span> <span class="o">=</span> <span class="n">x1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    
+    <span class="c1"># Get the spatial part of the gradient</span>
+    <span class="k">if</span> <span class="n">grad_k</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">grad_k_spatial</span> <span class="o">=</span> <span class="n">grad_k</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:</span><span class="n">ndim</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">grad_k_spatial</span> <span class="o">=</span> <span class="n">grad_k</span><span class="p">[:,</span> <span class="p">:</span><span class="n">ndim</span><span class="p">]</span>
+    
+    <span class="c1"># For single x1 point, return shape (n2, d)</span>
+    <span class="k">if</span> <span class="n">x1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">grad_k_spatial</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">grad_k_spatial</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># shape (n2, d)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">grad_k_spatial</span>  <span class="c1"># already (n2, d)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Multiple x1 points - return full gradient array (n1, n2, d)</span>
+        <span class="k">return</span> <span class="n">grad_k_spatial</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">numerical_kernel_gradient</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">x_train</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute numerical gradient of GP kernel k(xs, x_train) with respect to xs.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters:</span>
+<span class="sd">    -----------</span>
+<span class="sd">    xs : array_like, shape (d,) or (1, d)</span>
+<span class="sd">        Query point(s) to compute gradient at</span>
+<span class="sd">    x_train : array_like, shape (n, d) </span>
+<span class="sd">        Training points</span>
+<span class="sd">    gp : george.GP</span>
+<span class="sd">        Gaussian Process object with kernel</span>
+<span class="sd">    h : float, default=1e-6</span>
+<span class="sd">        Step size for finite differences</span>
+<span class="sd">        </span>
+<span class="sd">    Returns:</span>
+<span class="sd">    --------</span>
+<span class="sd">    grad_k : ndarray, shape (n, d)</span>
+<span class="sd">        Numerical gradient of kernel k(xs, x_train) w.r.t. xs</span>
+<span class="sd">        Each row corresponds to gradient w.r.t. one training point</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
+    <span class="n">x_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">x_train</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">xs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;This function handles single query point only&quot;</span><span class="p">)</span>
+    
+    <span class="n">n_train</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">x_train</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">xs_flat</span> <span class="o">=</span> <span class="n">xs</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    
+    <span class="c1"># Initialize gradient array</span>
+    <span class="n">grad_k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_train</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
+    
+    <span class="c1"># Compute gradient for each dimension</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+        <span class="c1"># Create perturbed points</span>
+        <span class="n">xs_plus</span> <span class="o">=</span> <span class="n">xs_flat</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">xs_minus</span> <span class="o">=</span> <span class="n">xs_flat</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">xs_plus</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">h</span>
+        <span class="n">xs_minus</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-=</span> <span class="n">h</span>
+        
+        <span class="c1"># Evaluate kernel at perturbed points</span>
+        <span class="n">k_plus</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">xs_plus</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">x_train</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">k_minus</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">xs_minus</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">x_train</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        
+        <span class="c1"># Central difference</span>
+        <span class="n">grad_k</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">k_plus</span> <span class="o">-</span> <span class="n">k_minus</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">grad_k</span>
+
+
+<div class="viewcode-block" id="grad_gp_mean_prediction">
+<a class="viewcode-back" href="../../alabi.html#alabi.gp_utils.grad_gp_mean_prediction">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">grad_gp_mean_prediction</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">gp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the gradient of the GP mean prediction with respect to the input</span>
+<span class="sd">    locations.</span>
+
+<span class="sd">    :param xs: (*array-like, required*)</span>
+<span class="sd">        Input locations to evaluate the gradient at.</span>
+
+<span class="sd">    :param gp: (*george.GP, required*)</span>
+<span class="sd">        The computed Gaussian process object.</span>
+
+<span class="sd">    :returns: (*array*)</span>
+<span class="sd">        The gradient of the GP mean prediction at the input locations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="c1"># Ensure GP is computed</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">gp</span><span class="p">,</span> <span class="s1">&#39;_alpha&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">gp</span><span class="o">.</span><span class="n">_alpha</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;GP must be computed before computing gradients&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Use the grad_gp_kernel function to get kernel gradients</span>
+    <span class="c1"># grad_ks shape: (n_train_points, n_dims) for single query point</span>
+    <span class="c1"># grad_ks = grad_gp_kernel(xs, gp._x, gp, wrt=&#39;x1&#39;)</span>
+
+    <span class="n">grad_ks</span> <span class="o">=</span> <span class="n">numerical_kernel_gradient</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">gp</span><span class="o">.</span><span class="n">_x</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span>
+
+    <span class="c1"># The GP mean gradient is: ∇μ(x) = ∇k(x, X_train)^T @ α</span>
+    <span class="c1"># where α = K^{-1} @ y_train</span>
+    <span class="n">grad_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">grad_ks</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">gp</span><span class="o">.</span><span class="n">_alpha</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">grad_mean</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="grad_gp_var_prediction">
+<a class="viewcode-back" href="../../alabi.html#alabi.gp_utils.grad_gp_var_prediction">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">grad_gp_var_prediction</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">gp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the gradient of the GP variance prediction with respect to the input</span>
+<span class="sd">    locations.</span>
+
+<span class="sd">    :param xs: (*array-like, required*)</span>
+<span class="sd">        Input locations to evaluate the gradient at.</span>
+
+<span class="sd">    :param gp: (*george.GP, required*)</span>
+<span class="sd">        The computed Gaussian process object.</span>
+
+<span class="sd">    :returns: (*array*)</span>
+<span class="sd">        The gradient of the GP variance prediction at the input locations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="c1"># Ensure GP is computed</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">gp</span><span class="p">,</span> <span class="s1">&#39;_alpha&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">gp</span><span class="o">.</span><span class="n">_alpha</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;GP must be computed before computing gradients&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Get kernel gradients: ∇k(x*, X_train)</span>
+    <span class="c1"># grad_ks shape: (n_train_points, n_dims) for single query point</span>
+    <span class="n">grad_ks</span> <span class="o">=</span> <span class="n">numerical_kernel_gradient</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">gp</span><span class="o">.</span><span class="n">_x</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span>
+
+    <span class="c1"># Get kernel values: k(x*, X_train)</span>
+    <span class="n">ks</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">gp</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>  <span class="c1"># shape: (n_train_points,)</span>
+    
+    <span class="c1"># Get inverse covariance matrix</span>
+    <span class="n">Kinv</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">get_inverse</span><span class="p">()</span>  <span class="c1"># shape: (n_train_points, n_train_points)</span>
+    
+    <span class="c1"># For stationary kernels, ∇k(x*, x*) = 0, so the variance gradient is:</span>
+    <span class="c1"># ∇σ²(x*) = -2 * ∇k(x*, X_train)^T @ K^{-1} @ k(x*, X_train)</span>
+    <span class="c1"># </span>
+    <span class="c1"># grad_ks.T shape: (n_dims, n_train_points)</span>
+    <span class="c1"># Kinv @ ks shape: (n_train_points,)</span>
+    <span class="c1"># Result shape: (n_dims,)</span>
+    
+    <span class="n">grad_var</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">grad_ks</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Kinv</span><span class="p">,</span> <span class="n">ks</span><span class="p">))</span>
+    
+    <span class="k">return</span> <span class="n">grad_var</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="configure_gp">
+<a class="viewcode-back" href="../../alabi.html#alabi.gp_utils.configure_gp">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">configure_gp</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> 
                  <span class="n">fit_amp</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fit_mean</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fit_white_noise</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                  <span class="n">white_noise</span><span class="o">=-</span><span class="mi">12</span><span class="p">,</span> <span class="n">hyperparameters</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
@@ -400,15 +611,61 @@
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">gp</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
-    <span class="k">except</span><span class="p">:</span>
-        <span class="n">gp</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;LinAlgError during GP computation: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;This usually indicates numerical issues. Trying fixes:&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># Fix 1: Add more white noise (jitter) to diagonal</span>
+        <span class="n">original_white_noise</span> <span class="o">=</span> <span class="n">white_noise</span>
+        <span class="k">for</span> <span class="n">jitter_level</span> <span class="ow">in</span> <span class="p">[</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="o">-</span><span class="mi">8</span><span class="p">,</span> <span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="o">-</span><span class="mi">4</span><span class="p">]:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Trying with white_noise=</span><span class="si">{</span><span class="n">jitter_level</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">gp</span> <span class="o">=</span> <span class="n">george</span><span class="o">.</span><span class="n">GP</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">kernel</span><span class="p">,</span> <span class="n">fit_mean</span><span class="o">=</span><span class="n">fit_mean</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">y</span><span class="p">),</span>
+                              <span class="n">white_noise</span><span class="o">=</span><span class="n">jitter_level</span><span class="p">,</span> <span class="n">fit_white_noise</span><span class="o">=</span><span class="n">fit_white_noise</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">hyperparameters</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">gp</span><span class="o">.</span><span class="n">set_parameter_vector</span><span class="p">(</span><span class="n">hyperparameters</span><span class="p">)</span>
+                <span class="n">gp</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  ✓ Success with white_noise=</span><span class="si">{</span><span class="n">jitter_level</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">break</span>
+            <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
+                <span class="k">continue</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Fix 2: Check for duplicate points</span>
+            <span class="n">unique_theta</span><span class="p">,</span> <span class="n">unique_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">return_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_theta</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">unique_theta</span><span class="p">)</span><span class="si">}</span><span class="s2"> duplicate points, removing them&quot;</span><span class="p">)</span>
+                <span class="n">theta</span> <span class="o">=</span> <span class="n">unique_theta</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">unique_indices</span><span class="p">]</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">gp</span> <span class="o">=</span> <span class="n">george</span><span class="o">.</span><span class="n">GP</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">kernel</span><span class="p">,</span> <span class="n">fit_mean</span><span class="o">=</span><span class="n">fit_mean</span><span class="p">,</span> <span class="n">mean</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">y</span><span class="p">),</span>
+                                  <span class="n">white_noise</span><span class="o">=</span><span class="n">original_white_noise</span><span class="p">,</span> <span class="n">fit_white_noise</span><span class="o">=</span><span class="n">fit_white_noise</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">hyperparameters</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">gp</span><span class="o">.</span><span class="n">set_parameter_vector</span><span class="p">(</span><span class="n">hyperparameters</span><span class="p">)</span>
+                    <span class="n">gp</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  ✓ Success after removing duplicates&quot;</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Still failed after removing duplicates&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  All fixes failed. This might indicate:&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    - Inappropriate kernel parameters&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    - Poorly scaled data&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    - Pathological likelihood surface&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Other error during GP computation: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">return</span> <span class="n">gp</span></div>
 
 
-<div class="viewcode-block" id="optimize_gp"><a class="viewcode-back" href="../../alabi.html#alabi.gp_utils.optimize_gp">[docs]</a><span class="k">def</span> <span class="nf">optimize_gp</span><span class="p">(</span><span class="n">gp</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">gp_hyper_prior</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span>
-                <span class="n">nopt</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;powell&quot;</span><span class="p">,</span> 
-                <span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+<div class="viewcode-block" id="optimize_gp">
+<a class="viewcode-back" href="../../alabi.html#alabi.gp_utils.optimize_gp">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">optimize_gp</span><span class="p">(</span><span class="n">gp</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">gp_hyper_prior</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">method</span><span class="o">=</span><span class="s2">&quot;l-bfgs-b&quot;</span><span class="p">,</span> <span class="n">optimizer_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+
+    <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">RuntimeWarning</span><span class="p">)</span>
     
     <span class="c1"># Collapse arrays if 1D</span>
     <span class="n">theta</span> <span class="o">=</span> <span class="n">theta</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
@@ -416,51 +673,96 @@
 
     <span class="c1"># initial hyperparameters</span>
     <span class="n">init_hp</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">get_parameter_vector</span><span class="p">()</span>
-    
+        
+    <span class="n">valid_methods</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;newton-cg&quot;</span><span class="p">,</span> <span class="s2">&quot;bfgs&quot;</span><span class="p">,</span> <span class="s2">&quot;l-bfgs-b&quot;</span><span class="p">,</span> <span class="s2">&quot;powell&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_methods</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Warning: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2"> not in valid methods </span><span class="si">{</span><span class="n">valid_methods</span><span class="si">}</span><span class="s2">. Using &#39;l-bfgs-b&#39; optimizer instead.&quot;</span><span class="p">)</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;l-bfgs-b&quot;</span>
+        
+    <span class="c1"># methods without bounds arg </span>
+    <span class="k">if</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;bfgs&quot;</span><span class="p">]:</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="kc">None</span>
+
     <span class="c1"># Minimize GP nll, save result, evaluate marginal likelihood</span>
-    <span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;nelder-mead&quot;</span><span class="p">,</span> <span class="s2">&quot;powell&quot;</span><span class="p">,</span> <span class="s2">&quot;cg&quot;</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;newton-cg&quot;</span><span class="p">,</span> <span class="s2">&quot;l-bfgs-b&quot;</span><span class="p">]:</span>
         <span class="n">jac</span> <span class="o">=</span> <span class="n">_grad_nll</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">jac</span> <span class="o">=</span> <span class="kc">None</span>
+        
+    <span class="c1"># Set improved default optimizer_kwargs for faster convergence</span>
+    <span class="k">if</span> <span class="n">optimizer_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">default_optimizer_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;newton-cg&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;maxiter&#39;</span><span class="p">:</span> <span class="n">max_iter</span><span class="p">},</span>
+            <span class="s1">&#39;bfgs&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;maxiter&#39;</span><span class="p">:</span> <span class="n">max_iter</span><span class="p">},</span>
+            <span class="s1">&#39;l-bfgs-b&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;maxiter&#39;</span><span class="p">:</span> <span class="n">max_iter</span><span class="p">,</span> <span class="s1">&#39;factr&#39;</span><span class="p">:</span> <span class="mf">1e12</span><span class="p">},</span>
+            <span class="s1">&#39;powell&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;maxiter&#39;</span><span class="p">:</span> <span class="n">max_iter</span><span class="p">},</span>
+        <span class="p">}</span>
+        <span class="n">optimizer_kwargs</span> <span class="o">=</span> <span class="n">default_optimizer_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="p">{})</span>
     
-    <span class="c1"># Run the optimization routine nopt times</span>
-    <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">mll</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">nopt</span> <span class="o">=</span> <span class="n">p0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">p0</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">nopt</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># Run the optimization routine nopt times</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">mll</span> <span class="o">=</span> <span class="p">[]</span>
+        
+        <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">x0</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">p0</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">_nll</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">gp</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">gp_hyper_prior</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+                                <span class="n">jac</span><span class="o">=</span><span class="n">jac</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">optimizer_kwargs</span><span class="p">)</span>
+                
+                <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">gp_hyper_prior</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">)):</span>
+                    <span class="c1"># Compute marginal log likelihood for this set of kernel hyperparameters</span>
+                    <span class="n">test_gp</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">gp</span><span class="p">)</span>
+                    <span class="n">test_gp</span><span class="o">.</span><span class="n">set_parameter_vector</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+                    <span class="n">test_gp</span><span class="o">.</span><span class="n">recompute</span><span class="p">()</span>
+                    <span class="n">current_mll</span> <span class="o">=</span> <span class="n">test_gp</span><span class="o">.</span><span class="n">log_likelihood</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    
+                    <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+                    <span class="n">mll</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_mll</span><span class="p">)</span>
+                            
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Warning: GP hyperparameter optimization restart </span><span class="si">{</span><span class="n">ii</span><span class="si">}</span><span class="s2"> failed. Solution failed prior bounds.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">init_hp</span><span class="p">)</span>
+                    <span class="n">mll</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+                    
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Warning: GP hyperparameter optimization restart </span><span class="si">{</span><span class="n">ii</span><span class="si">}</span><span class="s2"> failed with error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">init_hp</span><span class="p">)</span>
+                <span class="n">mll</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
 
-    <span class="c1"># Optimize GP hyperparameters by maximizing marginal log_likelihood</span>
-    <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">x0</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">p0</span><span class="p">):</span>
-
-        <span class="n">resii</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">_nll</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">gp</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">gp_hyper_prior</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
-                         <span class="n">jac</span><span class="o">=</span><span class="n">jac</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">)[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span>
-
-        <span class="c1"># if hyperparameters allowed by prior</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">gp_hyper_prior</span><span class="p">(</span><span class="n">resii</span><span class="p">)):</span>
-            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">resii</span><span class="p">)</span>
-
+        <span class="c1"># Pick result with largest marginal log likelihood</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">max</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span> <span class="o">&gt;</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">:</span>
+            <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">gp</span><span class="o">.</span><span class="n">set_parameter_vector</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>   
+                <span class="n">gp</span><span class="o">.</span><span class="n">recompute</span><span class="p">()</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Warning: Failed to set best hyperparameters. Using initial values.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">gp</span><span class="o">.</span><span class="n">set_parameter_vector</span><span class="p">(</span><span class="n">init_hp</span><span class="p">)</span>
+                <span class="n">gp</span><span class="o">.</span><span class="n">recompute</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Warning: GP hyperparameter optimization failed. Solution failed prior bounds.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">init_hp</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Warning: All hyperparameter optimizations failed. Using initial values.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">gp</span><span class="o">.</span><span class="n">set_parameter_vector</span><span class="p">(</span><span class="n">init_hp</span><span class="p">)</span>
+            
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Optimize GP hyperparameters by maximizing marginal log_likelihood</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">_nll</span><span class="p">,</span> <span class="n">p0</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">gp</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">gp_hyper_prior</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+                       <span class="n">jac</span><span class="o">=</span><span class="n">jac</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">)</span>
 
-        <span class="c1"># Compute marginal log likelihood for this set of kernel hyperparameters</span>
-        <span class="n">op_gp</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">gp</span><span class="p">)</span>
-        <span class="n">op_gp</span><span class="o">.</span><span class="n">set_parameter_vector</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="n">ii</span><span class="p">])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Warning: GP hyperparameter optimization failed.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Set the optimized hyperparameters</span>
         <span class="k">try</span><span class="p">:</span>
+            <span class="n">gp</span><span class="o">.</span><span class="n">set_parameter_vector</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
             <span class="n">gp</span><span class="o">.</span><span class="n">recompute</span><span class="p">()</span>
-            <span class="n">mll</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">op_gp</span><span class="o">.</span><span class="n">log_likelihood</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
         <span class="k">except</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Warning: GP hyperparameter optimization failed. Cannot recompute gp.</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="n">mll</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
-
-
-    <span class="c1"># Pick result with largest marginal log likelihood</span>
-    <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">mll</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">gp</span><span class="o">.</span><span class="n">set_parameter_vector</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="n">ind</span><span class="p">])</span>   
-        <span class="n">gp</span><span class="o">.</span><span class="n">recompute</span><span class="p">()</span>
-    <span class="k">except</span><span class="p">:</span>
-        <span class="n">gp</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">return</span> <span class="n">gp</span></div>
+
 </pre></div>
         </article>
       </div>
@@ -473,7 +775,7 @@
         <div class="bottom-of-page">
           <div class="left-details">
             <div class="copyright">
-                Copyright &#169; 2021, Jessica Birky
+                Copyright &#169; 2021, Jess Birky
             </div>
             Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
             
@@ -493,10 +795,10 @@
       
     </aside>
   </div>
-</div><script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js?v=f6245a2f"></script>
-    <script src="../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../_static/sphinx_highlight.js?v=4825356b"></script>
-    <script src="../../_static/scripts/furo.js?v=5fa4622c"></script>
+</div><script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=f281be69"></script>
     <script src="../../_static/tabs.js?v=3ee01567"></script>
@@ -505,5 +807,8 @@
     <script>let toggleOpenOnPrint = 'true';</script>
     <script src="../../_static/togglebutton.js?v=4a39c7ea"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../../_static/notebook-outputs.js?v=9bb603c3"></script>
     </body>
 </html>

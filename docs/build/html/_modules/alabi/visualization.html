@@ -1,29 +1,26 @@
 <!doctype html>
-<html class="no-js" lang="en" data-content_root="">
+<html class="no-js" lang="en" data-content_root="../../">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2024.08.06 -->
+    <!-- Generated with Sphinx 7.3.7 and Furo 2025.07.19 -->
         <title>alabi.visualization - alabi</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=362ab14a" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=354aac6f" />
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=25af2a20" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/tabs.css?v=4c969af8" />
     <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
-    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css?v=d2d258e8" />
-    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css?v=f4aeca0c" />
-    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
-    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=302659d7" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=a7f7f5d3" />
     
     
 
 
 <style>
   body {
-    --color-code-background: #f8f8f8;
-  --color-code-foreground: black;
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
   --font-stack: Roboto Light, sans-serif;
   --font-stack--monospace: Courier, monospace;
   --color-background-secondary: #eff1f6;
@@ -35,14 +32,14 @@
   }
   @media not print {
     body[data-theme="dark"] {
-      --color-code-background: #202020;
-  --color-code-foreground: #d0d0d0;
+      --color-code-background: #2b2b2b;
+  --color-code-foreground: #f8f8f2;
   
     }
     @media (prefers-color-scheme: dark) {
       body:not([data-theme="light"]) {
-        --color-code-background: #202020;
-  --color-code-foreground: #d0d0d0;
+        --color-code-background: #2b2b2b;
+  --color-code-foreground: #f8f8f2;
   
       }
     }
@@ -202,7 +199,6 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
   
-  
   <span class="sidebar-brand-text">alabi</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
@@ -211,19 +207,21 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+  <p class="caption" role="heading"><span class="caption-text">Intro</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../../basic_usage/training.html">GP Training</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../basic_usage/mcmc.html">MCMC</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../auto_examples/index.html">Example Gallery</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Example Gallery</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/run_eggbox.html">Eggbox (2D)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/run_rosenbrock.html">Rosenbrock (2D)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gp_tutorial.html">GP Training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mcmc_tutorial.html">MCMC sampling</a></li>
 </ul>
-</li>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../plot_function1d.html">Active Learning in 1D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plot_line_fit.html">Fit a line to data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plot_kl_divergence.html">KL Divergence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plot_demo.html">2D Benchmarks</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../modules.html">alabi</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of alabi</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../modules.html">alabi</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of alabi</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../alabi.html">alabi package</a></li>
 </ul>
 </li>
@@ -273,16 +271,16 @@
 <span class="sd">-------------------------------------</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">import</span> <span class="nn">alabi.utility</span> <span class="k">as</span> <span class="nn">ut</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">alabi.utility</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ut</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">corner</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
-<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">matplotlib.colors</span> <span class="k">as</span> <span class="nn">colors</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">rc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">corner</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.colors</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">colors</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">rc</span>
 <span class="n">rc</span><span class="p">(</span><span class="s1">&#39;text&#39;</span><span class="p">,</span> <span class="n">usetex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">rc</span><span class="p">(</span><span class="s1">&#39;xtick&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
 <span class="n">rc</span><span class="p">(</span><span class="s1">&#39;ytick&#39;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
@@ -290,14 +288,13 @@
         <span class="s1">&#39;weight&#39;</span> <span class="p">:</span> <span class="s1">&#39;light&#39;</span><span class="p">}</span>
 <span class="n">rc</span><span class="p">(</span><span class="s1">&#39;font&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">font</span><span class="p">)</span>
 
-<span class="kn">from</span> <span class="nn">dynesty</span> <span class="kn">import</span> <span class="n">plotting</span> <span class="k">as</span> <span class="n">dyplot</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dynesty</span><span class="w"> </span><span class="kn">import</span> <span class="n">plotting</span> <span class="k">as</span> <span class="n">dyplot</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;plot_error_vs_iteration&quot;</span><span class="p">,</span> 
            <span class="s2">&quot;plot_hyperparam_vs_iteration&quot;</span><span class="p">,</span> 
            <span class="s2">&quot;plot_train_time_vs_iteration&quot;</span><span class="p">,</span>
            <span class="s2">&quot;plot_corner_lnp&quot;</span><span class="p">,</span>
            <span class="s2">&quot;plot_corner_scatter&quot;</span><span class="p">,</span>
-           <span class="s2">&quot;plot_train_sample_vs_iteration&quot;</span><span class="p">,</span>
            <span class="s2">&quot;plot_gp_fit_1D&quot;</span><span class="p">,</span>
            <span class="s2">&quot;plot_gp_fit_2D&quot;</span><span class="p">,</span>
            <span class="s2">&quot;plot_contour_2D&quot;</span><span class="p">,</span>
@@ -306,34 +303,46 @@
            <span class="s2">&quot;plot_dynesty_traceplot&quot;</span><span class="p">,</span>
            <span class="s2">&quot;plot_dynesty_runplot&quot;</span><span class="p">,</span>
            <span class="s2">&quot;plot_mcmc_comparison&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;plot_emcee_dynesty_comparison&quot;</span><span class="p">,</span>
            <span class="s2">&quot;plot_2D_panel4&quot;</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="plot_error_vs_iteration"><a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_error_vs_iteration">[docs]</a><span class="k">def</span> <span class="nf">plot_error_vs_iteration</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;GP fit&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="plot_error_vs_iteration">
+<a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_error_vs_iteration">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_error_vs_iteration</span><span class="p">(</span><span class="n">iteration</span><span class="p">,</span> <span class="n">train_error</span><span class="p">,</span> <span class="n">test_error</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+                            <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;Error&quot;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;GP fit&quot;</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+                            <span class="n">savedir</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">savename</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
     <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s2">&quot;iteration&quot;</span><span class="p">],</span> <span class="n">sm</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s2">&quot;training_error&quot;</span><span class="p">],</span> 
-                <span class="n">label</span><span class="o">=</span><span class="s1">&#39;train error&#39;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s2">&quot;iteration&quot;</span><span class="p">],</span> <span class="n">sm</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s2">&quot;test_error&quot;</span><span class="p">],</span> 
-                <span class="n">label</span><span class="o">=</span><span class="s1">&#39;test error&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">iteration</span><span class="p">,</span> <span class="n">train_error</span><span class="p">,</span>  <span class="n">label</span><span class="o">=</span><span class="s1">&#39;train error&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">test_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">iteration</span><span class="p">,</span> <span class="n">test_error</span><span class="p">,</span>  <span class="n">label</span><span class="o">=</span><span class="s1">&#39;test error&#39;</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;iteration&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Scaled MSE&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="n">metric</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s2">&quot;iteration&quot;</span><span class="p">]))</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">iteration</span><span class="p">))</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">minorticks_on</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">22</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    
+    <span class="k">if</span> <span class="n">savename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">savename</span> <span class="o">=</span> <span class="s2">&quot;gp_error_vs_iteration_log.png&quot;</span> <span class="k">if</span> <span class="n">log</span> <span class="k">else</span> <span class="s2">&quot;gp_error_vs_iteration.png&quot;</span>
+    
     <span class="k">if</span> <span class="n">log</span><span class="p">:</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/gp_error_vs_iteration_log.png&quot;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/gp_error_vs_iteration.png&quot;</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">fig</span></div>
 
 
-<div class="viewcode-block" id="plot_hyperparam_vs_iteration"><a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_hyperparam_vs_iteration">[docs]</a><span class="k">def</span> <span class="nf">plot_hyperparam_vs_iteration</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;GP fit&quot;</span><span class="p">):</span>
+
+<div class="viewcode-block" id="plot_hyperparam_vs_iteration">
+<a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_hyperparam_vs_iteration">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_hyperparam_vs_iteration</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;GP fit&quot;</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 
     <span class="n">hp_names</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">gp</span><span class="o">.</span><span class="n">get_parameter_names</span><span class="p">()</span>
     <span class="n">hp_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s2">&quot;gp_hyperparameters&quot;</span><span class="p">])</span>
@@ -346,6 +355,8 @@
             <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s2">&quot;iteration&quot;</span><span class="p">],</span> <span class="n">hp_values</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> 
                     <span class="n">label</span><span class="o">=</span><span class="n">hp_names</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
         <span class="n">ax1</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
+        <span class="n">ax1</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s2">&quot;iteration&quot;</span><span class="p">],</span> <span class="nb">min</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">gp_scale_rng</span><span class="p">),</span>
+                         <span class="nb">max</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">gp_scale_rng</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;C2&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;GP scale range&quot;</span><span class="p">)</span>
 
         <span class="c1"># plot mean on separate axis</span>
         <span class="n">ax2</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">twinx</span><span class="p">()</span>
@@ -356,23 +367,31 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">hp_names</span><span class="p">):</span>
             <span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s2">&quot;iteration&quot;</span><span class="p">],</span> <span class="n">hp_values</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> 
-                     <span class="n">label</span><span class="o">=</span><span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+                     <span class="n">label</span><span class="o">=</span><span class="n">hp_names</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
 
     <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;iteration&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
     <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;GP scale hyperparameters&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
     <span class="n">ax1</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s2">&quot;iteration&quot;</span><span class="p">]))</span>
-    <span class="n">ax1</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+    <span class="c1"># ax1.set_ylim(-1.2*sm.gp_scale_rng, 1.2*sm.gp_scale_rng)</span>
     <span class="n">ax1</span><span class="o">.</span><span class="n">minorticks_on</span><span class="p">()</span>
     <span class="n">ax1</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
     <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">22</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/gp_hyperparameters_vs_iteration.png&quot;</span><span class="p">)</span>
+    
+    <span class="n">savename</span> <span class="o">=</span> <span class="s2">&quot;gp_hyperparameters_vs_iteration.png&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving to &quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">fig</span></div>
 
 
-<div class="viewcode-block" id="plot_train_time_vs_iteration"><a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_train_time_vs_iteration">[docs]</a><span class="k">def</span> <span class="nf">plot_train_time_vs_iteration</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;GP fit&quot;</span><span class="p">):</span>
+
+<div class="viewcode-block" id="plot_train_time_vs_iteration">
+<a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_train_time_vs_iteration">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_train_time_vs_iteration</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;GP fit&quot;</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 
     <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s2">&quot;iteration&quot;</span><span class="p">],</span> <span class="n">sm</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s2">&quot;gp_train_time&quot;</span><span class="p">],</span> 
@@ -385,35 +404,27 @@
     <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">22</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">minorticks_on</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/gp_train_time_vs_iteration.png&quot;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-
-    <span class="k">return</span> <span class="n">fig</span></div>
-
-
-<div class="viewcode-block" id="plot_train_sample_vs_iteration"><a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_train_sample_vs_iteration">[docs]</a><span class="k">def</span> <span class="nf">plot_train_sample_vs_iteration</span><span class="p">(</span><span class="n">sm</span><span class="p">):</span>
-
-    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
     
-    <span class="n">yy</span> <span class="o">=</span> <span class="o">-</span><span class="n">sm</span><span class="o">.</span><span class="n">y</span><span class="p">[</span><span class="n">sm</span><span class="o">.</span><span class="n">ninit_train</span><span class="p">:]</span> 
-    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s2">&quot;iteration&quot;</span><span class="p">],</span> <span class="n">yy</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">yscale</span><span class="p">(</span><span class="s1">&#39;log&#39;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;iteration&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$-\ln P$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">minorticks_on</span><span class="p">()</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/gp_train_sample_vs_iteration.png&quot;</span><span class="p">)</span>
+    <span class="n">savename</span> <span class="o">=</span> <span class="s2">&quot;gp_train_time_vs_iteration.png&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving to &quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">fig</span></div>
 
 
-<div class="viewcode-block" id="plot_corner_lnp"><a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_corner_lnp">[docs]</a><span class="k">def</span> <span class="nf">plot_corner_lnp</span><span class="p">(</span><span class="n">sm</span><span class="p">):</span>
 
-    <span class="n">yy</span> <span class="o">=</span> <span class="o">-</span><span class="n">sm</span><span class="o">.</span><span class="n">y</span> 
+<div class="viewcode-block" id="plot_corner_lnp">
+<a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_corner_lnp">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_corner_lnp</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">theta</span><span class="p">()</span>
+    <span class="n">yy</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">y</span><span class="p">()</span>
 
     <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
-    <span class="n">fig</span> <span class="o">=</span> <span class="n">corner</span><span class="o">.</span><span class="n">corner</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">yy</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> 
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">corner</span><span class="o">.</span><span class="n">corner</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">yy</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">param_names</span><span class="p">,</span> 
             <span class="n">plot_datapoints</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_density</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_contours</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">show_titles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">title_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="mi">18</span><span class="p">},</span> 
             <span class="n">label_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="mi">22</span><span class="p">},</span> <span class="n">data_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;alpha&#39;</span><span class="p">:</span><span class="mf">1.0</span><span class="p">})</span>
@@ -424,7 +435,7 @@
     <span class="k">for</span> <span class="n">yi</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">ndim</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">xi</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">yi</span><span class="p">):</span>
             <span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="n">yi</span><span class="p">,</span> <span class="n">xi</span><span class="p">]</span>
-            <span class="n">im</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">theta</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">xi</span><span class="p">],</span> <span class="n">sm</span><span class="o">.</span><span class="n">theta</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="n">yi</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">yy</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;coolwarm&#39;</span><span class="p">,</span> 
+            <span class="n">im</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="n">xi</span><span class="p">],</span> <span class="n">theta</span><span class="p">[</span><span class="n">yi</span><span class="p">],</span> <span class="n">c</span><span class="o">=</span><span class="n">yy</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;coolwarm&#39;</span><span class="p">,</span> 
                             <span class="n">norm</span><span class="o">=</span><span class="n">colors</span><span class="o">.</span><span class="n">LogNorm</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">cb_rng</span><span class="p">),</span> <span class="n">vmax</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="n">cb_rng</span><span class="p">)),</span>
                             <span class="n">alpha</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
 
@@ -433,84 +444,124 @@
     <span class="n">cb</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$-\ln P$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=-</span><span class="mi">80</span><span class="p">)</span>
     <span class="n">cb</span><span class="o">.</span><span class="n">set_ticks</span><span class="p">(</span><span class="n">cb_rng</span><span class="p">)</span>
     <span class="n">cb</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">labelsize</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
-    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/gp_training_sample_corner.png&quot;</span><span class="p">)</span>
+    
+    <span class="n">savename</span> <span class="o">=</span> <span class="s2">&quot;gp_training_sample_corner.png&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving to &quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">fig</span></div>
 
 
-<div class="viewcode-block" id="plot_corner_scatter"><a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_corner_scatter">[docs]</a><span class="k">def</span> <span class="nf">plot_corner_scatter</span><span class="p">(</span><span class="n">sm</span><span class="p">):</span>
 
-    <span class="n">yy</span> <span class="o">=</span> <span class="o">-</span><span class="n">sm</span><span class="o">.</span><span class="n">y</span> 
+<div class="viewcode-block" id="plot_corner_scatter">
+<a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_corner_scatter">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_corner_scatter</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">theta</span><span class="p">()</span>
+    <span class="n">yy</span> <span class="o">=</span> <span class="o">-</span><span class="n">sm</span><span class="o">.</span><span class="n">y</span><span class="p">()</span>
 
     <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
-    <span class="n">fig</span> <span class="o">=</span> <span class="n">corner</span><span class="o">.</span><span class="n">corner</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">sm</span><span class="o">.</span><span class="n">ninit_train</span><span class="p">],</span> <span class="n">labels</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> 
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">corner</span><span class="o">.</span><span class="n">corner</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">sm</span><span class="o">.</span><span class="n">ninit_train</span><span class="p">],</span> <span class="n">labels</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">param_names</span><span class="p">,</span> 
             <span class="n">plot_datapoints</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">plot_density</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_contours</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
             <span class="n">show_titles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">title_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="mi">18</span><span class="p">},</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">,</span>
             <span class="n">label_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="mi">22</span><span class="p">},</span> <span class="n">data_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;alpha&#39;</span><span class="p">:</span><span class="mf">1.0</span><span class="p">})</span>
 
     <span class="k">if</span> <span class="n">sm</span><span class="o">.</span><span class="n">nactive</span> <span class="o">&gt;</span> <span class="n">sm</span><span class="o">.</span><span class="n">ndim</span><span class="p">:</span>
-        <span class="n">fig</span> <span class="o">=</span> <span class="n">corner</span><span class="o">.</span><span class="n">corner</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">theta</span><span class="p">[</span><span class="n">sm</span><span class="o">.</span><span class="n">ninit_train</span><span class="p">:],</span> <span class="n">labels</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> 
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">corner</span><span class="o">.</span><span class="n">corner</span><span class="p">(</span><span class="n">theta</span><span class="p">[</span><span class="n">sm</span><span class="o">.</span><span class="n">ninit_train</span><span class="p">:],</span> <span class="n">labels</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">param_names</span><span class="p">,</span> 
                 <span class="n">plot_datapoints</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">plot_density</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_contours</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                 <span class="n">show_titles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">title_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="mi">18</span><span class="p">},</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span>
                 <span class="n">label_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="mi">22</span><span class="p">},</span> <span class="n">data_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;alpha&#39;</span><span class="p">:</span><span class="mf">1.0</span><span class="p">},</span>
                 <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">)</span>
 
-    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/gp_training_sample_scatter.png&quot;</span><span class="p">)</span>
+    <span class="n">savename</span> <span class="o">=</span> <span class="s2">&quot;gp_training_sample_scatter.png&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving to &quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">fig</span></div>
 
 
-<div class="viewcode-block" id="plot_gp_fit_1D"><a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_gp_fit_1D">[docs]</a><span class="k">def</span> <span class="nf">plot_gp_fit_1D</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;GP fit&quot;</span><span class="p">):</span>
 
+<div class="viewcode-block" id="plot_gp_fit_1D">
+<a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_gp_fit_1D">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_gp_fit_1D</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;GP fit&quot;</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">theta</span><span class="p">()</span>
+    <span class="n">yy</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">y</span><span class="p">()</span>
+    <span class="n">theta_test</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">theta_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">theta_test</span><span class="p">)</span>
+    <span class="n">yy_test</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">y_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">y_test</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    
     <span class="n">xarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="mi">30</span><span class="p">)</span>
     <span class="n">mu</span><span class="p">,</span> <span class="n">var</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">gp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">xarr</span><span class="p">,</span> <span class="n">return_var</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
     <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xarr</span><span class="p">,</span> <span class="n">fn</span><span class="p">(</span><span class="n">xarr</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">.5</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">xarr</span><span class="p">,</span> <span class="n">mu</span><span class="o">-</span><span class="n">var</span><span class="p">,</span> <span class="n">mu</span><span class="o">+</span><span class="n">var</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">.8</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">theta</span><span class="p">,</span> <span class="n">sm</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">theta_test</span><span class="p">,</span> <span class="n">sm</span><span class="o">.</span><span class="n">y_test</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;g&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">yy</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">theta_test</span><span class="p">,</span> <span class="n">yy_test</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;g&#39;</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">22</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/gp_fit_1D.png&quot;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
-
-    <span class="k">return</span> <span class="n">fig</span></div>
-
-
-<div class="viewcode-block" id="plot_gp_fit_2D"><a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_gp_fit_2D">[docs]</a><span class="k">def</span> <span class="nf">plot_gp_fit_2D</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">ngrid</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;GP fit&quot;</span><span class="p">):</span>
-
-    <span class="n">xarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">ngrid</span><span class="p">)</span>
-    <span class="n">yarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">ngrid</span><span class="p">)</span>
-
-    <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">xarr</span><span class="p">,</span> <span class="n">yarr</span><span class="p">)</span>
-    <span class="n">Z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">ngrid</span><span class="p">,</span> <span class="n">ngrid</span><span class="p">))</span>
     
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Z</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
-        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Z</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
-            <span class="n">tt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">],</span> <span class="n">Y</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-            <span class="n">Z</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">evaluate</span><span class="p">(</span><span class="n">tt</span><span class="p">)</span>
-        
-    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
-    <span class="n">im</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Blues_r&#39;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">theta</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sm</span><span class="o">.</span><span class="n">theta</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> 
-                <span class="n">s</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">algorithm</span><span class="si">}</span><span class="s1"> training&#39;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">theta0</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sm</span><span class="o">.</span><span class="n">theta0</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;#1cc202&#39;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> 
-                <span class="n">s</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;initial training&#39;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">22</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/gp_fit_2D.png&quot;</span><span class="p">)</span>
+    <span class="n">savename</span> <span class="o">=</span> <span class="s2">&quot;gp_fit_1D.png&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving to &quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">fig</span></div>
 
 
-<div class="viewcode-block" id="plot_contour_2D"><a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_contour_2D">[docs]</a><span class="k">def</span> <span class="nf">plot_contour_2D</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">savedir</span><span class="p">,</span> <span class="n">save_name</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">ngrid</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Blues_r&#39;</span><span class="p">):</span>
+
+<div class="viewcode-block" id="plot_contour_2D">
+<a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_contour_2D">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_contour_2D</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">savedir</span><span class="p">,</span> <span class="n">savename</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> 
+                    <span class="n">ngrid</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Blues_r&#39;</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">xlabel</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_scale</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plot a 2D contour plot of a function.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fn : callable</span>
+<span class="sd">        Function to plot</span>
+<span class="sd">    bounds : list</span>
+<span class="sd">        Parameter bounds [[xmin, xmax], [ymin, ymax]]</span>
+<span class="sd">    savedir : str</span>
+<span class="sd">        Directory to save the plot</span>
+<span class="sd">    savename : str</span>
+<span class="sd">        Filename for the saved plot</span>
+<span class="sd">    title : str</span>
+<span class="sd">        Plot title</span>
+<span class="sd">    ngrid : int, optional</span>
+<span class="sd">        Grid resolution. Default is 60.</span>
+<span class="sd">    cmap : str, optional</span>
+<span class="sd">        Colormap name. Default is &#39;Blues_r&#39;.</span>
+<span class="sd">    show : bool, optional</span>
+<span class="sd">        Whether to display the plot. Default is False.</span>
+<span class="sd">    xlabel : str, optional</span>
+<span class="sd">        X-axis label</span>
+<span class="sd">    ylabel : str, optional</span>
+<span class="sd">        Y-axis label</span>
+<span class="sd">    vmin : float, optional</span>
+<span class="sd">        Minimum value for colorbar range. If None, uses data minimum.</span>
+<span class="sd">    vmax : float, optional</span>
+<span class="sd">        Maximum value for colorbar range. If None, uses data maximum.</span>
+<span class="sd">    log_scale : bool, optional</span>
+<span class="sd">        Whether to use logarithmic scaling for the colorbar. Default is False.</span>
+<span class="sd">        Note: When using log_scale=True, all values must be positive.</span>
+<span class="sd">        </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    fig : matplotlib.figure.Figure</span>
+<span class="sd">        The figure object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">xarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">ngrid</span><span class="p">)</span>
     <span class="n">yarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">ngrid</span><span class="p">)</span>
@@ -523,59 +574,144 @@
         <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Z</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
             <span class="n">tt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">],</span> <span class="n">Y</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]])</span>
             <span class="n">Z</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">fn</span><span class="p">(</span><span class="n">tt</span><span class="p">)</span>
-        
-    <span class="n">im</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">)</span>
+    
+    <span class="c1"># Use vmin and vmax if provided for colorbar range</span>
+    <span class="c1"># Handle log scale normalization</span>
+    <span class="k">if</span> <span class="n">log_scale</span><span class="p">:</span>        
+        <span class="c1"># Create log normalization</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">colors</span><span class="o">.</span><span class="n">LogNorm</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
+        <span class="n">im</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">im</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
+    
     <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">22</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">xlabel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="n">xlabel</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ylabel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="n">ylabel</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">18</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">savedir</span><span class="p">):</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">savedir</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
-    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">save_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving to &quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">fig</span></div>
 
 
-<div class="viewcode-block" id="plot_true_fit_2D"><a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_true_fit_2D">[docs]</a><span class="k">def</span> <span class="nf">plot_true_fit_2D</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">savedir</span><span class="p">,</span> <span class="n">ngrid</span><span class="o">=</span><span class="mi">60</span><span class="p">):</span>
 
-    <span class="n">fig</span> <span class="o">=</span> <span class="n">plot_contour_2D</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">savedir</span><span class="p">,</span> <span class="n">save_name</span><span class="o">=</span><span class="s2">&quot;true_function_2D.png&quot;</span><span class="p">,</span> 
-                    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;True function&quot;</span><span class="p">,</span> <span class="n">ngrid</span><span class="o">=</span><span class="n">ngrid</span><span class="p">)</span>
+<div class="viewcode-block" id="plot_true_fit_2D">
+<a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_true_fit_2D">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_true_fit_2D</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">ngrid</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">log_scale</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
-    <span class="k">return</span> <span class="n">fig</span></div>
-
-
-<div class="viewcode-block" id="plot_utility_2D"><a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_utility_2D">[docs]</a><span class="k">def</span> <span class="nf">plot_utility_2D</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">ngrid</span><span class="o">=</span><span class="mi">60</span><span class="p">):</span>
-
-    <span class="n">ut_fn</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">assign_utility</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">algorithm</span><span class="p">)</span>
-    <span class="n">fn</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">ut_fn</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">gp</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">gp</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span>
-
-    <span class="n">fig</span> <span class="o">=</span> <span class="n">plot_contour_2D</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="p">,</span> <span class="n">save_name</span><span class="o">=</span><span class="s2">&quot;objective_function.png&quot;</span><span class="p">,</span> 
-                    <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> function&quot;</span><span class="p">,</span> <span class="n">ngrid</span><span class="o">=</span><span class="n">ngrid</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Greens_r&#39;</span><span class="p">)</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plot_contour_2D</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">true_log_likelihood</span><span class="p">,</span> <span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="p">,</span> <span class="n">savename</span><span class="o">=</span><span class="s2">&quot;true_function_2D.png&quot;</span><span class="p">,</span> 
+                    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;True function&quot;</span><span class="p">,</span> <span class="n">ngrid</span><span class="o">=</span><span class="n">ngrid</span><span class="p">,</span> <span class="n">xlabel</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">param_names</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ylabel</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">param_names</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="n">log_scale</span><span class="o">=</span><span class="n">log_scale</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">fig</span></div>
 
 
-<span class="k">def</span> <span class="nf">plot_corner</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">samples</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+
+<div class="viewcode-block" id="plot_utility_2D">
+<a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_utility_2D">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_utility_2D</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">ngrid</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">log_scale</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+    <span class="n">obj_fn</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">utility</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">_y</span><span class="p">,</span> <span class="n">gp</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">gp</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">_bounds</span><span class="p">)</span>
+
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plot_contour_2D</span><span class="p">(</span><span class="n">obj_fn</span><span class="p">,</span> <span class="n">sm</span><span class="o">.</span><span class="n">_bounds</span><span class="p">,</span> <span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="p">,</span> <span class="n">savename</span><span class="o">=</span><span class="s2">&quot;objective_function.png&quot;</span><span class="p">,</span> 
+                    <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">algorithm</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> function&quot;</span><span class="p">,</span> <span class="n">ngrid</span><span class="o">=</span><span class="n">ngrid</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Greens_r&#39;</span><span class="p">,</span>
+                    <span class="n">xlabel</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">param_names</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="s2">&quot; scaled&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">param_names</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="s2">&quot; scaled&quot;</span><span class="p">,</span>
+                    <span class="n">log_scale</span><span class="o">=</span><span class="n">log_scale</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">fig</span></div>
+
+
+
+<div class="viewcode-block" id="plot_gp_fit_2D">
+<a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_gp_fit_2D">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_gp_fit_2D</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">ngrid</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s2">&quot;GP fit&quot;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s2">&quot;Blues_r&quot;</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_scale</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">theta</span><span class="p">()</span> 
+    <span class="n">theta0</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">theta_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">_theta0</span><span class="p">)</span>
+
+    <span class="n">xarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">ngrid</span><span class="p">)</span>
+    <span class="n">yarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">ngrid</span><span class="p">)</span>
+
+    <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">xarr</span><span class="p">,</span> <span class="n">yarr</span><span class="p">)</span>
+    <span class="n">Z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">ngrid</span><span class="p">,</span> <span class="n">ngrid</span><span class="p">))</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Z</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">Z</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">tt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">],</span> <span class="n">Y</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">Z</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">surrogate_log_likelihood</span><span class="p">(</span><span class="n">tt</span><span class="p">)</span>
+        
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">log_scale</span><span class="p">:</span>        
+        <span class="c1"># Create log normalization</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">colors</span><span class="o">.</span><span class="n">LogNorm</span><span class="p">(</span><span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
+        <span class="n">im</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">im</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">contourf</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">theta</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">theta</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> 
+                <span class="n">s</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">algorithm</span><span class="si">}</span><span class="s1"> training&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">theta0</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">theta0</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;#1cc202&#39;</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">,</span> 
+                <span class="n">s</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;initial training&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">22</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/gp_fit_2D.png&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">fig</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_corner</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">samples</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 
     <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
     <span class="n">fig</span> <span class="o">=</span> <span class="n">corner</span><span class="o">.</span><span class="n">corner</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.16</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.84</span><span class="p">],</span> <span class="n">show_titles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                        <span class="n">scale_hist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">plot_contours</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span>
+                        <span class="n">scale_hist</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">plot_contours</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">param_names</span><span class="p">,</span>
                         <span class="n">title_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">},</span> <span class="n">label_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">})</span>
-    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">sampler</span><span class="si">}</span><span class="s2">posterior.png&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+    
+    <span class="n">savename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sampler</span><span class="si">}</span><span class="s2">_posterior_</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">like_fn_name</span><span class="si">}</span><span class="s2">.png&quot;</span> <span class="k">if</span> <span class="n">sampler</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;posterior_</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">like_fn_name</span><span class="si">}</span><span class="s2">.png&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving to &quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">fig</span>
 
 
-<span class="k">def</span> <span class="nf">plot_corner_kde</span><span class="p">(</span><span class="n">sm</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_corner_kde</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 
-    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">dyplot</span><span class="o">.</span><span class="n">cornerplot</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">res</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.16</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.84</span><span class="p">],</span> <span class="n">span</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">dyplot</span><span class="o">.</span><span class="n">cornerplot</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">res</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.16</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.84</span><span class="p">],</span> <span class="n">span</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
                                <span class="n">title_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="mi">15</span><span class="p">},</span> <span class="n">label_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="mi">15</span><span class="p">})</span>
-    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/dynesty_posterior_kde.png&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+    
+    <span class="n">savename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;dynesty_posterior_kde_</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">like_fn_name</span><span class="si">}</span><span class="s2">.png&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving to &quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">fig</span>
 
 
-<span class="k">def</span> <span class="nf">plot_emcee_walkers</span><span class="p">(</span><span class="n">sm</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_emcee_walkers</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 
     <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">ndim</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">3</span><span class="o">*</span><span class="n">sm</span><span class="o">.</span><span class="n">ndim</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">samples</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">emcee_samples_full</span>
@@ -583,46 +719,108 @@
         <span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">samples</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">],</span> <span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">))</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">param_names</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_coords</span><span class="p">(</span><span class="o">-</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
     <span class="n">axes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;step number&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
 
-    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/emcee_walkers.png&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+    <span class="n">savename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;emcee_walkers_</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">like_fn_name</span><span class="si">}</span><span class="s2">.png&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving to &quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">fig</span>
 
 
-<div class="viewcode-block" id="plot_dynesty_traceplot"><a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_dynesty_traceplot">[docs]</a><span class="k">def</span> <span class="nf">plot_dynesty_traceplot</span><span class="p">(</span><span class="n">sm</span><span class="p">):</span>
+<div class="viewcode-block" id="plot_dynesty_traceplot">
+<a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_dynesty_traceplot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_dynesty_traceplot</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 
-    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">dyplot</span><span class="o">.</span><span class="n">traceplot</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">res</span><span class="p">,</span> <span class="n">trace_cmap</span><span class="o">=</span><span class="s1">&#39;plasma&#39;</span><span class="p">,</span>
+    <span class="n">fig</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">dyplot</span><span class="o">.</span><span class="n">traceplot</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">res</span><span class="p">,</span> <span class="n">trace_cmap</span><span class="o">=</span><span class="s1">&#39;plasma&#39;</span><span class="p">,</span>
                                  <span class="n">quantiles</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">show_titles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                                  <span class="n">label_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="mi">22</span><span class="p">})</span>
-    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/dynesty_traceplot.png&quot;</span><span class="p">)</span>
+    
+    <span class="n">savename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;dynesty_traceplot_</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">like_fn_name</span><span class="si">}</span><span class="s2">.png&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving to &quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">fig</span></div>
 
 
-<div class="viewcode-block" id="plot_dynesty_runplot"><a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_dynesty_runplot">[docs]</a><span class="k">def</span> <span class="nf">plot_dynesty_runplot</span><span class="p">(</span><span class="n">sm</span><span class="p">):</span>
 
-    <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">dyplot</span><span class="o">.</span><span class="n">runplot</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">res</span><span class="p">,</span> <span class="n">label_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="mi">22</span><span class="p">})</span>
-    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/dynesty_runplot.png&quot;</span><span class="p">)</span>
+<div class="viewcode-block" id="plot_dynesty_runplot">
+<a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_dynesty_runplot">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_dynesty_runplot</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+    <span class="n">fig</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">dyplot</span><span class="o">.</span><span class="n">runplot</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">res</span><span class="p">,</span> <span class="n">label_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="mi">22</span><span class="p">})</span>
+    
+    <span class="n">savename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;dynesty_runplot_</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">like_fn_name</span><span class="si">}</span><span class="s2">.png&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving to &quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">fig</span></div>
 
 
-<div class="viewcode-block" id="plot_mcmc_comparison"><a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_mcmc_comparison">[docs]</a><span class="k">def</span> <span class="nf">plot_mcmc_comparison</span><span class="p">(</span><span class="n">sm</span><span class="p">):</span>
+
+<div class="viewcode-block" id="plot_mcmc_comparison">
+<a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_mcmc_comparison">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_mcmc_comparison</span><span class="p">(</span><span class="n">samples1</span><span class="p">,</span> <span class="n">samples2</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">param_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
+                         <span class="n">name1</span><span class="o">=</span><span class="s2">&quot;sampler 1 posterior&quot;</span><span class="p">,</span> <span class="n">name2</span><span class="o">=</span><span class="s2">&quot;sampler 2 posterior&quot;</span><span class="p">,</span>
+                         <span class="n">savedir</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">savename</span><span class="o">=</span><span class="s2">&quot;mcmc_comparison.png&quot;</span><span class="p">,</span>
+                         <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;orange&quot;</span><span class="p">,</span> <span class="s2">&quot;royalblue&quot;</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    
+    <span class="n">default_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;show_titles&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;verbose&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;max_n_ticks&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+                      <span class="s2">&quot;plot_contours&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;plot_datapoints&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;plot_density&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                      <span class="s2">&quot;no_fill_contours&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;title_kwargs&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="mi">16</span><span class="p">},</span>
+                      <span class="s2">&quot;label_kwargs&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="mi">22</span><span class="p">},</span> <span class="s2">&quot;hist_kwargs&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;linewidth&quot;</span><span class="p">:</span><span class="mf">1.5</span><span class="p">,</span> <span class="s2">&quot;density&quot;</span><span class="p">:</span><span class="kc">True</span><span class="p">}}</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">default_kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="c1"># Plot first sample with its histogram color</span>
+    <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;hist_kwargs&quot;</span><span class="p">][</span><span class="s2">&quot;color&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">colors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">corner</span><span class="o">.</span><span class="n">corner</span><span class="p">(</span><span class="n">samples1</span><span class="p">,</span>  <span class="n">labels</span><span class="o">=</span><span class="n">param_names</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># Plot second sample with its histogram color</span>
+    <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;hist_kwargs&quot;</span><span class="p">][</span><span class="s2">&quot;color&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">colors</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">corner</span><span class="o">.</span><span class="n">corner</span><span class="p">(</span><span class="n">samples2</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">param_names</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">.16</span><span class="p">,</span><span class="mf">.50</span><span class="p">,</span><span class="mf">.84</span><span class="p">],</span> <span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="n">fig</span><span class="o">.</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">2.2</span><span class="p">,</span> <span class="mf">0.725</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;--- </span><span class="si">{</span><span class="n">name1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">26</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">2.2</span><span class="p">,</span> <span class="mf">0.55</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;--- </span><span class="si">{</span><span class="n">name2</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">26</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+
+    <span class="n">savename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;mcmc_comparison_</span><span class="si">{</span><span class="n">name1</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">name2</span><span class="si">}</span><span class="s2">.png&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving to &quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">fig</span></div>
+
+
+
+<div class="viewcode-block" id="plot_emcee_dynesty_comparison">
+<a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_emcee_dynesty_comparison">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_emcee_dynesty_comparison</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 
     <span class="n">lw</span> <span class="o">=</span> <span class="mf">1.5</span>
     <span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;orange&quot;</span><span class="p">,</span> <span class="s2">&quot;royalblue&quot;</span><span class="p">]</span>
 
     <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
-    <span class="n">fig</span> <span class="o">=</span> <span class="n">corner</span><span class="o">.</span><span class="n">corner</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">emcee_samples</span><span class="p">,</span>  <span class="n">labels</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">corner</span><span class="o">.</span><span class="n">corner</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">emcee_samples</span><span class="p">,</span>  <span class="n">labels</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">param_names</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
                     <span class="n">show_titles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">max_n_ticks</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
                     <span class="n">plot_contours</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">plot_datapoints</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">plot_density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                     <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">no_fill_contours</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">title_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="mi">16</span><span class="p">},</span>
                     <span class="n">label_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="mi">22</span><span class="p">},</span> <span class="n">hist_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;linewidth&quot;</span><span class="p">:</span><span class="mf">2.0</span><span class="p">,</span> <span class="s2">&quot;density&quot;</span><span class="p">:</span><span class="kc">True</span><span class="p">})</span>
 
-    <span class="n">fig</span> <span class="o">=</span> <span class="n">corner</span><span class="o">.</span><span class="n">corner</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">dynesty_samples</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">labels</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.16</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.84</span><span class="p">],</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">corner</span><span class="o">.</span><span class="n">corner</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">dynesty_samples</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">param_names</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">quantiles</span><span class="o">=</span><span class="p">[</span><span class="mf">0.16</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.84</span><span class="p">],</span>
                         <span class="n">show_titles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">max_n_ticks</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">title_fmt</span><span class="o">=</span><span class="s1">&#39;.3f&#39;</span><span class="p">,</span>
                         <span class="n">plot_contours</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">plot_datapoints</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">plot_density</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                         <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">no_fill_contours</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">title_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;fontsize&quot;</span><span class="p">:</span> <span class="mi">16</span><span class="p">},</span>
@@ -631,15 +829,23 @@
 
     <span class="n">fig</span><span class="o">.</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">2.2</span><span class="p">,</span> <span class="mf">0.725</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;--- emcee posterior&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">26</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
     <span class="n">fig</span><span class="o">.</span><span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">2.2</span><span class="p">,</span> <span class="mf">0.55</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;--- dynesty posterior&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">26</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
-    
-    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/mcmc_comparison.png&quot;</span><span class="p">)</span>
+
+    <span class="n">savename</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;mcmc_comparison_</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">like_fn_name</span><span class="si">}</span><span class="s2">.png&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving to &quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">sm</span><span class="o">.</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">fig</span></div>
 
 
-<div class="viewcode-block" id="plot_2D_panel4"><a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_2D_panel4">[docs]</a><span class="k">def</span> <span class="nf">plot_2D_panel4</span><span class="p">(</span><span class="n">savedir</span><span class="p">,</span> <span class="n">save_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
-    <span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
+<div class="viewcode-block" id="plot_2D_panel4">
+<a class="viewcode-back" href="../../alabi.html#alabi.visualization.plot_2D_panel4">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_2D_panel4</span><span class="p">(</span><span class="n">savedir</span><span class="p">,</span> <span class="n">savename</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
     <span class="n">img_01</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/gp_fit_2D.png&quot;</span><span class="p">)</span>
     <span class="n">img_02</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/objective_function.png&quot;</span><span class="p">)</span>
     <span class="n">img_03</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/gp_error_vs_iteration.png&quot;</span><span class="p">)</span>
@@ -652,10 +858,11 @@
     <span class="n">new_im</span><span class="o">.</span><span class="n">paste</span><span class="p">(</span><span class="n">img_03</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">img_01</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
     <span class="n">new_im</span><span class="o">.</span><span class="n">paste</span><span class="p">(</span><span class="n">img_04</span><span class="p">,</span> <span class="p">(</span><span class="n">img_01</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">img_01</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
 
-    <span class="k">if</span> <span class="n">save_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">new_im</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">save_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">savename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">new_im</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">savedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">savename</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">new_im</span></div>
+
 </pre></div>
         </article>
       </div>
@@ -668,7 +875,7 @@
         <div class="bottom-of-page">
           <div class="left-details">
             <div class="copyright">
-                Copyright &#169; 2021, Jessica Birky
+                Copyright &#169; 2021, Jess Birky
             </div>
             Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
             
@@ -688,10 +895,10 @@
       
     </aside>
   </div>
-</div><script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js?v=f6245a2f"></script>
-    <script src="../../_static/doctools.js?v=888ff710"></script>
-    <script src="../../_static/sphinx_highlight.js?v=4825356b"></script>
-    <script src="../../_static/scripts/furo.js?v=5fa4622c"></script>
+</div><script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=f281be69"></script>
     <script src="../../_static/tabs.js?v=3ee01567"></script>
@@ -700,5 +907,8 @@
     <script>let toggleOpenOnPrint = 'true';</script>
     <script src="../../_static/togglebutton.js?v=4a39c7ea"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../../_static/notebook-outputs.js?v=9bb603c3"></script>
     </body>
 </html>

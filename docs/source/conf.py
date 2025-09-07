@@ -7,17 +7,18 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../alabi'))
-
+#sys.path.insert(0, os.path.abspath("../../alabi"))
+basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, basedir)
 
 # -- Project information -----------------------------------------------------
 
-project = 'alabi'
-copyright = '2021, Jessica Birky'
-author = 'Jessica Birky'
+project = "alabi"
+copyright = "2021, Jess Birky"
+author = "Jess Birky"
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.1'
+release = "0.0.1"
 
 html_theme = "furo"
 html_title = "alabi"
@@ -25,31 +26,103 @@ html_title = "alabi"
 # -- General configuration ---------------------------------------------------
 
 extensions = [
-    # Sphinx's own extensions
     "sphinx.ext.autodoc",
     "sphinx.ext.extlinks",
     "sphinx.ext.intersphinx",
     "sphinx.ext.mathjax",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
-    # Our custom extension, only meant for Furo's own documentation.
     "furo.sphinxext",
-    # External stuff
     "myst_parser",
     "sphinx_copybutton",
     "sphinx_inline_tabs",
     "sphinx_togglebutton",
-    "sphinx_gallery.gen_gallery",
+    # "sphinx_gallery.gen_gallery",
+    "nbsphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
-exclude_patterns = []
+exclude_patterns = ["_build", "**.ipynb_checkpoints"]
+
+# nbsphinx specific settings
+nbsphinx_execute = 'never'  # Never execute notebook cells during build
+nbsphinx_allow_errors = True  # Continue through errors
+
+# Control output display
+nbsphinx_codecell_lexer = 'none'  # Don't highlight output as code
+
+# Limit output length (truncate long outputs)
+nbsphinx_output_max_lines = 10  # Show at most 10 lines of output
+
+# Remove empty code cells from display
+nbsphinx_remove_empty_cells = True
+
+# Control which outputs to show
+nbsphinx_output_stderr = False  # Don't show stderr outputs
+
+# Custom CSS class for styling outputs
+nbsphinx_code_css_class = 'nbsphinx-code-cell'
+
+# Timeout for notebook execution (if executing)
+nbsphinx_timeout = 60
+
+# Additional nbsphinx configuration
+# nbsphinx_custom_formats = {
+#     '.md': ['jupytext.reads', {'fmt': 'mystnb'}],
+# }
+
+# Enable notebook downloads
+nbsphinx_prolog = r"""
+{% set docname = 'docs/source/' + env.doc2path(env.docname, base=None) %}
+
+.. only:: html
+
+    .. role:: raw-html(raw)
+        :format: html
+
+    .. nbinfo::
+        
+        This page was generated from `{{ docname }}`__.
+        Interactive online version:
+        :raw-html:`<a href="https://mybinder.org/v2/gh/jbirky/alabi/{{ env.config.release|e }}?filepath={{ docname|e }}"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg" style="vertical-align:text-bottom"></a>`
+
+    __ https://github.com/jbirky/alabi/blob/{{ env.config.release|e }}/{{ docname|e }}
+
+.. raw:: latex
+
+    \nbsphinxstartnotebook{\scriptsize\noindent\strut
+    \textcolor{gray}{The following section was generated from
+    \sphinxcode{\sphinxupquote{\strut {{ docname | escape_latex }}}} \dotfill}}
+"""
+
+# Add download links for notebooks
+nbsphinx_epilog = r"""
+.. only:: html
+
+    .. container:: sphx-glr-download sphx-glr-download-python
+
+        :download:`Download Python source code: {{ env.docname.split('/')[-1] }}.py <{{ env.docname.split('/')[-1] }}.py>`
+
+    .. container:: sphx-glr-download sphx-glr-download-jupyter
+
+        :download:`Download Jupyter notebook: {{ env.docname.split('/')[-1] }}.ipynb <{{ env.docname.split('/')[-1] }}.ipynb>`
+"""
 
 # -- Options for HTML output -------------------------------------------------
 
-html_static_path = ['_static']
+html_static_path = ["_static"]
+
+# Add custom CSS
+html_css_files = [
+    'custom.css',
+]
+
+# Add custom JavaScript
+html_js_files = [
+    'notebook-outputs.js',
+]
 
 html_theme_options = {
     "light_css_variables": {
@@ -67,11 +140,12 @@ html_theme_options = {
     },
 }
 
-# Build example gallery
-sphinx_gallery_conf = {
-     'examples_dirs': '../examples',   # path to your example scripts
-     'gallery_dirs': 'auto_examples',  # path to where to save gallery generated output
-     'filename_pattern': '/plot_',
-     'ignore_pattern': r'__init__\.py',
-     'download_all_examples': False,
-}
+# # Build example gallery
+# sphinx_gallery_conf = {
+#      "examples_dirs": "examples",   # path to your example scripts
+#      "gallery_dirs": "auto_examples",  # path to where to save gallery generated output
+#      "filename_pattern": "/plot_",
+#      "ignore_pattern": r"__init__\.py",
+#      "download_all_examples": False,
+#      "first_notebook_cell": "%matplotlib inline",  # Add matplotlib inline to notebooks
+# }

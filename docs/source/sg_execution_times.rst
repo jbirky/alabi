@@ -6,7 +6,7 @@
 
 Computation times
 =================
-**00:00.000** total execution time for 2 files **from all galleries**:
+**00:00.000** total execution time for 0 files **from all galleries**:
 
 .. container::
 
@@ -32,9 +32,6 @@ Computation times
    * - Example
      - Time
      - Mem (MB)
-   * - :ref:`sphx_glr_auto_examples_run_eggbox.py` (``../examples/run_eggbox.py``)
-     - 00:00.000
-     - 0.0
-   * - :ref:`sphx_glr_auto_examples_run_rosenbrock.py` (``../examples/run_rosenbrock.py``)
-     - 00:00.000
-     - 0.0
+   * - N/A
+     - N/A
+     - N/A

@@ -1,15 +1,21 @@
 ```{toctree}
-:caption: User Guide
+:caption: Intro
 :hidden:
 
-quickstart
-basic_usage/surrogate
-basic_usage/training
-basic_usage/bayes_opt
-basic_usage/mcmc
-auto_examples/index
-troubleshooting
+gp_tutorial
+mcmc_tutorial
 ```
+
+```{toctree}
+:caption: Examples
+:hidden:
+
+plot_function1d
+plot_line_fit
+plot_kl_divergence
+plot_demo
+```
+
 
 ```{toctree}
 :caption: API
@@ -73,7 +79,7 @@ bounds = [(-1, 1)]
 
 Initialize the surrogate model, specifying the function to train on, the bounds of the input space, and directory where the results will be saved:
 ```python
-sm = SurrogateModel(fn=test1d_fn, bounds=bounds, savedir=f"results/test1d")
+sm = SurrogateModel(lnlike_fn=test1d_fn, bounds=bounds, savedir=f"results/test1d")
 ```
 
 ### Step 4

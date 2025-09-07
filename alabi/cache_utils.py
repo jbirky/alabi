@@ -78,7 +78,6 @@ def write_report_emcee(self, file):
 
     lines += f"Configuration: \n"
     lines += f"-------------- \n"
-    lines += f"Prior: {self.lnprior_comment} \n\n"
 
     lines += f"Number of walkers: {self.nwalkers} \n"
     lines += f"Number of steps per walker: {self.nsteps} \n\n"
@@ -115,7 +114,6 @@ def write_report_dynesty(self, file):
 
     lines += f"Configuration: \n"
     lines += f"-------------- \n"
-    lines += f"Prior: {self.ptform_comment} \n\n"
 
     lines += f"Results: \n"
     lines += f"-------- \n"

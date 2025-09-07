@@ -1,30 +1,27 @@
 <!doctype html>
-<html class="no-js" lang="en" data-content_root="">
+<html class="no-js" lang="en" data-content_root="./">
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="alabi package" href="alabi.html" /><link rel="prev" title="Rosenbrock (2D)" href="auto_examples/run_rosenbrock.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="alabi package" href="alabi.html" /><link rel="prev" title="2D Benchmarks" href="plot_demo.html" />
 
-    <!-- Generated with Sphinx 7.1.2 and Furo 2024.08.06 -->
+    <!-- Generated with Sphinx 7.3.7 and Furo 2025.07.19 -->
         <title>alabi - alabi</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=362ab14a" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=354aac6f" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=25af2a20" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="_static/tabs.css?v=4c969af8" />
     <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=13237357" />
-    <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css?v=d2d258e8" />
-    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css?v=f4aeca0c" />
-    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css?v=2082cf3c" />
-    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css?v=1277b6f3" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=302659d7" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=a7f7f5d3" />
     
     
 
 
 <style>
   body {
-    --color-code-background: #f8f8f8;
-  --color-code-foreground: black;
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
   --font-stack: Roboto Light, sans-serif;
   --font-stack--monospace: Courier, monospace;
   --color-background-secondary: #eff1f6;
@@ -36,14 +33,14 @@
   }
   @media not print {
     body[data-theme="dark"] {
-      --color-code-background: #202020;
-  --color-code-foreground: #d0d0d0;
+      --color-code-background: #2b2b2b;
+  --color-code-foreground: #f8f8f2;
   
     }
     @media (prefers-color-scheme: dark) {
       body:not([data-theme="light"]) {
-        --color-code-background: #202020;
-  --color-code-foreground: #d0d0d0;
+        --color-code-background: #2b2b2b;
+  --color-code-foreground: #f8f8f2;
   
       }
     }
@@ -203,7 +200,6 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
-  
   <span class="sidebar-brand-text">alabi</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
@@ -212,19 +208,21 @@
   <input type="hidden" name="area" value="default">
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
-  <p class="caption" role="heading"><span class="caption-text">User Guide</span></p>
+  <p class="caption" role="heading"><span class="caption-text">Intro</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="basic_usage/training.html">GP Training</a></li>
-<li class="toctree-l1"><a class="reference internal" href="basic_usage/mcmc.html">MCMC</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="auto_examples/index.html">Example Gallery</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of Example Gallery</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="auto_examples/run_eggbox.html">Eggbox (2D)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="auto_examples/run_rosenbrock.html">Rosenbrock (2D)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gp_tutorial.html">GP Training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcmc_tutorial.html">MCMC sampling</a></li>
 </ul>
-</li>
+<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="plot_function1d.html">Active Learning in 1D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot_line_fit.html">Fit a line to data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot_kl_divergence.html">KL Divergence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot_demo.html">2D Benchmarks</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current">
-<li class="toctree-l1 current has-children current-page"><a class="current reference internal" href="#">alabi</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" role="switch" type="checkbox"/><label for="toctree-checkbox-2"><div class="visually-hidden">Toggle navigation of alabi</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 current has-children current-page"><a class="current reference internal" href="#">alabi</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of alabi</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="alabi.html">alabi package</a></li>
 </ul>
 </li>
@@ -275,12 +273,13 @@
         </div>
         <article role="main" id="furo-main-content">
           <section id="alabi">
-<h1>alabi<a class="headerlink" href="#alabi" title="Permalink to this heading">¶</a></h1>
+<h1>alabi<a class="headerlink" href="#alabi" title="Link to this heading">¶</a></h1>
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="alabi.html">alabi package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="alabi.html#module-alabi.benchmarks">alabi.benchmarks module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#benchmarks-py"><code class="xref py py-mod docutils literal notranslate"><span class="pre">benchmarks.py</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.benchmarks.random_gaussian_covariance"><code class="docutils literal notranslate"><span class="pre">random_gaussian_covariance()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="alabi.html#module-alabi.cache_utils">alabi.cache_utils module</a><ul>
@@ -295,25 +294,28 @@
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#core-py"><code class="xref py py-mod docutils literal notranslate"><span class="pre">core.py</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel"><code class="docutils literal notranslate"><span class="pre">SurrogateModel</span></code></a><ul>
 <li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.active_train"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.active_train()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.evaluate"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.evaluate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.active_train_parallel"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.active_train_parallel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.compare_parallel_vs_sequential"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.compare_parallel_vs_sequential()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.eval_gp_at_iteration"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.eval_gp_at_iteration()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.find_map"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.find_map()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.find_next_point"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.find_next_point()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.fit_gp"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.fit_gp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.get_chain_diversity_metrics"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.get_chain_diversity_metrics()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.init_gp"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.init_gp()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.init_samples"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.init_samples()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.init_test"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.init_test()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.init_train"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.init_train()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.lnprob"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.lnprob()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.load_test"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.load_test()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.load_train"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.load_train()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.neg_evaluate"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.neg_evaluate()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.opt_gp"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.opt_gp()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.plot"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.plot()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.run_dynesty"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.run_dynesty()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.run_emcee"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.run_emcee()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.save"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.save()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.scaled_function"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.scaled_function()</span></code></a></li>
 <li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.set_hyperparam_prior_bounds"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.set_hyperparam_prior_bounds()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.surrogate_likelihood"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.surrogate_likelihood()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.surrogate_log_likelihood"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.surrogate_log_likelihood()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.theta"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.theta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.y"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.y()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -321,7 +323,9 @@
 <li class="toctree-l2"><a class="reference internal" href="alabi.html#module-alabi.gp_utils">alabi.gp_utils module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#gp-utils-py"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gp_utils.py</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.gp_utils.configure_gp"><code class="docutils literal notranslate"><span class="pre">configure_gp()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.gp_utils.default_hyper_prior"><code class="docutils literal notranslate"><span class="pre">default_hyper_prior()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.gp_utils.grad_gp_kernel"><code class="docutils literal notranslate"><span class="pre">grad_gp_kernel()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.gp_utils.grad_gp_mean_prediction"><code class="docutils literal notranslate"><span class="pre">grad_gp_mean_prediction()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.gp_utils.grad_gp_var_prediction"><code class="docutils literal notranslate"><span class="pre">grad_gp_var_prediction()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.gp_utils.optimize_gp"><code class="docutils literal notranslate"><span class="pre">optimize_gp()</span></code></a></li>
 </ul>
 </li>
@@ -336,6 +340,7 @@
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.assign_utility"><code class="docutils literal notranslate"><span class="pre">assign_utility()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.bape_utility"><code class="docutils literal notranslate"><span class="pre">bape_utility()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.eval_fn"><code class="docutils literal notranslate"><span class="pre">eval_fn()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.grad_bape_utility"><code class="docutils literal notranslate"><span class="pre">grad_bape_utility()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.jones_utility"><code class="docutils literal notranslate"><span class="pre">jones_utility()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.lnprior_normal"><code class="docutils literal notranslate"><span class="pre">lnprior_normal()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.lnprior_uniform"><code class="docutils literal notranslate"><span class="pre">lnprior_uniform()</span></code></a></li>
@@ -354,12 +359,12 @@
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_corner_scatter"><code class="docutils literal notranslate"><span class="pre">plot_corner_scatter()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_dynesty_runplot"><code class="docutils literal notranslate"><span class="pre">plot_dynesty_runplot()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_dynesty_traceplot"><code class="docutils literal notranslate"><span class="pre">plot_dynesty_traceplot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_emcee_dynesty_comparison"><code class="docutils literal notranslate"><span class="pre">plot_emcee_dynesty_comparison()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_error_vs_iteration"><code class="docutils literal notranslate"><span class="pre">plot_error_vs_iteration()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_gp_fit_1D"><code class="docutils literal notranslate"><span class="pre">plot_gp_fit_1D()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_gp_fit_2D"><code class="docutils literal notranslate"><span class="pre">plot_gp_fit_2D()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_hyperparam_vs_iteration"><code class="docutils literal notranslate"><span class="pre">plot_hyperparam_vs_iteration()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_mcmc_comparison"><code class="docutils literal notranslate"><span class="pre">plot_mcmc_comparison()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_train_sample_vs_iteration"><code class="docutils literal notranslate"><span class="pre">plot_train_sample_vs_iteration()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_train_time_vs_iteration"><code class="docutils literal notranslate"><span class="pre">plot_train_time_vs_iteration()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_true_fit_2D"><code class="docutils literal notranslate"><span class="pre">plot_true_fit_2D()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_utility_2D"><code class="docutils literal notranslate"><span class="pre">plot_utility_2D()</span></code></a></li>
@@ -385,14 +390,14 @@
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
-          <a class="prev-page" href="auto_examples/run_rosenbrock.html">
+          <a class="prev-page" href="plot_demo.html">
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
               <div class="page-info">
                 <div class="context">
                   <span>Previous</span>
                 </div>
                 
-                <div class="title">Rosenbrock (2D)</div>
+                <div class="title">2D Benchmarks</div>
                 
               </div>
             </a>
@@ -400,7 +405,7 @@
         <div class="bottom-of-page">
           <div class="left-details">
             <div class="copyright">
-                Copyright &#169; 2021, Jessica Birky
+                Copyright &#169; 2021, Jess Birky
             </div>
             Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
             
@@ -420,10 +425,10 @@
       
     </aside>
   </div>
-</div><script data-url_root="./" id="documentation_options" src="_static/documentation_options.js?v=f6245a2f"></script>
-    <script src="_static/doctools.js?v=888ff710"></script>
-    <script src="_static/sphinx_highlight.js?v=4825356b"></script>
-    <script src="_static/scripts/furo.js?v=5fa4622c"></script>
+</div><script src="_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="_static/copybutton.js?v=f281be69"></script>
     <script src="_static/tabs.js?v=3ee01567"></script>
@@ -432,5 +437,10 @@
     <script>let toggleOpenOnPrint = 'true';</script>
     <script src="_static/togglebutton.js?v=4a39c7ea"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/notebook-outputs.js?v=9bb603c3"></script>
     </body>
 </html>
