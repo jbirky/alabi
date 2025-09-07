@@ -1,0 +1,135 @@
+/* Custom CSS for notebook downloads */
+
+.sphx-glr-download {
+    margin: 10px 0;
+}
+
+.sphx-glr-download-python,
+.sphx-glr-download-jupyter {
+    display: inline-block;
+    margin: 5px 10px 5px 0;
+}
+
+.sphx-glr-download a {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    color: #495057;
+    display: inline-block;
+    padding: 0.375rem 0.75rem;
+    text-decoration: none;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    transition: all 0.15s ease-in-out;
+}
+
+/* Notebook output styling and length control */
+.nbsphinx .nbsphinx-code-cell {
+    margin: 1em 0;
+}
+
+/* Limit height of long outputs */
+.nbsphinx .nboutput {
+    max-height: 400px;
+    overflow-y: auto;
+    margin: 0.5em 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Style for truncated outputs */
+.nbsphinx .nboutput.nbsphinx-truncated::after {
+    content: "... [output truncated]";
+    display: block;
+    text-align: center;
+    font-style: italic;
+    color: #666;
+    padding: 0.5em;
+    background-color: #f8f9fa;
+    border-top: 1px solid #ddd;
+}
+
+/* Hide stderr outputs if desired */
+.nbsphinx .nboutput .stderr {
+    display: none;
+}
+
+/* Style for large dataframe outputs */
+.nbsphinx .nboutput table {
+    max-height: 300px;
+    overflow-y: auto;
+    display: block;
+}
+
+/* Collapsible long outputs */
+.nbsphinx .nboutput-collapse {
+    max-height: 200px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    position: relative;
+}
+
+.nbsphinx .nboutput-collapse::after {
+    content: "Click to expand full output";
+    display: block;
+    text-align: center;
+    font-style: italic;
+    color: #007bff;
+    cursor: pointer;
+    padding: 0.5em;
+    background: linear-gradient(transparent, white);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+}
+
+.nbsphinx .nboutput-collapse.expanded {
+    max-height: none;
+}
+
+.nbsphinx .nboutput-collapse.expanded::after {
+    display: none;
+}
+
+.sphx-glr-download a:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+    color: #495057;
+    text-decoration: none;
+}
+
+.sphx-glr-download-python a {
+    background: #f8f9fa;
+    border-color: #28a745;
+    color: #28a745;
+}
+
+.sphx-glr-download-python a:hover {
+    background: #28a745;
+    color: white;
+}
+
+.sphx-glr-download-jupyter a {
+    background: #f8f9fa;
+    border-color: #fd7e14;
+    color: #fd7e14;
+}
+
+.sphx-glr-download-jupyter a:hover {
+    background: #fd7e14;
+    color: white;
+}
+
+/* Notebook info styling */
+.nbinfo {
+    background: #e7f3ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+
+.nbinfo p {
+    margin: 0.5rem 0;
+}
