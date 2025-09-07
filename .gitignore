@@ -3,3 +3,5 @@
 *.hdf5
 *.csv
 __pycache__/
+docs/source/demo/
+docs/source/results/

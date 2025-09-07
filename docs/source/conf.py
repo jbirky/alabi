@@ -7,9 +7,17 @@
 
 import os
 import sys
-#sys.path.insert(0, os.path.abspath("../../alabi"))
-basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-sys.path.insert(0, basedir)
+
+# Check if we're building on ReadTheDocs
+on_rtd = os.environ.get('READTHEDOCS') == 'True'
+
+if on_rtd:
+    # On ReadTheDocs, use the installed package
+    import alabi
+else:
+    # For local builds, use the development version
+    basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+    sys.path.insert(0, basedir)
 
 # -- Project information -----------------------------------------------------
 
@@ -46,6 +54,18 @@ templates_path = ["_templates"]
 
 exclude_patterns = ["_build", "**.ipynb_checkpoints"]
 
+# Autodoc settings
+autodoc_default_options = {
+    'members': True,
+    'member-order': 'bysource',
+    'special-members': '__init__',
+    'undoc-members': True,
+    'exclude-members': '__weakref__'
+}
+
+# Mock imports for packages that might not be available during doc build
+autodoc_mock_imports = ['george', 'emcee', 'dynesty', 'corner', 'h5py', 'tqdm', 'pybind11']
+
 # nbsphinx specific settings
 nbsphinx_execute = 'never'  # Never execute notebook cells during build
 nbsphinx_allow_errors = True  # Continue through errors
@@ -68,47 +88,56 @@ nbsphinx_code_css_class = 'nbsphinx-code-cell'
 # Timeout for notebook execution (if executing)
 nbsphinx_timeout = 60
 
+# Disable problematic prolog/epilog for now
+# nbsphinx_prolog = ""
+# nbsphinx_epilog = ""
+
 # Additional nbsphinx configuration
 # nbsphinx_custom_formats = {
 #     '.md': ['jupytext.reads', {'fmt': 'mystnb'}],
 # }
 
+# Disable notebook prolog/epilog that was causing ReadTheDocs build issues
+# TODO: Fix template string concatenation issues and re-enable
+# 
 # Enable notebook downloads
-nbsphinx_prolog = r"""
-{% set docname = 'docs/source/' + env.doc2path(env.docname, base=None) %}
-
-.. only:: html
-
-    .. role:: raw-html(raw)
-        :format: html
-
-    .. nbinfo::
-        
-        This page was generated from `{{ docname }}`__.
-        Interactive online version:
-        :raw-html:`<a href="https://mybinder.org/v2/gh/jbirky/alabi/{{ env.config.release|e }}?filepath={{ docname|e }}"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg" style="vertical-align:text-bottom"></a>`
-
-    __ https://github.com/jbirky/alabi/blob/{{ env.config.release|e }}/{{ docname|e }}
-
-.. raw:: latex
-
-    \nbsphinxstartnotebook{\scriptsize\noindent\strut
-    \textcolor{gray}{The following section was generated from
-    \sphinxcode{\sphinxupquote{\strut {{ docname | escape_latex }}}} \dotfill}}
-"""
+# nbsphinx_prolog = r"""
+# {% set docname = env.doc2path(env.docname, base=None) | string %}
+# 
+# .. only:: html
+# 
+#     .. role:: raw-html(raw)
+#         :format: html
+# 
+#     .. nbinfo::
+#         
+#         This page was generated from `{{ docname }}`__.
+#         {% if env.config.html_baseurl %}
+#         Interactive online version:
+#         :raw-html:`<a href="https://mybinder.org/v2/gh/jbirky/alabi/HEAD?filepath={{ docname|e }}"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg" style="vertical-align:text-bottom"></a>`
+#         {% endif %}
+# 
+#     __ https://github.com/jbirky/alabi/blob/main/{{ docname|e }}
+# 
+# .. raw:: latex
+# 
+#     \nbsphinxstartnotebook{\scriptsize\noindent\strut
+#     \textcolor{gray}{The following section was generated from
+#     \sphinxcode{\sphinxupquote{\strut {{ docname | escape_latex }}}} \dotfill}}
+# """
 
 # Add download links for notebooks
-nbsphinx_epilog = r"""
-.. only:: html
-
-    .. container:: sphx-glr-download sphx-glr-download-python
-
-        :download:`Download Python source code: {{ env.docname.split('/')[-1] }}.py <{{ env.docname.split('/')[-1] }}.py>`
-
-    .. container:: sphx-glr-download sphx-glr-download-jupyter
-
-        :download:`Download Jupyter notebook: {{ env.docname.split('/')[-1] }}.ipynb <{{ env.docname.split('/')[-1] }}.ipynb>`
-"""
+# nbsphinx_epilog = r"""
+# .. only:: html
+# 
+#     .. container:: sphx-glr-download sphx-glr-download-python
+# 
+#         :download:`Download Python source code: {{ env.docname.split('/')[-1] }}.py <{{ env.docname.split('/')[-1] }}.py>`
+# 
+#     .. container:: sphx-glr-download sphx-glr-download-jupyter
+# 
+#         :download:`Download Jupyter notebook: {{ env.docname.split('/')[-1] }}.ipynb <{{ env.docname.split('/')[-1] }}.ipynb>`
+# """
 
 # -- Options for HTML output -------------------------------------------------
 

@@ -412,6 +412,8 @@
 <span class="sd">    run_emcee : Run MCMC sampling</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="SurrogateModel.__init__">
+<a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lnlike_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">param_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">theta_scaler</span><span class="o">=</span><span class="n">preprocessing</span><span class="o">.</span><span class="n">MinMaxScaler</span><span class="p">(),</span> <span class="n">y_scaler</span><span class="o">=</span><span class="n">no_scaler</span><span class="p">,</span>
                  <span class="n">cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">savedir</span><span class="o">=</span><span class="s2">&quot;results/&quot;</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;surrogate_model&quot;</span><span class="p">,</span>
@@ -503,7 +505,8 @@
                                  <span class="s2">&quot;test_scaled_mse&quot;</span> <span class="p">:</span> <span class="p">[],</span>
                                  <span class="s2">&quot;gp_kl_divergence&quot;</span> <span class="p">:</span> <span class="p">[],</span>
                                  <span class="s2">&quot;gp_train_time&quot;</span> <span class="p">:</span> <span class="p">[],</span>
-                                 <span class="s2">&quot;obj_fn_opt_time&quot;</span> <span class="p">:</span> <span class="p">[]}</span>
+                                 <span class="s2">&quot;obj_fn_opt_time&quot;</span> <span class="p">:</span> <span class="p">[]}</span></div>
+
 
     
 <div class="viewcode-block" id="SurrogateModel.save">
