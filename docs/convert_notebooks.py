@@ -81,7 +81,7 @@ def jupyter_notebook_to_python(nb):
 
 def main():
     """Convert all notebooks in the docs/source directory"""
-    source_dir = Path(__file__).parent
+    source_dir = Path("source")  # Changed from Path(__file__).parent
     
     for notebook_path in source_dir.glob("*.ipynb"):
         if notebook_path.name.startswith('.'):

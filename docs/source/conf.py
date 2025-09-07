@@ -97,47 +97,38 @@ nbsphinx_timeout = 60
 #     '.md': ['jupytext.reads', {'fmt': 'mystnb'}],
 # }
 
-# Disable notebook prolog/epilog that was causing ReadTheDocs build issues
-# TODO: Fix template string concatenation issues and re-enable
-# 
-# Enable notebook downloads
-# nbsphinx_prolog = r"""
-# {% set docname = env.doc2path(env.docname, base=None) | string %}
-# 
-# .. only:: html
-# 
-#     .. role:: raw-html(raw)
-#         :format: html
-# 
-#     .. nbinfo::
-#         
-#         This page was generated from `{{ docname }}`__.
-#         {% if env.config.html_baseurl %}
-#         Interactive online version:
-#         :raw-html:`<a href="https://mybinder.org/v2/gh/jbirky/alabi/HEAD?filepath={{ docname|e }}"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg" style="vertical-align:text-bottom"></a>`
-#         {% endif %}
-# 
-#     __ https://github.com/jbirky/alabi/blob/main/{{ docname|e }}
-# 
-# .. raw:: latex
-# 
-#     \nbsphinxstartnotebook{\scriptsize\noindent\strut
-#     \textcolor{gray}{The following section was generated from
-#     \sphinxcode{\sphinxupquote{\strut {{ docname | escape_latex }}}} \dotfill}}
-# """
+# Enable notebook information with simplified prolog (avoiding path concatenation issues)
+nbsphinx_prolog = r"""
+.. only:: html
+
+    .. role:: raw-html(raw)
+        :format: html
+
+    .. nbinfo::
+        
+        This notebook is available on `GitHub <https://github.com/jbirky/alabi/blob/main/docs/source/{{ env.docname }}.ipynb>`__.
+        Interactive online version:
+        :raw-html:`<a href="https://mybinder.org/v2/gh/jbirky/alabi/HEAD?filepath=docs/source/{{ env.docname }}.ipynb"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg" style="vertical-align:text-bottom"></a>`
+
+.. raw:: latex
+
+    \nbsphinxstartnotebook{\scriptsize\noindent\strut
+    \textcolor{gray}{The following section was generated from
+    \sphinxcode{\sphinxupquote{\strut docs/source/{{ env.docname }}.ipynb}} \dotfill}}
+"""
 
 # Add download links for notebooks
-# nbsphinx_epilog = r"""
-# .. only:: html
-# 
-#     .. container:: sphx-glr-download sphx-glr-download-python
-# 
-#         :download:`Download Python source code: {{ env.docname.split('/')[-1] }}.py <{{ env.docname.split('/')[-1] }}.py>`
-# 
-#     .. container:: sphx-glr-download sphx-glr-download-jupyter
-# 
-#         :download:`Download Jupyter notebook: {{ env.docname.split('/')[-1] }}.ipynb <{{ env.docname.split('/')[-1] }}.ipynb>`
-# """
+nbsphinx_epilog = r"""
+.. only:: html
+
+    .. container:: sphx-glr-download sphx-glr-download-python
+
+        :download:`Download Python source code: {{ env.docname.split('/')[-1] }}.py <{{ env.docname.split('/')[-1] }}.py>`
+
+    .. container:: sphx-glr-download sphx-glr-download-jupyter
+
+        :download:`Download Jupyter notebook: {{ env.docname.split('/')[-1] }}.ipynb <{{ env.docname.split('/')[-1] }}.ipynb>`
+"""
 
 # -- Options for HTML output -------------------------------------------------
 
