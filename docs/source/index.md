@@ -3,6 +3,7 @@
 :hidden:
 
 quickstart
+save_reload
 gp_tutorial
 mcmc_tutorial
 plot_bayesian_optimization
@@ -12,10 +13,11 @@ plot_bayesian_optimization
 :caption: Examples
 :hidden:
 
-plot_function1d
+plot_demo_1d
+plot_demo_2d
 plot_line_fit
 plot_kl_divergence
-plot_demo
+plot_gaussian_nd
 ```
 
 
@@ -37,11 +39,14 @@ Issues <https://github.com/jbirky/alabi/issues>
 
 <!-- ------------------------------------------------------------------------ -->
 
-## Active Learning Accelerated Bayesian Inference (ALABI)
+# ``alabi``
+
+## Active Learning Accelerated Bayesian Inference 
 
 A python package for performing bayesian inference and optimization for computationally expensive functions.
 
-### Contributors:
+## 
+#### Contributors:
 
 - [Jess Birky](https://github.com/jbirky)
 - [Rory Barnes](https://github.com/RoryBarnes)

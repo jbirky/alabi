@@ -1,9 +1,9 @@
 """
-plot_function1d
-===============
+plot_demo_1d
+============
 
 This Python script was automatically generated from the Jupyter notebook
-plot_function1d.ipynb.
+plot_demo_1d.ipynb.
 
 You can run this script directly or copy sections into your own code.
 """
@@ -71,6 +71,9 @@ def bape(xgrid):
 def agp(xgrid):
 
     return -np.array([ut.agp_utility(np.array([x]), sm._y, sm.gp, sm.bounds) for x in xgrid])
+
+# %% [markdown]
+# Define a plot function for inspecting the current GP fit so that we can compare the fit before and after active learning training.
 
 # %%
 def plot_current_gp(sm):

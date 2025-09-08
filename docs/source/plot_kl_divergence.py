@@ -62,6 +62,9 @@ print("mean:", mean)
 
 print("cov:", cov)
 
+# %% [markdown]
+# ### Define `alabi` settings and run function
+
 # %%
 gp_kwargs = {"kernel": "ExpSquaredKernel", 
 
@@ -177,9 +180,9 @@ def run_alabi(ndim, with_mcmc=True):
 
             sm.run_dynesty(like_fn=sm.surrogate_log_likelihood, 
 
-                           sampler_kwargs=dynesty_sampler_kwargs, r
+                           sampler_kwargs=dynesty_sampler_kwargs,
 
-                           un_kwargs=dynesty_run_kwargs)
+                           run_kwargs=dynesty_run_kwargs)
 
 
 
@@ -187,6 +190,20 @@ def run_alabi(ndim, with_mcmc=True):
 
 # %%
 sm = run_alabi(ndim, with_mcmc=True)
+
+# %% [markdown]
+# ### Measure convergence using KL divergence metric
+# 
+# Compute the KL divergence between the surrogate model Gaussian ($P$) and the true Gaussian ($Q$) using the means and covariances:
+# 
+# $$ D_{\rm KL}(P \Vert Q) =
+#      \frac{1}{2} \left[ \log \frac{\vert K_2 \vert}{\vert K_1 \vert}
+#         + \mu^T K_2^{-1} \mu
+#         + \mathrm{tr} \left(K_2^{-1} K_1\right) - k
+#     \right] $$
+# where $K_1$ is the covariance matrix of $P$, $K_2$ is the covariance matrix of $Q$, and $\mu = \mu_1 - \mu_2$ is the difference in the mean of $P$ and $Q$.
+# 
+# If $D_{\rm KL}(P \Vert Q) = 0$, then the two distributions are identical, whereas a larger KL divergence value indicates greater divergence.
 
 # %%
 batches = np.arange(ntrain, int(nbatch * niter_per_batch)+1, niter_per_batch)
@@ -208,6 +225,9 @@ for it in batches:
     kl_div = metrics.kl_divergence_gaussian(mean, cov, dynesty_samples_model.mean(axis=0), np.cov(dynesty_samples_model, rowvar=False))
 
     kl_divergence.append(kl_div)
+
+# %% [markdown]
+# Plot KL divergence vs. iteration. For this 4D Gaussian example it takes roughly ~30 active learning iterations for the surrogate model to converge.
 
 # %%
 plt.plot(batches, kl_divergence, marker='o')

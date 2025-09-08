@@ -3,7 +3,7 @@
   <head><meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width,initial-scale=1"/>
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="2D Benchmarks" href="plot_demo.html" /><link rel="prev" title="Fit a line to data" href="plot_line_fit.html" />
+<link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="Test computational scaling" href="plot_gaussian_nd.html" /><link rel="prev" title="Fit a line to data" href="plot_line_fit.html" />
         <link rel="canonical" href="https://alabi.jessicabirky.com/plot_kl_divergence.html" />
 
     <!-- Generated with Sphinx 7.3.7 and Furo 2025.07.19 -->
@@ -191,7 +191,7 @@
           <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
         </button>
       </div>
-      <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
         <div class="visually-hidden">Toggle table of contents sidebar</div>
         <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
       </label>
@@ -214,16 +214,18 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html#quickstart-example">Quickstart Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="save_reload.html">Saving and Reloading</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gp_tutorial.html">GP Training</a></li>
 <li class="toctree-l1"><a class="reference internal" href="mcmc_tutorial.html">MCMC sampling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot_bayesian_optimization.html">Bayesian Optimization</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Examples</span></p>
 <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="plot_function1d.html">Visualize Active Learning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot_demo_1d.html">Visualize Active Learning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot_demo_2d.html">2D Benchmarks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot_line_fit.html">Fit a line to data</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">KL Divergence</a></li>
-<li class="toctree-l1"><a class="reference internal" href="plot_demo.html">2D Benchmarks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot_gaussian_nd.html">Test computational scaling</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul>
@@ -271,7 +273,7 @@
               <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
             </button>
           </div>
-          <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
             <div class="visually-hidden">Toggle table of contents sidebar</div>
             <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
           </label>
@@ -334,6 +336,8 @@ cov: [[ 0.44158713 -0.07856504  0.22354773 -0.40385537]
  [-0.40385537  0.5080006  -0.85113813  1.27353841]]
 </pre></div></div>
 </div>
+<section id="Define-alabi-settings-and-run-function">
+<h2>Define <code class="docutils literal notranslate"><span class="pre">alabi</span></code> settings and run function<a class="headerlink" href="#Define-alabi-settings-and-run-function" title="Link to this heading">¶</a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
@@ -395,226 +399,35 @@ cov: [[ 0.44158713 -0.07856504  0.22354773 -0.40385537]
 
             <span class="c1"># Run MCMC on surrogate likelihood function</span>
             <span class="n">sm</span><span class="o">.</span><span class="n">run_dynesty</span><span class="p">(</span><span class="n">like_fn</span><span class="o">=</span><span class="n">sm</span><span class="o">.</span><span class="n">surrogate_log_likelihood</span><span class="p">,</span>
-                           <span class="n">sampler_kwargs</span><span class="o">=</span><span class="n">dynesty_sampler_kwargs</span><span class="p">,</span> <span class="n">r</span>
-                           <span class="n">un_kwargs</span><span class="o">=</span><span class="n">dynesty_run_kwargs</span><span class="p">)</span>
+                           <span class="n">sampler_kwargs</span><span class="o">=</span><span class="n">dynesty_sampler_kwargs</span><span class="p">,</span>
+                           <span class="n">run_kwargs</span><span class="o">=</span><span class="n">dynesty_run_kwargs</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">sm</span>
 </pre></div>
 </div>
 </div>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sm</span> <span class="o">=</span> <span class="n">run_alabi</span><span class="p">(</span><span class="n">ndim</span><span class="p">,</span> <span class="n">with_mcmc</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
+</section>
+<section id="Measure-convergence-using-KL-divergence-metric">
+<h2>Measure convergence using KL divergence metric<a class="headerlink" href="#Measure-convergence-using-KL-divergence-metric" title="Link to this heading">¶</a></h2>
+<p>Compute the KL divergence between the surrogate model Gaussian (<span class="math notranslate nohighlight">\(P\)</span>) and the true Gaussian (<span class="math notranslate nohighlight">\(Q\)</span>) using the means and covariances:</p>
+<div class="math-wrapper docutils container">
+<div class="math notranslate nohighlight">
+\[D_{\rm KL}(P \Vert Q) =
+    \frac{1}{2} \left[ \log \frac{\vert K_2 \vert}{\vert K_1 \vert}
+       + \mu^T K_2^{-1} \mu
+       + \mathrm{tr} \left(K_2^{-1} K_1\right) - k
+   \right]\]</div>
 </div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Computed 10 function evaluations: 0.0s
-
-Initialized GP with squared exponential kernel.
-Successfully initialized GP on attempt 1
-Optimized 6 hyperparameters: (0.013s)
-Running 10 active learning iterations using bape...
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|██████████| 10/10 [00:01&lt;00:00,  6.05it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Optimized 6 hyperparameters: (0.013s)
-Caching model to convergence_results/multivariate_normal_4d/surrogate_model...
-Initializing dynesty with self.surrogate_log_likelihood surrogate model as likelihood.
-Initialized dynesty DynamicNestedSampler.
-Running dynesty with 200 live points on 1 cores...
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-12494it [00:47, 264.27it/s, batch: 14 | bound: 13 | nc: 1 | ncall: 82607 | eff(%): 14.765 | loglstar: -6.170 &lt;  1.122 &lt;  0.148 | logz: -4.567 +/-  0.057 | stop:  0.918]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Caching model to convergence_results/multivariate_normal_4d/surrogate_model...
-Running 10 active learning iterations using bape...
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|██████████| 10/10 [00:01&lt;00:00,  6.25it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Optimized 6 hyperparameters: (0.019s)
-Caching model to convergence_results/multivariate_normal_4d/surrogate_model...
-Initializing dynesty with self.surrogate_log_likelihood surrogate model as likelihood.
-Initialized dynesty DynamicNestedSampler.
-Running dynesty with 200 live points on 1 cores...
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-11947it [00:37, 321.38it/s, batch: 14 | bound: 7 | nc: 1 | ncall: 57552 | eff(%): 20.387 | loglstar: -9.517 &lt; -2.526 &lt; -3.524 | logz: -7.659 +/-  0.054 | stop:  0.947]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Caching model to convergence_results/multivariate_normal_4d/surrogate_model...
-Running 10 active learning iterations using bape...
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|██████████| 10/10 [00:01&lt;00:00,  6.43it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Optimized 6 hyperparameters: (0.071s)
-Caching model to convergence_results/multivariate_normal_4d/surrogate_model...
-Initializing dynesty with self.surrogate_log_likelihood surrogate model as likelihood.
-Initialized dynesty DynamicNestedSampler.
-Running dynesty with 200 live points on 1 cores...
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-12057it [00:34, 349.30it/s, batch: 14 | bound: 6 | nc: 1 | ncall: 55324 | eff(%): 21.392 | loglstar: -9.310 &lt; -2.488 &lt; -3.479 | logz: -7.119 +/-  0.049 | stop:  0.931]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Caching model to convergence_results/multivariate_normal_4d/surrogate_model...
-Running 10 active learning iterations using bape...
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|██████████| 10/10 [00:01&lt;00:00,  5.11it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Optimized 6 hyperparameters: (0.111s)
-Caching model to convergence_results/multivariate_normal_4d/surrogate_model...
-Initializing dynesty with self.surrogate_log_likelihood surrogate model as likelihood.
-Initialized dynesty DynamicNestedSampler.
-Running dynesty with 200 live points on 1 cores...
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-12127it [00:34, 347.98it/s, batch: 14 | bound: 6 | nc: 1 | ncall: 54578 | eff(%): 21.869 | loglstar: -9.474 &lt; -2.513 &lt; -3.370 | logz: -7.253 +/-  0.050 | stop:  0.923]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Caching model to convergence_results/multivariate_normal_4d/surrogate_model...
-Running 10 active learning iterations using bape...
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-100%|██████████| 10/10 [00:01&lt;00:00,  6.39it/s]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Optimized 6 hyperparameters: (0.102s)
-Caching model to convergence_results/multivariate_normal_4d/surrogate_model...
-Initializing dynesty with self.surrogate_log_likelihood surrogate model as likelihood.
-Initialized dynesty DynamicNestedSampler.
-Running dynesty with 200 live points on 1 cores...
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-12141it [00:38, 317.86it/s, batch: 14 | bound: 7 | nc: 1 | ncall: 52854 | eff(%): 22.628 | loglstar: -9.361 &lt; -2.541 &lt; -3.200 | logz: -7.249 +/-  0.051 | stop:  0.927]
-</pre></div></div>
-</div>
-<div class="nboutput docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area docutils container">
-<div class="highlight"><pre>
-Caching model to convergence_results/multivariate_normal_4d/surrogate_model...
-</pre></div></div>
-</div>
-<div class="nboutput nblast docutils container">
-<div class="prompt empty docutils container">
-</div>
-<div class="output_area stderr docutils container">
-<div class="highlight"><pre>
-
-</pre></div></div>
-</div>
+<p>where <span class="math notranslate nohighlight">\(K_1\)</span> is the covariance matrix of <span class="math notranslate nohighlight">\(P\)</span>, <span class="math notranslate nohighlight">\(K_2\)</span> is the covariance matrix of <span class="math notranslate nohighlight">\(Q\)</span>, and <span class="math notranslate nohighlight">\(\mu = \mu_1 - \mu_2\)</span> is the difference in the mean of <span class="math notranslate nohighlight">\(P\)</span> and <span class="math notranslate nohighlight">\(Q\)</span>.</p>
+<p>If <span class="math notranslate nohighlight">\(D_{\rm KL}(P \Vert Q) = 0\)</span>, then the two distributions are identical, whereas a larger KL divergence value indicates greater divergence.</p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
@@ -632,6 +445,7 @@ Caching model to convergence_results/multivariate_normal_4d/surrogate_model...
 </pre></div>
 </div>
 </div>
+<p>Plot KL divergence vs. iteration. For this 4D Gaussian example it takes roughly ~30 active learning iterations for the surrogate model to converge.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
@@ -647,17 +461,10 @@ Caching model to convergence_results/multivariate_normal_4d/surrogate_model...
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="_images/plot_kl_divergence_7_0.png" src="_images/plot_kl_divergence_7_0.png" />
+<img alt="_images/plot_kl_divergence_10_0.png" src="_images/plot_kl_divergence_10_0.png" />
 </div>
 </div>
-<div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
-</pre></div>
-</div>
-</div>
+</section>
 </section>
 <div class="sphx-glr-download sphx-glr-download-python docutils container">
 <p><a class="reference download internal" download="" href="_downloads/b4b80e620530e7a6e6c5af23c1874450/plot_kl_divergence.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_kl_divergence.py</span></code></a></p>
@@ -671,12 +478,12 @@ Caching model to convergence_results/multivariate_normal_4d/surrogate_model...
       <footer>
         
         <div class="related-pages">
-          <a class="next-page" href="plot_demo.html">
+          <a class="next-page" href="plot_gaussian_nd.html">
               <div class="page-info">
                 <div class="context">
                   <span>Next</span>
                 </div>
-                <div class="title">2D Benchmarks</div>
+                <div class="title">Test computational scaling</div>
               </div>
               <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
             </a>
@@ -709,8 +516,28 @@ Caching model to convergence_results/multivariate_normal_4d/surrogate_model...
         
       </footer>
     </div>
-    <aside class="toc-drawer no-toc">
+    <aside class="toc-drawer">
       
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">KL Divergence</a><ul>
+<li><a class="reference internal" href="#Define-alabi-settings-and-run-function">Define <code class="docutils literal notranslate"><span class="pre">alabi</span></code> settings and run function</a></li>
+<li><a class="reference internal" href="#Measure-convergence-using-KL-divergence-metric">Measure convergence using KL divergence metric</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
       
       
     </aside>

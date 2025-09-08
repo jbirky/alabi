@@ -1,9 +1,9 @@
 """
-plot_demo
-=========
+plot_demo_2d
+============
 
 This Python script was automatically generated from the Jupyter notebook
-plot_demo.ipynb.
+plot_demo_2d.ipynb.
 
 You can run this script directly or copy sections into your own code.
 """
