@@ -216,6 +216,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Examples</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="plot_bayesian_optimization.html">Bayesian Optimization with Jones Algorithm</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot_function1d.html">Active Learning in 1D</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot_line_fit.html">Fit a line to data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot_kl_divergence.html">KL Divergence</a></li>
@@ -460,12 +461,14 @@ Random seed for reproducible results</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.theta">
 <span class="sig-name descname"><span class="pre">theta</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.theta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.theta" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Return unscaled training theta values</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.y">
 <span class="sig-name descname"><span class="pre">y</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.y"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.y" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Return unscaled training y values</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.init_train">
@@ -486,7 +489,18 @@ See <code class="docutils literal notranslate"><span class="pre">utility.prior_s
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.load_train">
 <span class="sig-name descname"><span class="pre">load_train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cache_file</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.load_train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.load_train" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Reload training samples from cache file and apply scalers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cache_file</strong> – (<em>str, required</em>) 
+Name of cache file relative to savedir. Must be a .npz file containing ‘theta’ and ‘y’ arrays.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(<em>tuple</em>) 
+Scaled training samples (_theta, _y) after loading from cache.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.init_samples">
@@ -547,17 +561,50 @@ theta_scaler and y_scaler.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.set_hyperparam_prior_bounds">
 <span class="sig-name descname"><span class="pre">set_hyperparam_prior_bounds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.set_hyperparam_prior_bounds"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.set_hyperparam_prior_bounds" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Configure prior bounds for GP hyperparameters based on current training data.</p>
+<dl class="simple">
+<dt>By default ranges for parameters:</dt><dd><ul class="simple">
+<li><p>mean: [mean(y) - std(y), mean(y) + std(y)]</p></li>
+<li><p>amplitude: [0.1, 10]</p></li>
+<li><p>white noise: [white_noise - 3, white_noise + 3]</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.fit_gp">
 <span class="sig-name descname"><span class="pre">fit_gp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_theta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.fit_gp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.fit_gp" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Fit Gaussian Process to training data with current hyperparameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>_theta</strong> – (<em>array, optional</em>) 
+Scaled training parameter samples. If None, uses <code class="docutils literal notranslate"><span class="pre">self._theta</span></code>.</p></li>
+<li><p><strong>_y</strong> – (<em>array, optional</em>) 
+Scaled training output values. If None, uses <code class="docutils literal notranslate"><span class="pre">self._y</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(<em>tuple</em>) 
+- gp: Fitted george.GP object
+- timing: Time taken to fit the GP in seconds</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.opt_gp">
 <span class="sig-name descname"><span class="pre">opt_gp</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.opt_gp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.opt_gp" title="Link to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Optimize GP hyperparameters by maximizing the log marginal likelihood.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>(<em>tuple</em>) 
+- op_gp: Optimized george.GP object with updated hyperparameters
+- timing: Time taken for optimization in seconds</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.init_gp">
@@ -652,19 +699,34 @@ different random scale lengths if the initial attempt fails.</p>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.eval_gp_at_iteration">
-<span class="sig-name descname"><span class="pre">eval_gp_at_iteration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.eval_gp_at_iteration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.eval_gp_at_iteration" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">eval_gp_at_iteration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.eval_gp_at_iteration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.eval_gp_at_iteration" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.surrogate_log_likelihood">
-<span class="sig-name descname"><span class="pre">surrogate_log_likelihood</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta_xs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.surrogate_log_likelihood"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.surrogate_log_likelihood" title="Link to this definition">¶</a></dt>
-<dd><p>Evaluate predictive mean of the GP at point <code class="docutils literal notranslate"><span class="pre">theta_xs</span></code></p>
+<span class="sig-name descname"><span class="pre">surrogate_log_likelihood</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta_xs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.surrogate_log_likelihood"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.surrogate_log_likelihood" title="Link to this definition">¶</a></dt>
+<dd><p>Evaluate predictive mean of the GP at point(s) <code class="docutils literal notranslate"><span class="pre">theta_xs</span></code></p>
+<p>This method is vectorized to handle both single parameter vectors and
+arrays of parameter vectors efficiently.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>theta_xs</strong> – (<em>array, required</em>) Point to evaluate GP mean at.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>theta_xs</strong> (<em>array-like</em>) – Point(s) to evaluate GP mean at. Can be:
+- 1D array of shape (ndim,) for single point
+- 2D array of shape (npoints, ndim) for multiple points</p></li>
+<li><p><strong>iter</strong> (<em>int, optional</em>) – Iteration number of GP to use. If -1, uses most recent GP.</p></li>
+<li><p><strong>return_var</strong> (<em>bool, optional</em>) – Whether to also return variance predictions.</p></li>
+</ul>
 </dd>
-<dt class="field-even">Returns ypred<span class="colon">:</span></dt>
-<dd class="field-even"><p>(<em>float</em>) GP mean evaluated at <code class="docutils literal notranslate"><span class="pre">theta_xs</span></code>.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>ypred</strong> (<em>array</em>) – GP mean(s) evaluated at <code class="docutils literal notranslate"><span class="pre">theta_xs</span></code>. Shape matches input.</p></li>
+<li><p><strong>varpred</strong> (<em>array, optional</em>) – GP variance(s) if return_var=True.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>array or tuple of arrays</em></p>
 </dd>
 </dl>
 </dd></dl>
@@ -672,7 +734,22 @@ different random scale lengths if the initial attempt fails.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.surrogate_likelihood">
 <span class="sig-name descname"><span class="pre">surrogate_likelihood</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta_xs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.surrogate_likelihood"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.surrogate_likelihood" title="Link to this definition">¶</a></dt>
-<dd><p>Evaluate predictive probability (not log-probability) of the GP at point theta_xs</p>
+<dd><p>Evaluate predictive probability (not log-probability) of the GP at point(s) theta_xs</p>
+<p>This method is vectorized to handle both single parameter vectors and
+arrays of parameter vectors efficiently.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>theta_xs</strong> (<em>array-like</em>) – Point(s) to evaluate GP probability at. Can be:
+- 1D array of shape (ndim,) for single point
+- 2D array of shape (npoints, ndim) for multiple points</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>GP probability/probabilities evaluated at <code class="docutils literal notranslate"><span class="pre">theta_xs</span></code>. Shape matches input.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>float or array</em></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -2109,47 +2186,7 @@ on [0,1] to uniform random variables on [a,b].</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="alabi.visualization.plot_contour_2D">
 <span class="sig-prename descclassname"><span class="pre">alabi.visualization.</span></span><span class="sig-name descname"><span class="pre">plot_contour_2D</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">savedir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">savename</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">title</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ngrid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Blues_r'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xlabel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ylabel</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/visualization.html#plot_contour_2D"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.visualization.plot_contour_2D" title="Link to this definition">¶</a></dt>
-<dd><p>Plot a 2D contour plot of a function.</p>
-<section id="parameters">
-<h3>Parameters<a class="headerlink" href="#parameters" title="Link to this heading">¶</a></h3>
-<dl class="simple">
-<dt>fn<span class="classifier">callable</span></dt><dd><p>Function to plot</p>
-</dd>
-<dt>bounds<span class="classifier">list</span></dt><dd><p>Parameter bounds [[xmin, xmax], [ymin, ymax]]</p>
-</dd>
-<dt>savedir<span class="classifier">str</span></dt><dd><p>Directory to save the plot</p>
-</dd>
-<dt>savename<span class="classifier">str</span></dt><dd><p>Filename for the saved plot</p>
-</dd>
-<dt>title<span class="classifier">str</span></dt><dd><p>Plot title</p>
-</dd>
-<dt>ngrid<span class="classifier">int, optional</span></dt><dd><p>Grid resolution. Default is 60.</p>
-</dd>
-<dt>cmap<span class="classifier">str, optional</span></dt><dd><p>Colormap name. Default is ‘Blues_r’.</p>
-</dd>
-<dt>show<span class="classifier">bool, optional</span></dt><dd><p>Whether to display the plot. Default is False.</p>
-</dd>
-<dt>xlabel<span class="classifier">str, optional</span></dt><dd><p>X-axis label</p>
-</dd>
-<dt>ylabel<span class="classifier">str, optional</span></dt><dd><p>Y-axis label</p>
-</dd>
-<dt>vmin<span class="classifier">float, optional</span></dt><dd><p>Minimum value for colorbar range. If None, uses data minimum.</p>
-</dd>
-<dt>vmax<span class="classifier">float, optional</span></dt><dd><p>Maximum value for colorbar range. If None, uses data maximum.</p>
-</dd>
-<dt>log_scale<span class="classifier">bool, optional</span></dt><dd><p>Whether to use logarithmic scaling for the colorbar. Default is False.
-Note: When using log_scale=True, all values must be positive.</p>
-</dd>
-</dl>
-</section>
-<section id="returns">
-<h3>Returns<a class="headerlink" href="#returns" title="Link to this heading">¶</a></h3>
-<dl class="simple">
-<dt>fig<span class="classifier">matplotlib.figure.Figure</span></dt><dd><p>The figure object</p>
-</dd>
-</dl>
-</section>
-</dd></dl>
+<dd></dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="alabi.visualization.plot_true_fit_2D">

@@ -215,6 +215,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Examples</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../plot_bayesian_optimization.html">Bayesian Optimization with Jones Algorithm</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_function1d.html">Active Learning in 1D</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_line_fit.html">Fit a line to data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_kl_divergence.html">KL Divergence</a></li>
@@ -525,44 +526,6 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">plot_contour_2D</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">savedir</span><span class="p">,</span> <span class="n">savename</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> 
                     <span class="n">ngrid</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Blues_r&#39;</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
                     <span class="n">xlabel</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_scale</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Plot a 2D contour plot of a function.</span>
-<span class="sd">    </span>
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    fn : callable</span>
-<span class="sd">        Function to plot</span>
-<span class="sd">    bounds : list</span>
-<span class="sd">        Parameter bounds [[xmin, xmax], [ymin, ymax]]</span>
-<span class="sd">    savedir : str</span>
-<span class="sd">        Directory to save the plot</span>
-<span class="sd">    savename : str</span>
-<span class="sd">        Filename for the saved plot</span>
-<span class="sd">    title : str</span>
-<span class="sd">        Plot title</span>
-<span class="sd">    ngrid : int, optional</span>
-<span class="sd">        Grid resolution. Default is 60.</span>
-<span class="sd">    cmap : str, optional</span>
-<span class="sd">        Colormap name. Default is &#39;Blues_r&#39;.</span>
-<span class="sd">    show : bool, optional</span>
-<span class="sd">        Whether to display the plot. Default is False.</span>
-<span class="sd">    xlabel : str, optional</span>
-<span class="sd">        X-axis label</span>
-<span class="sd">    ylabel : str, optional</span>
-<span class="sd">        Y-axis label</span>
-<span class="sd">    vmin : float, optional</span>
-<span class="sd">        Minimum value for colorbar range. If None, uses data minimum.</span>
-<span class="sd">    vmax : float, optional</span>
-<span class="sd">        Maximum value for colorbar range. If None, uses data maximum.</span>
-<span class="sd">    log_scale : bool, optional</span>
-<span class="sd">        Whether to use logarithmic scaling for the colorbar. Default is False.</span>
-<span class="sd">        Note: When using log_scale=True, all values must be positive.</span>
-<span class="sd">        </span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    fig : matplotlib.figure.Figure</span>
-<span class="sd">        The figure object</span>
-<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">xarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">ngrid</span><span class="p">)</span>
     <span class="n">yarr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">ngrid</span><span class="p">)</span>

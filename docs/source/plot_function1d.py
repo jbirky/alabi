@@ -9,7 +9,7 @@ You can run this script directly or copy sections into your own code.
 """
 
 # %% [markdown]
-# # Active Learning in 1D
+# # Visualize Active Learning
 # 
 # In this example, we demonstrate the GP fitting process on a 1D function and visualize the active learning function.
 

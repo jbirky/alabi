@@ -4,7 +4,7 @@
    "cell_type": "markdown",
    "metadata": {},
    "source": [
-    "# Active Learning in 1D\n",
+    "# Visualize Active Learning\n",
     "\n",
     "In this example, we demonstrate the GP fitting process on a 1D function and visualize the active learning function."
    ]

@@ -10,6 +10,7 @@ mcmc_tutorial
 :caption: Examples
 :hidden:
 
+plot_bayesian_optimization
 plot_function1d
 plot_line_fit
 plot_kl_divergence

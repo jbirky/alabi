@@ -215,6 +215,7 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Examples</span></p>
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../plot_bayesian_optimization.html">Bayesian Optimization with Jones Algorithm</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_function1d.html">Active Learning in 1D</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_line_fit.html">Fit a line to data</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_kl_divergence.html">KL Divergence</a></li>
@@ -580,6 +581,9 @@
 <div class="viewcode-block" id="SurrogateModel.theta">
 <a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.theta">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">theta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return unscaled training theta values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_theta</span><span class="p">)</span></div>
 
@@ -587,6 +591,9 @@
 <div class="viewcode-block" id="SurrogateModel.y">
 <a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.y">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">y</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return unscaled training y values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span></div>
 
@@ -623,6 +630,15 @@
 <div class="viewcode-block" id="SurrogateModel.load_train">
 <a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.load_train">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">load_train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cache_file</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reload training samples from cache file and apply scalers.</span>
+<span class="sd">        </span>
+<span class="sd">        :param cache_file: (*str, required*) </span>
+<span class="sd">            Name of cache file relative to savedir. Must be a .npz file containing &#39;theta&#39; and &#39;y&#39; arrays.</span>
+
+<span class="sd">        :returns: (*tuple*) </span>
+<span class="sd">            Scaled training samples (_theta, _y) after loading from cache.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">sims</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cache_file</span><span class="p">)</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="n">sims</span><span class="p">[</span><span class="s2">&quot;theta&quot;</span><span class="p">]</span>
@@ -762,6 +778,14 @@
 <div class="viewcode-block" id="SurrogateModel.set_hyperparam_prior_bounds">
 <a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.set_hyperparam_prior_bounds">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">set_hyperparam_prior_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Configure prior bounds for GP hyperparameters based on current training data.</span>
+<span class="sd">        </span>
+<span class="sd">        By default ranges for parameters:</span>
+<span class="sd">            - mean: [mean(y) - std(y), mean(y) + std(y)]</span>
+<span class="sd">            - amplitude: [0.1, 10]</span>
+<span class="sd">            - white noise: [white_noise - 3, white_noise + 3]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># Configure GP hyperparameter prior</span>
         <span class="n">hp_bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gp</span><span class="o">.</span><span class="n">get_parameter_bounds</span><span class="p">()</span>
@@ -788,6 +812,19 @@
 <div class="viewcode-block" id="SurrogateModel.fit_gp">
 <a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.fit_gp">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">fit_gp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_theta</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">_y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fit Gaussian Process to training data with current hyperparameters.</span>
+<span class="sd">        </span>
+<span class="sd">        :param _theta: (*array, optional*) </span>
+<span class="sd">            Scaled training parameter samples. If None, uses ``self._theta``.</span>
+<span class="sd">            </span>
+<span class="sd">        :param _y: (*array, optional*) </span>
+<span class="sd">            Scaled training output values. If None, uses ``self._y``.</span>
+<span class="sd">            </span>
+<span class="sd">        :returns: (*tuple*) </span>
+<span class="sd">            - gp: Fitted george.GP object</span>
+<span class="sd">            - timing: Time taken to fit the GP in seconds</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="n">_theta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">_theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_theta</span>
@@ -818,6 +855,13 @@
 <div class="viewcode-block" id="SurrogateModel.opt_gp">
 <a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.opt_gp">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">opt_gp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Optimize GP hyperparameters by maximizing the log marginal likelihood.</span>
+<span class="sd">        </span>
+<span class="sd">        :returns: (*tuple*) </span>
+<span class="sd">            - op_gp: Optimized george.GP object with updated hyperparameters</span>
+<span class="sd">            - timing: Time taken for optimization in seconds</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
 
@@ -1072,7 +1116,7 @@
     
 <div class="viewcode-block" id="SurrogateModel.eval_gp_at_iteration">
 <a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.eval_gp_at_iteration">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">eval_gp_at_iteration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">iter</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">eval_gp_at_iteration</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">iter</span><span class="p">,</span> <span class="n">return_var</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         
         <span class="n">gp_iter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gp</span> 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s2">&quot;iteration&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -1092,31 +1136,75 @@
             
         <span class="n">gp_iter</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">_theta_cond</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">gp_iter</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">_y_cond</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">return_var</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">return_cov</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">gp_iter</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">_y_cond</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">return_var</span><span class="o">=</span><span class="n">return_var</span><span class="p">,</span> <span class="n">return_cov</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 
 
 
 <div class="viewcode-block" id="SurrogateModel.surrogate_log_likelihood">
 <a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.surrogate_log_likelihood">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">surrogate_log_likelihood</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta_xs</span><span class="p">,</span> <span class="nb">iter</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">surrogate_log_likelihood</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta_xs</span><span class="p">,</span> <span class="nb">iter</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">return_var</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Evaluate predictive mean of the GP at point ``theta_xs``</span>
+<span class="sd">        Evaluate predictive mean of the GP at point(s) ``theta_xs``</span>
+<span class="sd">        </span>
+<span class="sd">        This method is vectorized to handle both single parameter vectors and</span>
+<span class="sd">        arrays of parameter vectors efficiently.</span>
 
-<span class="sd">        :param theta_xs: (*array, required*) Point to evaluate GP mean at.</span>
+<span class="sd">        :param theta_xs: Point(s) to evaluate GP mean at. Can be:</span>
+<span class="sd">            - 1D array of shape (ndim,) for single point</span>
+<span class="sd">            - 2D array of shape (npoints, ndim) for multiple points</span>
+<span class="sd">        :type theta_xs: *array-like*</span>
+<span class="sd">        :param iter: Iteration number of GP to use. If -1, uses most recent GP.</span>
+<span class="sd">        :type iter: *int, optional*</span>
+<span class="sd">        :param return_var: Whether to also return variance predictions.</span>
+<span class="sd">        :type return_var: *bool, optional*</span>
 
-<span class="sd">        :returns ypred: (*float*) GP mean evaluated at ``theta_xs``.</span>
+<span class="sd">        :returns: </span>
+<span class="sd">            - **ypred** (*array*) -- GP mean(s) evaluated at ``theta_xs``. Shape matches input.</span>
+<span class="sd">            - **varpred** (*array, optional*) -- GP variance(s) if return_var=True.</span>
+<span class="sd">        :rtype: *array or tuple of arrays*</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-            
-        <span class="n">theta_xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta_xs</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        
+        <span class="c1"># Convert input to numpy array and handle dimensionality</span>
+        <span class="n">theta_xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta_xs</span><span class="p">)</span>
+        <span class="n">original_shape_1d</span> <span class="o">=</span> <span class="kc">False</span>
+        
+        <span class="c1"># Handle 1D input (single point)</span>
+        <span class="k">if</span> <span class="n">theta_xs</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">theta_xs</span> <span class="o">=</span> <span class="n">theta_xs</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">original_shape_1d</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="n">theta_xs</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;theta_xs must be 1D or 2D array, got </span><span class="si">{</span><span class="n">theta_xs</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">D&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># Apply scaling transformation</span>
         <span class="n">_theta_xs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_scaler</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">theta_xs</span><span class="p">)</span>
+        
+        <span class="c1"># Get GP at specified iteration</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;training_results&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s2">&quot;iteration&quot;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">gp_ii</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_gp_at_iteration</span><span class="p">(</span><span class="nb">iter</span><span class="p">,</span> <span class="n">return_var</span><span class="o">=</span><span class="n">return_var</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">gp_ii</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">gp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_y</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">return_var</span><span class="o">=</span><span class="n">return_var</span><span class="p">,</span> <span class="n">return_cov</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
-        <span class="c1"># apply the GP</span>
-        <span class="n">gp_ii</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eval_gp_at_iteration</span><span class="p">(</span><span class="nb">iter</span><span class="p">)</span>
+        <span class="c1"># Apply the GP and handle return values</span>
+        <span class="k">if</span> <span class="n">return_var</span> <span class="o">==</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">_ypred</span> <span class="o">=</span> <span class="n">gp_ii</span><span class="p">(</span><span class="n">_theta_xs</span><span class="p">)</span>
+            <span class="n">ypred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">_ypred</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
             
-        <span class="n">_ypred</span> <span class="o">=</span> <span class="n">gp_ii</span><span class="p">(</span><span class="n">_theta_xs</span><span class="p">)</span>
-        <span class="n">ypred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">_ypred</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="c1"># Return single value if input was 1D, otherwise return array</span>
+            <span class="k">if</span> <span class="n">original_shape_1d</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ypred</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ypred</span>
+                
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_ypred</span><span class="p">,</span> <span class="n">_varpred</span> <span class="o">=</span> <span class="n">gp_ii</span><span class="p">(</span><span class="n">_theta_xs</span><span class="p">)</span>
+            <span class="n">ypred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">_ypred</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="n">varpred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">_varpred</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 
-        <span class="k">return</span> <span class="n">ypred</span></div>
+            <span class="c1"># Return single values if input was 1D, otherwise return arrays</span>
+            <span class="k">if</span> <span class="n">original_shape_1d</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ypred</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">varpred</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">ypred</span><span class="p">,</span> <span class="n">varpred</span></div>
 
     
     
@@ -1124,12 +1212,23 @@
 <a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.surrogate_likelihood">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">surrogate_likelihood</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">theta_xs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Evaluate predictive probability (not log-probability) of the GP at point theta_xs</span>
+<span class="sd">        Evaluate predictive probability (not log-probability) of the GP at point(s) theta_xs</span>
+<span class="sd">        </span>
+<span class="sd">        This method is vectorized to handle both single parameter vectors and</span>
+<span class="sd">        arrays of parameter vectors efficiently.</span>
+<span class="sd">        </span>
+<span class="sd">        :param theta_xs: Point(s) to evaluate GP probability at. Can be:</span>
+<span class="sd">            - 1D array of shape (ndim,) for single point</span>
+<span class="sd">            - 2D array of shape (npoints, ndim) for multiple points</span>
+<span class="sd">        :type theta_xs: *array-like*</span>
+<span class="sd">        </span>
+<span class="sd">        :returns: GP probability/probabilities evaluated at ``theta_xs``. Shape matches input.</span>
+<span class="sd">        :rtype: *float or array*</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Get log-probability from GP</span>
+        <span class="c1"># Get log-probability from GP (already vectorized)</span>
         <span class="n">log_prob</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">surrogate_log_likelihood</span><span class="p">(</span><span class="n">theta_xs</span><span class="p">)</span>
         
-        <span class="c1"># Convert to probability</span>
+        <span class="c1"># Convert to probability (works element-wise for arrays)</span>
         <span class="n">prob</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_prob</span><span class="p">)</span>
         
         <span class="k">return</span> <span class="n">prob</span></div>
@@ -1793,7 +1892,6 @@
 <span class="sd">        Bayesian posteriors and evidences&quot;, MNRAS, 493, 3132-3158</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="kn">import</span><span class="w"> </span><span class="nn">dynesty</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">dynesty</span><span class="w"> </span><span class="kn">import</span> <span class="n">NestedSampler</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">dynesty</span><span class="w"> </span><span class="kn">import</span> <span class="n">DynamicNestedSampler</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">dynesty</span><span class="w"> </span><span class="kn">import</span> <span class="n">utils</span> <span class="k">as</span> <span class="n">dyfunc</span>
