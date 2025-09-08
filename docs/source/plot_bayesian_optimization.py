@@ -11,7 +11,7 @@ You can run this script directly or copy sections into your own code.
 # %% [markdown]
 # # Bayesian Optimization
 # 
-# This notebook demonstrates how to use alabi for Bayesian optimization on a 1D multimodal function using the Jones (Expected Improvement) active learning algorithm.
+# In addition to inference problems, `alabi` can also be used for optimizing computationally expensive functions. This notebook demonstrates how to use alabi for Bayesian optimization on a 1D multimodal function using the Jones (Expected Improvement) active learning algorithm.
 
 # %% [markdown]
 # ## Import Libraries

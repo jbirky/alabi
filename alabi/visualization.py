@@ -236,44 +236,6 @@ def plot_gp_fit_1D(sm, title="GP fit", show=False):
 def plot_contour_2D(fn, bounds, savedir, savename, title, 
                     ngrid=60, cmap='Blues_r', show=False,
                     xlabel=None, ylabel=None, vmin=None, vmax=None, log_scale=False):
-    """
-    Plot a 2D contour plot of a function.
-    
-    Parameters
-    ----------
-    fn : callable
-        Function to plot
-    bounds : list
-        Parameter bounds [[xmin, xmax], [ymin, ymax]]
-    savedir : str
-        Directory to save the plot
-    savename : str
-        Filename for the saved plot
-    title : str
-        Plot title
-    ngrid : int, optional
-        Grid resolution. Default is 60.
-    cmap : str, optional
-        Colormap name. Default is 'Blues_r'.
-    show : bool, optional
-        Whether to display the plot. Default is False.
-    xlabel : str, optional
-        X-axis label
-    ylabel : str, optional
-        Y-axis label
-    vmin : float, optional
-        Minimum value for colorbar range. If None, uses data minimum.
-    vmax : float, optional
-        Maximum value for colorbar range. If None, uses data maximum.
-    log_scale : bool, optional
-        Whether to use logarithmic scaling for the colorbar. Default is False.
-        Note: When using log_scale=True, all values must be positive.
-        
-    Returns
-    -------
-    fig : matplotlib.figure.Figure
-        The figure object
-    """
 
     xarr = np.linspace(bounds[0][0], bounds[0][1], ngrid)
     yarr = np.linspace(bounds[1][0], bounds[1][1], ngrid)
