@@ -63,27 +63,71 @@ def kl_divergence_integral(log_p, log_q, bounds, method='qmc',
     """
     Numerically compute KL divergence: KL(P||Q) = ∫ p(x) * log(p(x)/q(x)) dx
     
-    Parameters:
-    -----------
-    p : callable
-        Probability density function P(x)
-    q : callable
-        Probability density function Q(x)
-    bounds : array-like
-        Integration bounds. For 1D: [a, b]. For nD: [[a1, b1], [a2, b2], ...]
-    method : str, default='quad'
-        Integration method: 'quad' (scipy), 'mc' (Monte Carlo), 'qmc' (Quasi-Monte Carlo)
-    n_samples : int, default=10000
-        Number of samples for MC/QMC methods
-    epsilon : float, default=1e-12
-        Small value to avoid log(0) issues
+    This function estimates the Kullback-Leibler divergence between two probability
+    distributions using numerical integration. The KL divergence measures how one
+    probability distribution P diverges from a second distribution Q.
+    
+    :param log_p: Log probability density function P(x). Should return log(p(x)) for input x.
+    :type log_p: *callable*
+    :param log_q: Log probability density function Q(x). Should return log(q(x)) for input x.
+    :type log_q: *callable*
+    :param bounds: Integration bounds. For 1D: [a, b]. For nD: [[a1, b1], [a2, b2], ...]
+    :type bounds: *array-like*
+    :param method: Integration method:
         
-    Returns:
-    --------
-    kl_div : float
-        KL divergence estimate
-    error : float (optional)
-        Error estimate for quad method
+        - 'quad': scipy.integrate (exact for 1D, nquad for multi-D)
+        - 'mc': Monte Carlo sampling
+        - 'qmc': Quasi-Monte Carlo (Sobol sequence) 
+        
+        Default is 'qmc'.
+    :type method: *str, optional*
+    :param n_samples: Number of samples for MC/QMC methods. Default is 2^14 = 16384.
+    :type n_samples: *int, optional*
+    :param epsilon: Small value to avoid log(0) issues. Default is 1e-12.
+    :type epsilon: *float, optional*
+    :param n_jobs: Number of parallel jobs (reserved for future use). Default is 1.
+    :type n_jobs: *int, optional*
+    
+    :returns:
+        - **kl_div** (*float*) -- KL divergence estimate D_KL(P||Q).
+        - **error** (*float*) -- Error estimate (for 'quad' method) or standard error estimate (for MC/QMC methods).
+    :rtype: *tuple*
+    
+    .. note::
+        
+        The KL divergence is defined as:
+        
+        .. math::
+            
+            D_{KL}(P||Q) = \\int p(x) \\log\\left(\\frac{p(x)}{q(x)}\\right) dx
+        
+        This function handles numerical stability by capping very large values and
+        avoiding log(0) issues through the epsilon parameter.
+    
+    **Examples**
+    
+    1D integration with quadrature:
+    
+    .. code-block:: python
+        
+        >>> import numpy as np
+        >>> from scipy.stats import norm
+        >>> 
+        >>> # Define log probability functions for two normal distributions
+        >>> log_p = lambda x: norm.logpdf(x, loc=0, scale=1)
+        >>> log_q = lambda x: norm.logpdf(x, loc=1, scale=1.5)
+        >>> 
+        >>> bounds = np.array([-5, 5])
+        >>> kl_div, error = kl_divergence_integral(log_p, log_q, bounds, method='quad')
+    
+    Multi-dimensional with Quasi-Monte Carlo:
+    
+    .. code-block:: python
+        
+        >>> # 2D case
+        >>> bounds = np.array([[-3, 3], [-3, 3]])
+        >>> kl_div, error = kl_divergence_integral(log_p_2d, log_q_2d, bounds, 
+        ...                                        method='qmc', n_samples=10000)
     """
         
     def integrand(x):
@@ -160,20 +204,68 @@ def kl_divergence_kde(samples_p, samples_q, bandwidth=None):
     Compute KL divergence between two sets of samples from distributions P and Q
     using kernel density estimation (KDE).
     
-    Parameters:
-    -----------
-    samples_p : array-like, shape (n_samples_p, n_dims)
-        Samples from distribution P
-    samples_q : array-like, shape (n_samples_q, n_dims)
-        Samples from distribution Q
-    bandwidth : float, optional
-        Bandwidth for the KDE. If None, it will be estimated automatically.
-        Default is None.
+    This function estimates the KL divergence by first fitting Gaussian kernel density
+    estimators to both sample sets, then computing the expectation E_P[log(P/Q)] over
+    the samples from distribution P. This approach is useful when you have samples
+    from two distributions but don't have explicit probability density functions.
     
-    Returns:
-    --------
-    kl_div : float
-        KL divergence D_KL(P||Q) = E_P[log(P/Q)]
+    :param samples_p: Samples from distribution P. For 1D data, can be 1D array.
+        For multi-dimensional data, should be shape (n_samples, n_dimensions).
+    :type samples_p: *array-like, shape (n_samples_p, n_dims)*
+    :param samples_q: Samples from distribution Q. For 1D data, can be 1D array.
+        For multi-dimensional data, should be shape (n_samples, n_dimensions).
+    :type samples_q: *array-like, shape (n_samples_q, n_dims)*
+    :param bandwidth: Bandwidth for the KDE. If None, it will be estimated automatically
+        using Scott's rule or Silverman's rule. Default is None.
+    :type bandwidth: *float, optional*
+    
+    :returns: KL divergence D_KL(P||Q) = E_P[log(P/Q)]
+    :rtype: *float*
+    
+    .. note::
+        
+        The KL divergence is estimated as:
+        
+        .. math::
+            
+            \\hat{D}_{KL}(P||Q) = \\frac{1}{N_P} \\sum_{i=1}^{N_P} \\log\\left(\\frac{\\hat{p}(x_i^P)}{\\hat{q}(x_i^P)}\\right)
+        
+        where :math:`\\hat{p}` and :math:`\\hat{q}` are the KDE estimates of the densities,
+        and :math:`x_i^P` are samples from distribution P.
+        
+        This method works well when:
+        
+        - You have sufficient samples from both distributions
+        - The distributions are reasonably smooth
+        - The dimensionality is not too high (curse of dimensionality affects KDE)
+    
+    **Examples**
+    
+    Compare two 1D normal distributions:
+    
+    .. code-block:: python
+        
+        >>> import numpy as np
+        >>> 
+        >>> # Generate samples from two normal distributions
+        >>> samples_p = np.random.normal(0, 1, 1000)  # N(0,1)
+        >>> samples_q = np.random.normal(1, 1.5, 1000)  # N(1,1.5²)
+        >>> 
+        >>> kl_div = kl_divergence_kde(samples_p, samples_q)
+        >>> print(f"KL divergence: {kl_div:.4f}")
+    
+    Multi-dimensional case:
+    
+    .. code-block:: python
+        
+        >>> # 2D multivariate normal distributions
+        >>> mean_p, cov_p = [0, 0], [[1, 0.5], [0.5, 1]]
+        >>> mean_q, cov_q = [1, 1], [[1.5, 0], [0, 1.5]]
+        >>> 
+        >>> samples_p = np.random.multivariate_normal(mean_p, cov_p, 1000)
+        >>> samples_q = np.random.multivariate_normal(mean_q, cov_q, 1000)
+        >>> 
+        >>> kl_div = kl_divergence_kde(samples_p, samples_q, bandwidth=0.3)
     """
     
     samples_p = np.asarray(samples_p)

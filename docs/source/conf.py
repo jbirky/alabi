@@ -28,6 +28,9 @@ author = "Jess Birky"
 # The full version, including alpha/beta/rc tags
 release = "0.0.1"
 
+# Custom domain configuration
+html_baseurl = "https://alabi.jessicabirky.com/"  # Update with your actual custom domain
+
 html_theme = "furo"
 html_title = "alabi"
 

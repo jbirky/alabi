@@ -46,100 +46,126 @@ class SurrogateModel(object):
     and active learning. The model supports various active learning algorithms and 
     scalers for handling different types of likelihood functions.
 
-    Parameters
-    ----------
-    lnlike_fn : callable, required
+    :param lnlike_fn: (*callable, required*)
         Log-likelihood function that takes parameter array theta and returns scalar 
         log-likelihood value. For Bayesian inference, this is your model's log-likelihood.
         Signature: lnlike_fn(theta) -> float
         
-    bounds : array-like, required  
+    :param bounds: (*array-like, required*)
         Prior bounds for each parameter. List/array of (min, max) tuples for each dimension.
         Example: bounds = [(0, 1), (2, 3), (-1, 1)]
         
-    param_names : array-like, optional
+    :param param_names: (*array-like, optional*)
         Names/labels for each parameter. If None, defaults to θ₀, θ₁, etc.
         Length must match number of dimensions in bounds.
         
-    theta_scaler : sklearn transformer, optional, default=MinMaxScaler()
+    :param theta_scaler: (*sklearn transformer, optional, default=MinMaxScaler()*)
         Scaler for input parameters. Applied to theta values before GP training.
         Common options: MinMaxScaler() (scale to [0,1]) or StandardScaler()
         
-    y_scaler : sklearn transformer, optional, default=no_scaler
+    :param y_scaler: (*sklearn transformer, optional, default=no_scaler*)
         Scaler for output values (log-likelihoods). Options include:
         - no_scaler: No scaling (default)
         - minmax_scaler: Scale to [0,1] 
         - nlog_scaler: Apply -log10(-y) transformation for negative log-likelihoods
         - log_scaler: Apply log10(y) for positive values
         
-    cache : bool, optional, default=True
+    :param cache: (*bool, optional, default=True*)
         Whether to cache the trained model to disk for reuse
         
-    savedir : str, optional, default="results/"
+    :param savedir: (*str, optional, default="results/"*)
         Directory for saving results, plots, and cached models
         
-    model_name : str, optional, default="surrogate_model" 
+    :param model_name: (*str, optional, default="surrogate_model"*)
         Name prefix for cached model files
         
-    verbose : bool, optional, default=True
+    :param verbose: (*bool, optional, default=True*)
         Print progress information during training and inference
         
-    ncore : int, optional, default=cpu_count()
+    :param ncore: (*int, optional, default=cpu_count()*)
         Number of CPU cores to use for parallel computation
         
-    ignore_warnings : bool, optional, default=True
+    :param ignore_warnings: (*bool, optional, default=True*)
         Suppress sklearn and other package warnings
         
-    random_seed : int, optional, default=None
+    :param random_seed: (*int, optional, default=None*)
         Random seed for reproducible results
 
-    Attributes
-    ----------
-    gp : george.GP
+    .. attribute:: gp
+        :type: george.GP
+        
         Trained Gaussian Process model
-    bounds : ndarray
+        
+    .. attribute:: bounds
+        :type: ndarray
+        
         Original parameter bounds (unscaled)
-    _bounds : ndarray  
+        
+    .. attribute:: _bounds
+        :type: ndarray
+        
         Scaled parameter bounds used for GP training
-    _theta : ndarray
+        
+    .. attribute:: _theta
+        :type: ndarray
+        
         Training parameter samples (scaled)
-    _y : ndarray
+        
+    .. attribute:: _y
+        :type: ndarray
+        
         Training likelihood values (scaled)
-    ntrain : int
+        
+    .. attribute:: ntrain
+        :type: int
+        
         Number of initial training samples
-    ndim : int
+        
+    .. attribute:: ndim
+        :type: int
+        
         Number of parameters/dimensions
-    emcee_samples : ndarray
+        
+    .. attribute:: emcee_samples
+        :type: ndarray
+        
         MCMC samples from emcee (if run_emcee called)
-    dynesty_samples : ndarray
+        
+    .. attribute:: dynesty_samples
+        :type: ndarray
+        
         Nested sampling results from dynesty (if run_dynesty called)
 
-    Examples
-    --------
+    **Examples**
+    
     Basic usage for Bayesian inference:
     
-    >>> def log_likelihood(theta):
-    ...     # Your model likelihood function
-    ...     return -0.5 * np.sum((theta - 2)**2)
-    >>> 
-    >>> bounds = [(0, 4), (0, 4)]  # 2D parameter space
-    >>> sm = SurrogateModel(log_likelihood, bounds)
-    >>> sm.init_samples(ntrain=100)  # Initial training data
-    >>> sm.init_gp()  # Initialize Gaussian Process
-    >>> sm.active_train(niter=50)  # Active learning
-    >>> sm.run_dynesty()  # Bayesian inference
+    .. code-block:: python
+    
+        def log_likelihood(theta):
+            # Your model likelihood function
+            return -0.5 * np.sum((theta - 2)**2)
+         
+        bounds = [(0, 4), (0, 4)]  # 2D parameter space
+        sm = SurrogateModel(log_likelihood, bounds)
+        sm.init_samples(ntrain=100)  # Initial training data
+        sm.init_gp()  # Initialize Gaussian Process
+        sm.active_train(niter=50)  # Active learning
+        sm.run_dynesty()  # Bayesian inference
     
     For optimization problems:
     
-    >>> sm.active_train(algorithm="jones")  # Use Jones algorithm for optimization
+    .. code-block:: python
     
-    See Also
-    --------
-    init_samples : Initialize training data
-    init_gp : Initialize Gaussian Process
-    active_train : Perform active learning
-    run_dynesty : Run nested sampling
-    run_emcee : Run MCMC sampling
+        sm.active_train(algorithm="jones")  # Use Jones algorithm for optimization
+    
+    .. seealso::
+    
+        :meth:`init_samples` : Initialize training data
+        :meth:`init_gp` : Initialize Gaussian Process
+        :meth:`active_train` : Perform active learning
+        :meth:`run_dynesty` : Run nested sampling
+        :meth:`run_emcee` : Run MCMC sampling
     """
 
     def __init__(self, lnlike_fn=None, bounds=None, param_names=None,
@@ -335,33 +361,30 @@ class SurrogateModel(object):
         Creates initial dataset by either loading cached samples or computing new ones
         by evaluating the likelihood function at randomly sampled parameter values.
         
-        Parameters
-        ----------
-        ntrain : int, optional, default=100
+        :param ntrain: (*int, optional, default=100*)
             Number of training samples to generate. Used only if not loading cached samples.
             
-        ntest : int, optional, default=0  
+        :param ntest: (*int, optional, default=0*)
             Number of test samples to generate. Currently unused.
             
-        reload : bool, optional, default=False
+        :param reload: (*bool, optional, default=False*)
             Whether to attempt loading cached samples from previous runs.
             If True, tries to load from default cache files first.
             
-        sampler : str, optional, default="uniform"
+        :param sampler: (*str, optional, default="uniform"*)
             Sampling method for generating parameter values. Options:
             - "uniform": Uniform sampling within bounds (default)
             - "sobol": Low-discrepancy Sobol sequence sampling
             - "lhs": Latin hypercube sampling
             
-        train_file : str, optional, default="initial_training_sample.npz"
+        :param train_file: (*str, optional, default="initial_training_sample.npz"*)
             Filename for cached training samples relative to savedir.
             Format: .npz file containing 'theta' and 'y' arrays.
             
-        test_file : str, optional, default="initial_test_sample.npz"
+        :param test_file: (*str, optional, default="initial_test_sample.npz"*)
             Filename for cached test samples relative to savedir. Currently unused.
 
-        Notes
-        -----
+        :note:
         This method must be called before init_gp() to provide training data for the
         Gaussian Process. The samples are automatically scaled using the configured
         theta_scaler and y_scaler.
@@ -371,8 +394,7 @@ class SurrogateModel(object):
         - theta0, y0: Unscaled original training samples  
         - ntrain: Number of training samples
         
-        Examples
-        --------
+        :example:
         Basic usage with default uniform sampling:
         
         >>> sm.init_samples(ntrain=200)
@@ -847,49 +869,46 @@ class SurrogateModel(object):
         will most improve the Gaussian Process model. Different algorithms balance
         exploration (uncertainty reduction) vs exploitation (finding optima).
         
-        Parameters
-        ----------
-        niter : int, optional, default=100
+        :param niter: (*int, optional, default=100*)
             Number of active learning iterations. Each iteration adds one new training point.
             
-        algorithm : str, optional, default="bape"
+        :param algorithm: (*str, optional, default="bape"*)
             Active learning algorithm. Options:
             - "bape": Bayesian Active Parameter Estimation (exploration-focused)
             - "jones": Jones algorithm (exploitation-focused, good for optimization)
             - "agp": Augmented Gaussian Process (balanced)
             - "alternate": Alternates between exploration and exploitation
             
-        gp_opt_freq : int, optional, default=20
+        :param gp_opt_freq: (*int, optional, default=20*)
             Frequency of GP hyperparameter re-optimization. GP hyperparameters are
             re-optimized every gp_opt_freq iterations. Lower values = more optimization.
             
-        save_progress : bool, optional, default=False
+        :param save_progress: (*bool, optional, default=False*)
             Whether to save training progress data for later analysis.
             
-        obj_opt_method : str, optional, default="l-bfgs-b"
+        :param obj_opt_method: (*str, optional, default="l-bfgs-b"*)
             Optimization method for acquisition function. Options:
             - "l-bfgs-b": L-BFGS-B (good with gradients)
             - "nelder-mead": Nelder-Mead simplex (gradient-free)
             
-        nopt : int, optional, default=1
+        :param nopt: (*int, optional, default=1*)
             Number of optimization restarts for acquisition function. Higher values
             help avoid local minima but increase computation time.
             
-        n_attempts : int, optional, default=5
+        :param n_attempts: (*int, optional, default=5*)
             Number of attempts for each optimization restart.
             
-        use_grad_opt : bool, optional, default=True
+        :param use_grad_opt: (*bool, optional, default=True*)
             Whether to use gradient information if available. Set False for
             gradient-free optimization.
             
-        optimizer_kwargs : dict, optional, default={}
+        :param optimizer_kwargs: (*dict, optional, default={}*)
             Additional keyword arguments passed to the optimizer.
             
-        show_progress : bool, optional, default=True
+        :param show_progress: (*bool, optional, default=True*)
             Whether to display progress bar during training.
 
-        Notes
-        -----
+        :note:
         Active learning algorithms have different purposes:
         
         - **BAPE**: Best for uncertainty quantification and space-filling
@@ -901,8 +920,7 @@ class SurrogateModel(object):
         based on the specified frequency. Training data is accumulated in _theta and _y
         attributes.
         
-        Examples
-        --------
+        :example:
         Basic active learning with BAPE:
         
         >>> sm.active_train(niter=50, algorithm="bape")
@@ -1071,9 +1089,7 @@ class SurrogateModel(object):
         The affine-invariant ensemble sampler is robust and works well for a wide variety
         of posterior shapes without requiring manual tuning of step sizes.
         
-        Parameters
-        ----------
-        like_fn : callable, str, or None, optional
+        :param like_fn: (*callable, str, or None, optional*)
             Likelihood function to sample. Options:
             - None (default): Uses the trained GP surrogate model (self.surrogate_log_likelihood)
             - "surrogate", "gp": Uses the GP surrogate model explicitly
@@ -1081,54 +1097,54 @@ class SurrogateModel(object):
             - callable: Custom likelihood function with signature like_fn(theta)
             Default is None.
             
-        prior_fn : callable or None, optional
+        :param prior_fn: (*callable or None, optional*)
             Log-prior function with signature prior_fn(theta). Should return log-probability
             density. If None, uses uniform prior with bounds from self.bounds.
             Default is None.
             
-        nwalkers : int or None, optional
+        :param nwalkers: (*int or None, optional*)
             Number of MCMC walkers in the ensemble. Should be at least 2*ndim.
             If None, defaults to 10*ndim. More walkers improve convergence but increase
             computational cost. Default is None.
             
-        nsteps : int, optional
+        :param nsteps: (*int, optional*)
             Number of MCMC steps per walker. Total number of likelihood evaluations
             will be nwalkers * nsteps. Default is 50000.
             
-        sampler_kwargs : dict, optional
+        :param sampler_kwargs: (*dict, optional*)
             Additional keyword arguments passed to emcee.EnsembleSampler constructor.
             Common options include:
             - 'a': Stretch move scale parameter (default: 2.0)
             - 'moves': Custom proposal moves
             Default is {}.
             
-        run_kwargs : dict, optional
+        :param run_kwargs: (*dict, optional*)
             Additional keyword arguments passed to the run_mcmc() method.
             Common options include:
             - 'progress': Show progress bar (default: True)
             - 'store': Store chain in memory (default: True)
             Default is {}.
             
-        opt_init : bool, optional
+        :param opt_init: (*bool, optional*)
             Whether to initialize walkers near the maximum a posteriori (MAP) estimate.
             If True, uses find_map() to locate starting point. If False, initializes
             walkers randomly from the prior. Default is False.
             
-        multi_proc : bool, optional
+        :param multi_proc: (*bool, optional*)
             Whether to use multiprocessing with self.ncore processes. Generally
             recommended for expensive likelihood evaluations. Default is True.
             
-        prior_fn_comment : str or None, optional
+        :param prior_fn_comment: (*str or None, optional*)
             Comment describing the prior function for logging purposes. If None
             and prior_fn is provided, attempts to extract function name.
             Default is None.
             
-        burn : int or None, optional
+        :param burn: (*int or None, optional*)
             Number of burn-in samples to discard from each walker. If None, 
             automatically estimates burn-in using autocorrelation analysis.
             Default is None.
             
-        thin : int or None, optional
+        :param thin: (*int or None, optional*)
             Thinning factor - keep every thin-th sample to reduce autocorrelation.
             If None, automatically estimates based on autocorrelation time.
             Default is None.
@@ -1170,8 +1186,7 @@ class SurrogateModel(object):
         prior_fn_comment : str
             Description of prior function used
             
-        Notes
-        -----
+        :note:
         The emcee algorithm uses an affine-invariant ensemble sampler that:
         - Does not require tuning of step sizes or proposal distributions
         - Works well for correlated and multi-modal posteriors
@@ -1182,8 +1197,7 @@ class SurrogateModel(object):
         analysis if not provided. The acceptance fraction should typically be
         between 0.2-0.5 for good performance.
         
-        Examples
-        --------
+        :example:
         Sample surrogate model with default settings:
         
         >>> sm.run_emcee()
@@ -1341,9 +1355,7 @@ class SurrogateModel(object):
         trained GP surrogate model or the true likelihood function. Dynesty is particularly 
         effective for estimating the Bayesian evidence and exploring multi-modal posteriors.
         
-        Parameters
-        ----------
-        like_fn : callable, str, or None, optional
+        :param like_fn: (*callable, str, or None, optional*)
             Likelihood function to sample. Options:
             - None (default): Uses the trained GP surrogate model (self.surrogate_log_likelihood)
             - "surrogate", "gp": Uses the GP surrogate model explicitly
@@ -1351,18 +1363,18 @@ class SurrogateModel(object):
             - callable: Custom likelihood function with signature like_fn(theta)
             Default is None.
             
-        prior_transform : callable or None, optional
+        :param prior_transform: (*callable or None, optional*)
             Prior transformation function that maps from unit hypercube [0,1]^ndim
             to the parameter space. Should have signature prior_transform(u) where
             u is array of shape (ndim,) with values in [0,1]. If None, uses uniform
             prior with bounds from self.bounds. Default is None.
             
-        mode : {"dynamic", "static"}, optional
+        :param mode: (*{"dynamic", "static"}, optional*)
             Dynesty sampling mode. "dynamic" uses DynamicNestedSampler which adaptively
             allocates live points, while "static" uses fixed number of live points.
             Dynamic mode is generally more efficient. Default is "dynamic".
             
-        sampler_kwargs : dict, optional
+        :param sampler_kwargs: (*dict, optional*)
             Additional keyword arguments passed to the dynesty sampler constructor.
             Common options include:
             - 'nlive': Number of live points (default: 50*ndim)
@@ -1370,7 +1382,7 @@ class SurrogateModel(object):
             - 'sample': Sampling method ('auto', 'unif', 'rwalk', 'slice', 'rslice', 'hslice')
             Default is {}.
             
-        run_kwargs : dict, optional
+        :param run_kwargs: (*dict, optional*)
             Additional keyword arguments passed to the run_nested() method.
             Common options include:
             - 'dlogz': Target evidence uncertainty (default: 0.5)
@@ -1379,17 +1391,17 @@ class SurrogateModel(object):
             - 'stop_kwargs': Stopping criterion arguments (default: {'pfrac': 1.0})
             Default is {}.
             
-        multi_proc : bool, optional
+        :param multi_proc: (*bool, optional*)
             Whether to use multiprocessing. If True, uses self.ncore processes.
             Note that multiprocessing can sometimes be slower due to overhead.
             Default is False.
             
-        save_iter : int or None, optional
+        :param save_iter: (*int or None, optional*)
             If provided, saves the sampler state every save_iter iterations to allow
             for checkpointing and resuming long runs. Saves to 
             '{savedir}/dynesty_sampler_{like_fn_name}.pkl'. Default is None.
             
-        prior_transform_comment : str or None, optional
+        :param prior_transform_comment: (*str or None, optional*)
             Comment describing the prior transform for logging purposes. If None
             and prior_transform is provided, attempts to extract function name.
             Default is None.
@@ -1638,9 +1650,7 @@ class SurrogateModel(object):
         model training, GP hyperparameter optimization, and MCMC sampling results. Plots
         are automatically saved to the model's save directory.
         
-        Parameters
-        ----------
-        plots : list of str, optional
+        :param plots: (*list of str, optional*)
             List of plot types to generate. Each plot requires specific data to be available
             (e.g., 'emcee_corner' requires run_emcee() to have been called first). If None,
             no plots are generated. Available options:
@@ -1673,31 +1683,27 @@ class SurrogateModel(object):
             
             Default is None.
             
-        show : bool, optional
+        :param show: (*bool, optional*)
             Whether to display plots interactively in addition to saving them.
             If False, plots are only saved to disk. Default is False.
             
-        cb_rng : list of [float, float], optional
+        :param cb_rng: (*list of [float, float], optional*)
             Colorbar range for 2D contour plots as [vmin, vmax]. If [None, None],
             uses automatic range determination. Only applies to plots with colorbars
             like 'gp_fit_2D'. Default is [None, None].
             
-        log_scale : bool, optional
+        :param log_scale: (*bool, optional*)
             Whether to use logarithmic color scale for 2D contour plots. If True,
             applies matplotlib.colors.LogNorm to the colorbar. Only applies to
             plots with colorbars. Default is False.
             
-        Returns
-        -------
-        None or matplotlib.figure.Figure
+        :returns: *None or matplotlib.figure.Figure*
             Some individual plots may return figure objects for further customization.
             
-        Raises
-        ------
-        NameError
+        :raises NameError:
             If required data for a requested plot is not available (e.g., requesting
             'emcee_corner' before running run_emcee()).
-        AttributeError
+        :raises AttributeError:
             If the model has not been properly initialized or trained.
             
         Notes
@@ -1958,15 +1964,11 @@ class SurrogateModel(object):
         Worker function to run a single active learning chain.
         This function is designed to be pickled for multiprocessing.
         
-        Parameters
-        ----------
-        chain_id : int
+        :param chain_id: (*int*)
             Identifier for this chain
         Other parameters same as active_train()
         
-        Returns
-        -------
-        tuple or None
+        :returns: *tuple or None*
             (new_theta, new_y, training_results) if successful, None if failed
         """
         try:
@@ -2485,9 +2487,7 @@ class SurrogateModel(object):
         """
         Get a pickleable representation of the model state for multiprocessing.
         
-        Returns
-        -------
-        dict
+        :returns: *dict*
             Dictionary containing all necessary state information
         """
         import copy

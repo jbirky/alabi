@@ -49,16 +49,14 @@ def prior_sampler(bounds=None, nsample=1, sampler='uniform', random_state=None):
     various space-filling designs commonly used in Bayesian optimization and 
     surrogate modeling.
     
-    Parameters
-    ----------
-    bounds : array-like of shape (ndim, 2)
+    :param bounds: (*array-like of shape (ndim, 2)*)
         Array of (min, max) bounds for each parameter dimension. Each row specifies
         the lower and upper bounds for one parameter.
         
-    nsample : int, optional
+    :param nsample: (*int, optional*)
         Number of samples to generate. Default is 1.
         
-    sampler : {'uniform', 'sobol', 'lhs', 'halton', 'hammersly', 'grid'}, optional
+    :param sampler: (*{'uniform', 'sobol', 'lhs', 'halton', 'hammersly', 'grid'}, optional*)
         Sampling method to use:
         
         - 'uniform': Pseudo-random uniform sampling
@@ -70,22 +68,18 @@ def prior_sampler(bounds=None, nsample=1, sampler='uniform', random_state=None):
         
         Default is 'uniform'.
         
-    random_state : int, RandomState instance or None, optional
+    :param random_state: (*int, RandomState instance or None, optional*)
         Random state for reproducible sampling. If None, uses a different random
         seed each time to avoid clustering. Default is None.
     
-    Returns
-    -------
-    ndarray of shape (nsample, ndim)
+    :returns: *ndarray of shape (nsample, ndim)*
         Array of parameter samples within the specified bounds.
     
-    Raises
-    ------
-    ValueError
+    :raises ValueError:
         If an invalid sampler method is specified.
     
-    Notes
-    -----
+    **Notes**
+    
     Quasi-random samplers (sobol, halton, hammersley) provide better space-filling
     properties than pseudo-random uniform sampling, which is beneficial for:
     - Initial design of experiments
@@ -98,25 +92,30 @@ def prior_sampler(bounds=None, nsample=1, sampler='uniform', random_state=None):
     For optimization starting points, consider using 'sobol' or 'lhs' instead of
     'uniform' to avoid clustering issues when generating single samples repeatedly.
     
-    Examples
-    --------
+    **Examples**
+    
     Generate uniform random samples:
     
-    >>> bounds = [(-1, 1), (0, 10)]
-    >>> samples = prior_sampler(bounds, nsample=5, sampler='uniform')
-    >>> samples.shape
-    (5, 2)
+    .. code-block:: python
+    
+        bounds = [(-1, 1), (0, 10)]
+        samples = prior_sampler(bounds, nsample=5, sampler='uniform')
+        print(samples.shape)  # (5, 2)
     
     Use Sobol sequence for better space-filling:
     
-    >>> samples = prior_sampler(bounds, nsample=100, sampler='sobol')
+    .. code-block:: python
+    
+        samples = prior_sampler(bounds, nsample=100, sampler='sobol')
     
     Latin Hypercube Sampling for stratified design:
     
-    >>> samples = prior_sampler(bounds, nsample=20, sampler='lhs')
+    .. code-block:: python
     
-    References
-    ----------
+        samples = prior_sampler(bounds, nsample=20, sampler='lhs')
+    
+    **References**
+    
     For more information on sampling methods, see:
     https://scikit-optimize.github.io/stable/auto_examples/sampler/initial-sampling-method.html
     """
@@ -188,29 +187,25 @@ def eval_fn(fn, theta, ncore=mp.cpu_count()):
     functions (like likelihood functions or forward models) at multiple parameter
     values, with automatic parallelization when multiple cores are available.
     
-    Parameters
-    ----------
-    fn : callable
+    :param fn: (*callable*)
         Function to evaluate at each parameter point. Should have signature
         fn(theta_i) where theta_i is array of shape (ndim,) and return a scalar.
         
-    theta : array-like of shape (npoints, ndim)
+    :param theta: (*array-like of shape (npoints, ndim)*)
         Array of parameter points at which to evaluate the function. Each row
         represents one parameter vector.
         
-    ncore : int, optional
+    :param ncore: (*int, optional*)
         Number of CPU cores to use for parallel evaluation. If ncore <= 1,
         uses serial evaluation with progress bar. If ncore > 1, uses
         multiprocessing.Pool for parallel evaluation. Default is all available cores.
         
-    Returns
-    -------
-    ndarray of shape (npoints,)
+    :returns: *ndarray of shape (npoints,)*
         Function values evaluated at each parameter point. Order matches the
         input theta array.
         
-    Notes
-    -----
+    **Notes**
+    
     This function is particularly useful for:
     - Initial sampling of expensive functions for surrogate model training
     - Batch evaluation of likelihood functions
@@ -220,22 +215,26 @@ def eval_fn(fn, theta, ncore=mp.cpu_count()):
     and parallel execution modes. For serial execution, a progress bar is shown
     using tqdm.
     
-    Examples
-    --------
+    **Examples**
+    
     Evaluate a simple function at multiple points:
     
-    >>> def quadratic(x):
-    ...     return np.sum(x**2)
-    >>> theta = np.random.rand(100, 2)
-    >>> y = eval_fn(quadratic, theta, ncore=1)
+    .. code-block:: python
+    
+        def quadratic(x):
+            return np.sum(x**2)
+        theta = np.random.rand(100, 2)
+        y = eval_fn(quadratic, theta, ncore=1)
     
     Parallel evaluation of expensive function:
     
-    >>> def expensive_fn(x):
-    ...     # Simulate expensive computation
-    ...     time.sleep(0.1)
-    ...     return np.sum(x**2)
-    >>> y = eval_fn(expensive_fn, theta, ncore=4)
+    .. code-block:: python
+    
+        def expensive_fn(x):
+            # Simulate expensive computation
+            time.sleep(0.1)
+            return np.sum(x**2)
+        y = eval_fn(expensive_fn, theta, ncore=4)
     """
 
     t0 = time.time()
@@ -265,40 +264,40 @@ def lnprior_uniform(x, bounds):
     prior distribution within specified bounds. Points outside the bounds
     receive log-probability of negative infinity.
     
-    Parameters
-    ----------
-    x : array-like of shape (ndim,) or float
+    :param x: (*array-like of shape (ndim,) or float*)
         Parameter values at which to evaluate the log-prior. For scalar input,
         assumes 1D parameter space.
         
-    bounds : array-like of shape (ndim, 2)
+    :param bounds: (*array-like of shape (ndim, 2)*)
         Parameter bounds as [(min, max), ...] for each dimension.
         
-    Returns
-    -------
-    float
+    :returns: *float*
         Log-probability density. Returns 0.0 if all parameters are within bounds,
         -np.inf if any parameter is outside bounds.
         
-    Notes
-    -----
+    **Notes**
+    
     For a uniform distribution on [a, b], the probability density is 1/(b-a)
     and the log-probability density is -log(b-a). However, this function 
     returns 0.0 for in-bounds points since constant offsets don't affect
     relative probabilities in MCMC sampling.
     
-    Examples
-    --------
+    **Examples**
+    
     Check if point is within bounds:
     
-    >>> bounds = [(-1, 1), (0, 2)]
-    >>> x = [0.5, 1.0]
-    >>> lnp = lnprior_uniform(x, bounds)  # Returns 0.0
+    .. code-block:: python
+    
+        bounds = [(-1, 1), (0, 2)]
+        x = [0.5, 1.0]
+        lnp = lnprior_uniform(x, bounds)  # Returns 0.0
     
     Point outside bounds:
     
-    >>> x = [2.0, 1.0]  # First parameter out of bounds
-    >>> lnp = lnprior_uniform(x, bounds)  # Returns -inf
+    .. code-block:: python
+    
+        x = [2.0, 1.0]  # First parameter out of bounds
+        lnp = lnprior_uniform(x, bounds)  # Returns -inf
     """
 
     ndim = len(bounds)
@@ -325,21 +324,17 @@ def prior_transform_uniform(theta, bounds):
     mapping from the unit hypercube [0,1]^ndim to the parameter space with given bounds.
     It is commonly used in nested sampling algorithms like dynesty.
     
-    Parameters
-    ----------
-    theta : array-like of shape (ndim,)
+    :param theta: (*array-like of shape (ndim,)*)
         Random variables uniformly distributed on [0,1] for each dimension.
         
-    bounds : array-like of shape (ndim, 2)
+    :param bounds: (*array-like of shape (ndim, 2)*)
         Parameter bounds as [(min, max), ...] for each dimension.
         
-    Returns
-    -------
-    ndarray of shape (ndim,)
+    :returns: *ndarray of shape (ndim,)*
         Transformed parameter values within the specified bounds.
         
-    Notes
-    -----
+    **Notes**
+    
     The transformation for each dimension i is:
     
     .. math::
@@ -350,20 +345,24 @@ def prior_transform_uniform(theta, bounds):
     This is the inverse of the uniform CDF, mapping uniform random variables
     on [0,1] to uniform random variables on [a,b].
     
-    Examples
-    --------
+    **Examples**
+    
     Transform unit cube samples to parameter bounds:
     
-    >>> bounds = [(-2, 2), (0, 10)]
-    >>> theta_unit = [0.25, 0.8]  # Uniform on [0,1]
-    >>> theta_params = prior_transform_uniform(theta_unit, bounds)
-    >>> print(theta_params)  # [-1.0, 8.0]
+    .. code-block:: python
+    
+        bounds = [(-2, 2), (0, 10)]
+        theta_unit = [0.25, 0.8]  # Uniform on [0,1]
+        theta_params = prior_transform_uniform(theta_unit, bounds)
+        print(theta_params)  # [-1.0, 8.0]
     
     Use with nested sampling:
     
-    >>> def my_prior_transform(u):
-    ...     return prior_transform_uniform(u, bounds)
-    >>> # Pass to dynesty sampler
+    .. code-block:: python
+    
+        def my_prior_transform(u):
+            return prior_transform_uniform(u, bounds)
+        # Pass to dynesty sampler
     """
 
     pt = np.zeros(len(bounds))
@@ -434,29 +433,25 @@ def agp_utility(theta, y, gp, bounds):
     with the uncertainty (variance), preferring regions with high predicted values
     and high uncertainty.
     
-    Parameters
-    ----------
-    theta : array-like of shape (ndim,)
+    :param theta: (*array-like of shape (ndim,)*)
         Parameter values at which to evaluate the utility function.
         
-    y : array-like of shape (nsamples,)
+    :param y: (*array-like of shape (nsamples,)*)
         Observed function values at training points, used to condition the GP.
         
-    gp : george.GP
+    :param gp: (*george.GP*)
         Trained Gaussian Process model. The GP will be computed if not already done.
         
-    bounds : array-like of shape (ndim, 2)
+    :param bounds: (*array-like of shape (ndim, 2)*)
         Parameter bounds as [(min, max), ...] for each dimension. Used to check
         if theta is within the prior support.
     
-    Returns
-    -------
-    float
+    :returns: *float*
         Negative AGP utility value. The negative is used so that minimizing
         this function is equivalent to maximizing the actual utility.
     
-    Notes
-    -----
+    **Notes**
+    
     The AGP utility function is defined as:
     
     .. math::
@@ -472,26 +467,28 @@ def agp_utility(theta, y, gp, bounds):
     - Less optimization-focused than Expected Improvement
     - Naturally balances exploration and exploitation through entropy
     
-    Raises
-    ------
-    ValueError
+    :raises ValueError:
         If the utility computation results in invalid values (e.g., negative variance).
     
-    Examples
-    --------
+    **Examples**
+    
     Evaluate AGP utility at a test point:
     
-    >>> theta_test = np.array([0.5, 1.2])
-    >>> utility = agp_utility(theta_test, y_train, gp, bounds)
+    .. code-block:: python
+    
+        theta_test = np.array([0.5, 1.2])
+        utility = agp_utility(theta_test, y_train, gp, bounds)
     
     Find next point by minimizing negative utility:
     
-    >>> from scipy.optimize import minimize
-    >>> result = minimize(lambda x: agp_utility(x, y_train, gp, bounds), x0)
-    >>> next_point = result.x
+    .. code-block:: python
     
-    References
-    ----------
+        from scipy.optimize import minimize
+        result = minimize(lambda x: agp_utility(x, y_train, gp, bounds), x0)
+        next_point = result.x
+    
+    **References**
+    
     Wang & Li (2017): "Adaptive Gaussian Process Approximation for Bayesian 
     Inference with Expensive Likelihood Functions", Neural Computation, 30, 3072-3094.
     """
@@ -547,70 +544,66 @@ def bape_utility(theta, y, gp, bounds):
     relative to the mean, promoting exploration of the parameter space. The utility
     is computed in log-form for numerical stability.
     
-    Parameters
-    ----------
-    theta : array-like of shape (ndim,)
-        Parameter values at which to evaluate the utility function.
-        
-    y : array-like of shape (nsamples,)
-        Observed function values at training points, used to condition the GP.
-        
-    gp : george.GP
-        Trained Gaussian Process model. Must have been computed (gp.computed=True).
-        
-    bounds : array-like of shape (ndim, 2)
-        Parameter bounds as [(min, max), ...] for each dimension. Used to check
+    :param theta: Parameter values at which to evaluate the utility function.
+    :type theta: *array-like of shape (ndim,)*
+    :param y: Observed function values at training points, used to condition the GP.
+    :type y: *array-like of shape (nsamples,)*
+    :param gp: Trained Gaussian Process model. Must have been computed (gp.computed=True).
+    :type gp: *george.GP*
+    :param bounds: Parameter bounds as [(min, max), ...] for each dimension. Used to check
         if theta is within the prior support.
+    :type bounds: *array-like of shape (ndim, 2)*
     
-    Returns
-    -------
-    float
-        Negative log-BAPE utility value. The negative is used so that minimizing
+    :returns: Negative log-BAPE utility value. The negative is used so that minimizing
         this function is equivalent to maximizing the actual utility.
+    :rtype: *float*
     
-    Notes
-    -----
-    The BAPE utility function is defined as:
+    .. note::
+        
+        The BAPE utility function is defined as:
+        
+        .. math::
+            
+            u(\\theta) = e^{2\\mu(\\theta) + \\sigma^2(\\theta)} \\left(e^{\\sigma^2(\\theta)} - 1 \\right)
+        
+        This function returns the negative logarithm of the utility for numerical stability:
+        
+        .. math::
+            
+            -\\log u(\\theta) = -\\left(2\\mu(\\theta) + \\sigma^2(\\theta) + \\log(e^{\\sigma^2(\\theta)} - 1)\\right)
+        
+        BAPE is particularly effective for:
+        
+        - Exploring multi-modal posteriors
+        - Reducing uncertainty in posterior estimates
+        - Active learning when the goal is posterior characterization
+        
+        Unlike optimization-focused acquisitions (e.g., Expected Improvement), BAPE
+        prioritizes exploration over exploitation, making it less suitable for finding
+        global optima but excellent for posterior mapping.
     
-    .. math::
-        u(\\theta) = e^{2\\mu(\\theta) + \\sigma^2(\\theta)} \\left(e^{\\sigma^2(\\theta)} - 1 \\right)
+    :raises ValueError: If the utility computation results in invalid values (e.g., negative variance).
+    :raises RuntimeError: If the GP has not been computed before calling this function.
     
-    This function returns the negative logarithm of the utility for numerical stability:
+    **Examples**
     
-    .. math::
-        -\\log u(\\theta) = -\\left(2\\mu(\\theta) + \\sigma^2(\\theta) + \\log(e^{\\sigma^2(\\theta)} - 1)\\right)
-    
-    BAPE is particularly effective for:
-    - Exploring multi-modal posteriors
-    - Reducing uncertainty in posterior estimates
-    - Active learning when the goal is posterior characterization
-    
-    Unlike optimization-focused acquisitions (e.g., Expected Improvement), BAPE
-    prioritizes exploration over exploitation, making it less suitable for finding
-    global optima but excellent for posterior mapping.
-    
-    Raises
-    ------
-    ValueError
-        If the utility computation results in invalid values (e.g., negative variance).
-    RuntimeError
-        If the GP has not been computed before calling this function.
-    
-    Examples
-    --------
     Evaluate BAPE utility at a test point:
     
-    >>> theta_test = np.array([0.5, 1.2])
-    >>> utility = bape_utility(theta_test, y_train, gp, bounds)
+    .. code-block:: python
+        
+        >>> theta_test = np.array([0.5, 1.2])
+        >>> utility = bape_utility(theta_test, y_train, gp, bounds)
     
     Find next point by minimizing negative utility:
     
-    >>> from scipy.optimize import minimize
-    >>> result = minimize(lambda x: bape_utility(x, y_train, gp, bounds), x0)
-    >>> next_point = result.x
+    .. code-block:: python
+        
+        >>> from scipy.optimize import minimize
+        >>> result = minimize(lambda x: bape_utility(x, y_train, gp, bounds), x0)
+        >>> next_point = result.x
     
-    References
-    ----------
+    **References**
+    
     Kandasamy et al. (2015): "Query efficient posterior estimation in scientific 
     experiments via Bayesian active learning", Artificial Intelligence, 243, 45-56.
     """
@@ -689,86 +682,85 @@ def jones_utility(theta, y, gp, bounds, zeta=0.01):
     (sampling where the uncertainty is high). Unlike BAPE, this acquisition function
     is designed specifically for global optimization.
     
-    Parameters
-    ----------
-    theta : array-like of shape (ndim,)
-        Parameter values at which to evaluate the utility function.
-        
-    y : array-like of shape (nsamples,)
-        Observed function values at training points. The maximum value is used
+    :param theta: Parameter values at which to evaluate the utility function.
+    :type theta: *array-like of shape (ndim,)*
+    :param y: Observed function values at training points. The maximum value is used
         as the current best (f_best).
-        
-    gp : george.GP
-        Trained Gaussian Process model. Must have been computed (gp.computed=True).
-        
-    bounds : array-like of shape (ndim, 2)
-        Parameter bounds as [(min, max), ...] for each dimension. Used to check
+    :type y: *array-like of shape (nsamples,)*
+    :param gp: Trained Gaussian Process model. Must have been computed (gp.computed=True).
+    :type gp: *george.GP*
+    :param bounds: Parameter bounds as [(min, max), ...] for each dimension. Used to check
         if theta is within the prior support.
-        
-    zeta : float, optional
-        Exploration parameter controlling the trade-off between exploitation
+    :type bounds: *array-like of shape (ndim, 2)*
+    :param zeta: Exploration parameter controlling the trade-off between exploitation
         and exploration. Larger values promote more exploration:
+        
         - zeta = 0: Pure exploitation (greedy)
         - zeta > 0: Balanced exploration/exploitation
         - zeta >> 0: Pure exploration
+        
         Default is 0.01.
+    :type zeta: *float, optional*
     
-    Returns
-    -------
-    float
-        Negative Expected Improvement value. The negative is used so that minimizing
+    :returns: Negative Expected Improvement value. The negative is used so that minimizing
         this function is equivalent to maximizing the Expected Improvement.
+    :rtype: *float*
     
-    Notes
-    -----
-    The Expected Improvement is defined as:
+    .. note::
+        
+        The Expected Improvement is defined as:
+        
+        .. math::
+            
+            EI(\\theta) = \\mathbb{E}[\\max(f(\\theta) - f_{\\text{best}} - \\zeta, 0)]
+        
+        where f_best is the current best observed value. For a Gaussian predictive
+        distribution with mean μ and variance σ², this becomes:
+        
+        .. math::
+            
+            EI(\\theta) = (\\mu - f_{\\text{best}} - \\zeta) \\Phi(z) + \\sigma \\phi(z)
+        
+        where z = (μ - f_best - ζ)/σ, Φ is the standard normal CDF, and φ is the
+        standard normal PDF.
+        
+        Expected Improvement is particularly effective for:
+        
+        - Global optimization problems
+        - Finding the maximum of expensive functions
+        - Balancing local and global search
+        
+        Compared to BAPE, Expected Improvement focuses on exploitation (finding optima)
+        rather than exploration (mapping the entire posterior).
     
-    .. math::
-        EI(\\theta) = \\mathbb{E}[\\max(f(\\theta) - f_{\\text{best}} - \\zeta, 0)]
+    :raises ValueError: If the utility computation results in invalid values.
+    :raises RuntimeError: If the GP has not been computed before calling this function.
     
-    where f_best is the current best observed value. For a Gaussian predictive
-    distribution with mean μ and variance σ², this becomes:
+    **Examples**
     
-    .. math::
-        EI(\\theta) = (\\mu - f_{\\text{best}} - \\zeta) \\Phi(z) + \\sigma \\phi(z)
-    
-    where z = (μ - f_best - ζ)/σ, Φ is the standard normal CDF, and φ is the
-    standard normal PDF.
-    
-    Expected Improvement is particularly effective for:
-    - Global optimization problems
-    - Finding the maximum of expensive functions
-    - Balancing local and global search
-    
-    Compared to BAPE, Expected Improvement focuses on exploitation (finding optima)
-    rather than exploration (mapping the entire posterior).
-    
-    Raises
-    ------
-    ValueError
-        If the utility computation results in invalid values.
-    RuntimeError
-        If the GP has not been computed before calling this function.
-    
-    Examples
-    --------
     Evaluate Expected Improvement at a test point:
     
-    >>> theta_test = np.array([0.5, 1.2])
-    >>> ei_value = jones_utility(theta_test, y_train, gp, bounds)
+    .. code-block:: python
+        
+        >>> theta_test = np.array([0.5, 1.2])
+        >>> ei_value = jones_utility(theta_test, y_train, gp, bounds)
     
     Find next point for optimization:
     
-    >>> from scipy.optimize import minimize
-    >>> result = minimize(lambda x: jones_utility(x, y_train, gp, bounds, zeta=0.01), x0)
-    >>> next_point = result.x
+    .. code-block:: python
+        
+        >>> from scipy.optimize import minimize
+        >>> result = minimize(lambda x: jones_utility(x, y_train, gp, bounds, zeta=0.01), x0)
+        >>> next_point = result.x
     
     Use higher exploration parameter:
     
-    >>> ei_explore = jones_utility(theta_test, y_train, gp, bounds, zeta=0.1)
+    .. code-block:: python
+        
+        >>> ei_explore = jones_utility(theta_test, y_train, gp, bounds, zeta=0.1)
     
-    References
-    ----------
+    **References**
+    
     Jones et al. (1998): "Efficient global optimization of expensive black-box 
     functions", Journal of Global Optimization, 13, 455-492.
     """
@@ -831,33 +823,33 @@ def assign_utility(algorithm):
 
 def minimize_objective_single(idx, obj_fn, grad_obj_fn, bounds, set_bounds, starting_points, method, options, n_attempts):
     """
-    Single optimization run - used for parallelization
+    Single optimization run - used for parallelization.
     
-    Parameters
-    ----------
-    idx : int
-        Index of the optimization run
-    obj_fn : callable
-        Objective function to minimize
-    grad_obj_fn : callable
-        Gradient of objective function
-    bounds : list
-        Parameter bounds
-    set_bounds : list or None
-        Bounds for optimization method
-    starting_points : ndarray
-        Pre-generated starting points for optimization
-    method : str
-        Optimization method
-    options : dict
-        Optimization options
-    n_attempts : int
-        Maximum number of attempts
-        
-    Returns
-    -------
-    tuple
-        (x_opt, f_opt) - optimal point and function value
+    This is a helper function that performs one optimization attempt with a specific
+    starting point. It is designed to be called in parallel by the main
+    minimize_objective function to enable multi-core optimization.
+    
+    :param idx: Index of the optimization run.
+    :type idx: *int*
+    :param obj_fn: Objective function to minimize.
+    :type obj_fn: *callable*
+    :param grad_obj_fn: Gradient of objective function.
+    :type grad_obj_fn: *callable*
+    :param bounds: Parameter bounds.
+    :type bounds: *list*
+    :param set_bounds: Bounds for optimization method.
+    :type set_bounds: *list or None*
+    :param starting_points: Pre-generated starting points for optimization.
+    :type starting_points: *ndarray*
+    :param method: Optimization method.
+    :type method: *str*
+    :param options: Optimization options.
+    :type options: *dict*
+    :param n_attempts: Maximum number of attempts.
+    :type n_attempts: *int*
+    
+    :returns: (x_opt, f_opt) - optimal point and function value.
+    :rtype: *tuple*
     """
     # Use pre-generated starting point to avoid clustering
     t0 = starting_points[idx].flatten()
@@ -913,113 +905,107 @@ def minimize_objective(obj_fn, grad_obj_fn, bounds=None, nopt=1, method="l-bfgs-
     initial points help avoid local minima, which is crucial for acquisition function
     optimization where the landscape can be highly multi-modal.
     
-    Parameters
-    ----------
-    obj_fn : callable
-        Objective function to minimize. Should have signature obj_fn(theta) and
+    :param obj_fn: Objective function to minimize. Should have signature obj_fn(theta) and
         return a scalar value. Typically an acquisition function like BAPE or EI.
-        
-    grad_obj_fn : callable or None
-        Gradient of the objective function. Should have signature grad_obj_fn(theta)
+    :type obj_fn: *callable*
+    :param grad_obj_fn: Gradient of the objective function. Should have signature grad_obj_fn(theta)
         and return array of shape (ndim,). If None, uses finite differences.
-        
-    bounds : array-like of shape (ndim, 2)
-        Parameter bounds as [(min, max), ...] for each dimension. Used both
+    :type grad_obj_fn: *callable or None*
+    :param bounds: Parameter bounds as [(min, max), ...] for each dimension. Used both
         for optimization constraints and generating initial points.
-        
-    nopt : int, optional
-        Number of optimization restarts with different initial points. More
+    :type bounds: *array-like of shape (ndim, 2)*
+    :param nopt: Number of optimization restarts with different initial points. More
         restarts increase the chance of finding the global minimum but increase
         computational cost. Default is 1.
+    :type nopt: *int, optional*
+    :param method: Scipy optimization method to use. Common choices:
         
-    method : str, optional
-        Scipy optimization method to use. Common choices:
         - "l-bfgs-b": Quasi-Newton with bounds (default, works well with gradients)
         - "nelder-mead": Simplex method (gradient-free, robust)
         - "tnc": Truncated Newton with bounds
         - "slsqp": Sequential Least Squares Programming
-        Default is "l-bfgs-b".
         
-    ps : callable or None, optional
-        Prior sampling function with signature ps(nsample=1). Used to generate
+        Default is "l-bfgs-b".
+    :type method: *str, optional*
+    :param ps: Prior sampling function with signature ps(nsample=1). Used to generate
         initial points for optimization restarts. If None, uses uniform sampling
         within bounds. Default is None.
+    :type ps: *callable or None, optional*
+    :param options: Additional options passed to scipy.optimize.minimize. Common options:
         
-    options : dict or None, optional
-        Additional options passed to scipy.optimize.minimize. Common options:
         - "max_iter": Maximum iterations (default: 50)
         - "ftol": Function tolerance for convergence
         - "gtol": Gradient tolerance for convergence
-        Default is {"max_iter": 50}.
         
-    ncore : int, optional
-        Number of CPU cores to use for parallel optimization. If ncore > 1,
+        Default is {"max_iter": 50}.
+    :type options: *dict or None, optional*
+    :param ncore: Number of CPU cores to use for parallel optimization. If ncore > 1,
         runs multiple optimization restarts in parallel using multiprocessing.
         Default is 1 (serial execution).
-        
-    n_attempts : int, optional
-        Maximum number of retry attempts if an optimization fails (returns
+    :type ncore: *int, optional*
+    :param n_attempts: Maximum number of retry attempts if an optimization fails (returns
         infinite or out-of-bounds results). Default is 5.
-        
-    Returns
-    -------
-    theta_best : ndarray of shape (ndim,)
-        Parameter values that minimize the objective function.
-        
-    obj_best : float
-        Minimum objective function value achieved.
-        
-    Raises
-    ------
-    RuntimeError
-        If no valid solutions are found after all optimization attempts.
-        
-    Notes
-    -----
-    This function is critical for acquisition function optimization in active learning.
-    The key challenges addressed are:
+    :type n_attempts: *int, optional*
     
-    1. **Multi-modality**: Acquisition functions often have many local minima
-    2. **Numerical stability**: Some points may yield infinite or invalid values
-    3. **Boundary constraints**: Solutions must respect parameter bounds
-    4. **Computational efficiency**: Parallel restarts when multiple cores available
+    :returns: 
+        - **theta_best** (*ndarray of shape (ndim,)*) -- Parameter values that minimize the objective function.
+        - **obj_best** (*float*) -- Minimum objective function value achieved.
+    :rtype: *tuple*
     
-    The function automatically retries failed optimizations with new initial points
-    and filters out invalid solutions (infinite values, out-of-bounds points).
+    :raises RuntimeError: If no valid solutions are found after all optimization attempts.
     
-    Examples
-    --------
+    .. note::
+        
+        This function is critical for acquisition function optimization in active learning.
+        The key challenges addressed are:
+        
+        1. **Multi-modality**: Acquisition functions often have many local minima
+        2. **Numerical stability**: Some points may yield infinite or invalid values
+        3. **Boundary constraints**: Solutions must respect parameter bounds
+        4. **Computational efficiency**: Parallel restarts when multiple cores available
+        
+        The function automatically retries failed optimizations with new initial points
+        and filters out invalid solutions (infinite values, out-of-bounds points).
+    
+    **Examples**
+    
     Basic optimization of BAPE utility:
     
-    >>> bounds = [(-2, 2), (-1, 1)]
-    >>> theta_next, obj_min = minimize_objective(
-    ...     obj_fn=lambda x: bape_utility(x, y_train, gp, bounds),
-    ...     grad_obj_fn=lambda x: grad_bape_utility(x, y_train, gp, bounds),
-    ...     bounds=bounds,
-    ...     nopt=5
-    ... )
+    .. code-block:: python
+        
+        >>> bounds = [(-2, 2), (-1, 1)]
+        >>> theta_next, obj_min = minimize_objective(
+        ...     obj_fn=lambda x: bape_utility(x, y_train, gp, bounds),
+        ...     grad_obj_fn=lambda x: grad_bape_utility(x, y_train, gp, bounds),
+        ...     bounds=bounds,
+        ...     nopt=5
+        ... )
     
     Parallel optimization with multiple restarts:
     
-    >>> theta_next, obj_min = minimize_objective(
-    ...     obj_fn=acquisition_fn,
-    ...     grad_obj_fn=None,  # Use finite differences
-    ...     bounds=bounds,
-    ...     nopt=10,
-    ...     ncore=4,
-    ...     method="nelder-mead"
-    ... )
+    .. code-block:: python
+        
+        >>> theta_next, obj_min = minimize_objective(
+        ...     obj_fn=acquisition_fn,
+        ...     grad_obj_fn=None,  # Use finite differences
+        ...     bounds=bounds,
+        ...     nopt=10,
+        ...     ncore=4,
+        ...     method="nelder-mead"
+        ... )
     
     Custom optimization settings:
     
-    >>> options = {"max_iter": 100, "ftol": 1e-8}
-    >>> theta_next, obj_min = minimize_objective(
-    ...     obj_fn=acquisition_fn,
-    ...     grad_obj_fn=grad_fn,
-    ...     bounds=bounds,
-    ...     options=options,
-    ...     method="l-bfgs-b"
-    ... )
+    .. code-block:: python
+        
+        >>> options = {"max_iter": 100, "ftol": 1e-8}
+        >>> theta_next, obj_min = minimize_objective(
+        ...     obj_fn=acquisition_fn,
+        ...     grad_obj_fn=grad_fn,
+        ...     bounds=bounds,
+        ...     options=options,
+        ...     method="l-bfgs-b"
+        ... )
     """
     
     warnings.filterwarnings("ignore", category=RuntimeWarning)

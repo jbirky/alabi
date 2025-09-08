@@ -20,7 +20,7 @@ __all__ = ["configure_gp",
            "optimize_gp",
            "grad_gp_mean_prediction",
            "grad_gp_var_prediction",
-           "grad_gp_kernel"]
+           "numerical_kernel_gradient"]
 
 
 def _nll(p, gp, y, prior_fn=None):
@@ -89,122 +89,20 @@ def _grad_nll(p, gp, y, prior_fn=None):
     return -gp.grad_log_likelihood(y, quiet=True)
 
 
-def grad_gp_kernel(x1, x2, gp, wrt='x1'):
-    """
-    Compute the gradient of the GP kernel k(x1, x2) with respect to x1 or x2.
-    
-    For a GP kernel k(x1, x2), this function computes:
-    - If wrt='x1': ∇_{x1} k(x1, x2) 
-    - If wrt='x2': ∇_{x2} k(x1, x2)
-    
-    This is useful for computing derivatives of covariance functions and
-    can be used in active learning acquisition functions that require
-    kernel gradients.
-    
-    Parameters
-    ----------
-    x1 : array_like, shape (n1, d) or (d,)
-        First input points. If 1D, will be reshaped to (1, d).
-    x2 : array_like, shape (n2, d) or (d,)  
-        Second input points. If 1D, will be reshaped to (1, d).
-    gp : george.GP
-        Fitted George Gaussian Process object with kernel
-    wrt : str, optional
-        Variable to take gradient with respect to. Either 'x1' or 'x2'.
-        Default is 'x1'.
-        
-    Returns
-    -------
-    grad_k : ndarray, shape (n2, d) for single x1, or (n1, n2, d) for multiple x1
-        Gradient of kernel k(x1, x2) with respect to the specified variable.
-        
-    Notes
-    -----
-    This function uses George's built-in gradient capabilities which are
-    analytically computed for supported kernels (ExpSquared, Matern, etc.).
-    
-    For kernel k(x1, x2), the gradient with respect to x1 is typically:
-    ∇_{x1} k(x1, x2) = -∇_{x2} k(x1, x2)
-    
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from george import kernels, GP
-    >>> 
-    >>> # Create GP with ExpSquared kernel
-    >>> kernel = kernels.ExpSquaredKernel(1.0, ndim=2)
-    >>> gp = GP(kernel)
-    >>> 
-    >>> # Compute kernel gradient
-    >>> x1 = np.array([[0.0, 0.0]])  # shape (1, 2)
-    >>> x2 = np.array([[1.0, 0.5], [0.5, 1.0]])  # shape (2, 2)
-    >>> grad_k = grad_gp_kernel(x1, x2, gp, wrt='x1')
-    >>> print(grad_k.shape)  # (2, 2) - gradient for each x2 point
-    """
-    
-    # Ensure inputs are properly shaped
-    x1 = np.atleast_2d(x1)
-    x2 = np.atleast_2d(x2)
-    
-    if x1.shape[1] != x2.shape[1]:
-        raise ValueError(f"x1 and x2 must have same number of dimensions. "
-                        f"Got x1: {x1.shape[1]}, x2: {x2.shape[1]}")
-    
-    if wrt not in ['x1', 'x2']:
-        raise ValueError(f"wrt must be 'x1' or 'x2', got {wrt}")
-    
-    # Get kernel gradients using George's built-in methods
-    if wrt == 'x1':
-        # Gradient with respect to first argument
-        # George's get_gradient computes ∇_{x1} k(x1, x2)
-        grad_k = gp.kernel.get_gradient(x1, x2)
-    else:
-        # Gradient with respect to second argument  
-        # For symmetric kernels: ∇_{x2} k(x1, x2) = -∇_{x1} k(x2, x1)
-        grad_k = -gp.kernel.get_gradient(x2, x1)
-        # Need to transpose to get correct shape
-        if grad_k.ndim == 3:
-            grad_k = grad_k.transpose(1, 0, 2)
-    
-    # Extract only spatial gradients (first ndim components)
-    # George's gradient includes both spatial and hyperparameter gradients
-    ndim = x1.shape[1]
-    
-    # Get the spatial part of the gradient
-    if grad_k.ndim == 3:
-        grad_k_spatial = grad_k[:, :, :ndim]
-    else:
-        grad_k_spatial = grad_k[:, :ndim]
-    
-    # For single x1 point, return shape (n2, d)
-    if x1.shape[0] == 1:
-        if grad_k_spatial.ndim == 3:
-            return grad_k_spatial[0]  # shape (n2, d)
-        else:
-            return grad_k_spatial  # already (n2, d)
-    else:
-        # Multiple x1 points - return full gradient array (n1, n2, d)
-        return grad_k_spatial
-
-
 def numerical_kernel_gradient(xs, x_train, gp, h=1e-6):
     """
     Compute numerical gradient of GP kernel k(xs, x_train) with respect to xs.
     
-    Parameters:
-    -----------
-    xs : array_like, shape (d,) or (1, d)
+    :param xs: (*array_like, shape (d,) or (1, d)*)
         Query point(s) to compute gradient at
-    x_train : array_like, shape (n, d) 
+    :param x_train: (*array_like, shape (n, d)*)
         Training points
-    gp : george.GP
+    :param gp: (*george.GP*)
         Gaussian Process object with kernel
-    h : float, default=1e-6
+    :param h: (*float, default=1e-6*)
         Step size for finite differences
         
-    Returns:
-    --------
-    grad_k : ndarray, shape (n, d)
+    :returns: *ndarray, shape (n, d)*
         Numerical gradient of kernel k(xs, x_train) w.r.t. xs
         Each row corresponds to gradient w.r.t. one training point
     """
@@ -316,6 +214,62 @@ def grad_gp_var_prediction(xs, gp):
 def configure_gp(theta, y, kernel, 
                  fit_amp=True, fit_mean=True, fit_white_noise=False,
                  white_noise=-12, hyperparameters=None):
+    """
+    Configure and initialize a Gaussian Process with robust error handling.
+    
+    Creates a george.GP object with the specified kernel and configuration options.
+    Includes automatic fixes for common numerical issues such as singular matrices,
+    duplicate points, and poor conditioning.
+    
+    :param theta: (*array-like, shape (n_samples, n_features)*)
+        Training input locations (parameters). Must contain finite values only.
+        
+    :param y: (*array-like, shape (n_samples,)*)
+        Training target values (function evaluations). Must contain finite values only.
+        
+    :param kernel: (*george kernel object*)
+        George kernel object defining the covariance function. Common options include
+        ExpSquaredKernel, Matern32Kernel, Matern52Kernel.
+        
+    :param fit_amp: (*bool, optional, default=True*)
+        Whether to fit the kernel amplitude. If True, scales the kernel by the 
+        variance of y to improve conditioning.
+        
+    :param fit_mean: (*bool, optional, default=True*)
+        Whether to fit a constant mean function. If True, initializes mean to 
+        median(y) and allows optimization.
+        
+    :param fit_white_noise: (*bool, optional, default=False*)
+        Whether to fit the white noise (nugget) parameter. If True, the noise
+        level will be optimized during hyperparameter tuning.
+        
+    :param white_noise: (*float, optional, default=-12*)
+        Log-scale white noise parameter. Acts as regularization to prevent
+        singular matrices. More negative values = less noise.
+        
+    :param hyperparameters: (*array-like, optional, default=None*)
+        Pre-specified hyperparameters to set. If provided, these values are used
+        instead of the kernel's default initialization.
+        
+    :returns: *george.GP or None*
+        Configured and computed GP object ready for predictions, or None if
+        configuration failed despite all attempted fixes.
+        
+    :raises ValueError:
+        If theta or y contain non-finite values (NaN or inf).
+        
+    :raises LinAlgError:
+        If GP computation fails due to singular covariance matrix, automatically
+        attempts several fixes before giving up.
+        
+    **Notes**
+    
+    The function includes several automatic fixes for numerical issues:
+    
+    1. **Jitter addition**: Progressively increases white noise to regularize
+    2. **Duplicate removal**: Detects and removes duplicate training points
+    3. **Error reporting**: Provides diagnostic information for debugging
+    """
 
     if np.any(~np.isfinite(theta)) or np.any(~np.isfinite(y)):
         print("theta, y:", theta, y)
@@ -382,6 +336,116 @@ def configure_gp(theta, y, kernel,
 
 def optimize_gp(gp, theta, y, gp_hyper_prior, p0, bounds=None,
                 method="l-bfgs-b", optimizer_kwargs=None, max_iter=50):
+    """
+    Optimize Gaussian Process hyperparameters by maximizing marginal likelihood.
+    
+    Performs hyperparameter optimization for a Gaussian Process using scipy's
+    minimize function. Supports multiple optimization restarts and automatically
+    selects the result with highest marginal likelihood.
+    
+    :param gp: (*george.GP*)
+        Configured Gaussian Process object. Should be computed with training data.
+        
+    :param theta: (*array-like, shape (n_samples, n_features)*)
+        Training input locations (parameters). Will be squeezed if 1D.
+        
+    :param y: (*array-like, shape (n_samples,)*)
+        Training target values (function evaluations). Will be squeezed if 1D.
+        
+    :param gp_hyper_prior: (*callable*)
+        Prior function for hyperparameters. Should return log-probability density
+        for given hyperparameter vector. Used to constrain optimization.
+        
+    :param p0: (*array-like, shape (n_restarts, n_hyperparams) or (n_hyperparams,)*)
+        Initial guesses for hyperparameter optimization. If 2D, performs multiple
+        restarts with different initializations.
+        
+    :param bounds: (*list of tuples, optional, default=None*)
+        Bounds for hyperparameter optimization as [(min, max), ...]. Only used
+        for methods that support bounds (e.g., 'l-bfgs-b').
+        
+    :param method: (*str, optional, default="l-bfgs-b"*)
+        Scipy optimization method. Supported methods:
+        
+        - 'l-bfgs-b': L-BFGS-B with bounds support (default)
+        - 'newton-cg': Newton-CG with gradients
+        - 'bfgs': BFGS (no bounds support)
+        - 'powell': Powell method (derivative-free)
+        
+    :param optimizer_kwargs: (*dict, optional, default=None*)
+        Additional keyword arguments passed to scipy.optimize.minimize.
+        If None, uses method-specific defaults optimized for GP optimization.
+        
+    :param max_iter: (*int, optional, default=50*)
+        Maximum number of iterations for optimization. Used as default in
+        optimizer_kwargs if not specified.
+        
+    :returns: *george.GP or None*
+        GP object with optimized hyperparameters, or None if optimization failed.
+        The returned GP is recomputed with optimal hyperparameters.
+        
+    **Notes**
+    
+    **Multiple Restarts**: If p0 is 2D, the function performs multiple optimization
+    restarts and selects the result with highest marginal log-likelihood. This helps
+    avoid local minima in the hyperparameter space.
+    
+    **Gradient Usage**: For methods 'newton-cg' and 'l-bfgs-b', analytical gradients
+    are used via the `_grad_nll` function for faster convergence.
+    
+    **Error Handling**: The function gracefully handles optimization failures and
+    falls back to initial hyperparameters when necessary.
+    
+    **Examples**
+    
+    Basic hyperparameter optimization:
+    
+    .. code-block:: python
+    
+        import numpy as np
+        from scipy.stats import uniform
+        
+        # Define prior function
+        def prior(params):
+            # Uniform prior on log-scale parameters
+            if np.all(params > -10) and np.all(params < 10):
+                return 0.0  # log(1.0)
+            return -np.inf
+        
+        # Single optimization
+        p0 = gp.get_parameter_vector()  # Current hyperparameters
+        optimized_gp = optimize_gp(gp, theta, y, prior, p0)
+    
+    Multiple restarts for robustness:
+    
+    .. code-block:: python
+    
+        # Multiple random initializations
+        n_restarts = 5
+        n_params = len(gp.get_parameter_vector())
+        p0_multi = np.random.randn(n_restarts, n_params)
+        
+        # Optimization with bounds
+        bounds = [(-5, 5)] * n_params  # Bound each parameter
+        
+        optimized_gp = optimize_gp(gp, theta, y, prior, p0_multi, 
+                                  bounds=bounds, method='l-bfgs-b')
+    
+    Custom optimization settings:
+    
+    .. code-block:: python
+    
+        # High-precision optimization
+        custom_opts = {
+            'maxiter': 200,
+            'ftol': 1e-12,
+            'gtol': 1e-8
+        }
+        
+        optimized_gp = optimize_gp(gp, theta, y, prior, p0,
+                                  method='l-bfgs-b',
+                                  optimizer_kwargs=custom_opts)
+    """
 
     warnings.filterwarnings("ignore", category=RuntimeWarning)
     
@@ -465,7 +529,7 @@ def optimize_gp(gp, theta, y, gp_hyper_prior, p0, bounds=None,
     else:
         # Optimize GP hyperparameters by maximizing marginal log_likelihood
         res = minimize(_nll, p0, args=(gp, y, gp_hyper_prior), method=method,
-                       jac=jac, bounds=bounds, options=options)
+                       jac=jac, bounds=bounds, options=optimizer_kwargs)
 
         if not res.success:
             print("\nWarning: GP hyperparameter optimization failed.\n")
