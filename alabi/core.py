@@ -301,10 +301,16 @@ class SurrogateModel(object):
         return _y
             
     def theta(self):
+        """
+        Return unscaled training theta values
+        """
         
         return self.theta_scaler.inverse_transform(self._theta)
     
     def y(self):
+        """
+        Return unscaled training y values
+        """
         
         return self.y_scaler.inverse_transform(self._y.reshape(-1, 1)).flatten()
 
@@ -335,6 +341,15 @@ class SurrogateModel(object):
 
 
     def load_train(self, cache_file):
+        """
+        Reload training samples from cache file and apply scalers.
+        
+        :param cache_file: (*str, required*) 
+            Name of cache file relative to savedir. Must be a .npz file containing 'theta' and 'y' arrays.
+
+        :returns: (*tuple*) 
+            Scaled training samples (_theta, _y) after loading from cache.
+        """
 
         sims = np.load(cache_file)
         theta = sims["theta"]
@@ -468,6 +483,14 @@ class SurrogateModel(object):
 
 
     def set_hyperparam_prior_bounds(self):
+        """
+        Configure prior bounds for GP hyperparameters based on current training data.
+        
+        By default ranges for parameters:
+            - mean: [mean(y) - std(y), mean(y) + std(y)]
+            - amplitude: [0.1, 10]
+            - white noise: [white_noise - 3, white_noise + 3]
+        """
 
         # Configure GP hyperparameter prior
         hp_bounds = self.gp.get_parameter_bounds()
@@ -491,6 +514,19 @@ class SurrogateModel(object):
 
     
     def fit_gp(self, _theta=None, _y=None):
+        """
+        Fit Gaussian Process to training data with current hyperparameters.
+        
+        :param _theta: (*array, optional*) 
+            Scaled training parameter samples. If None, uses ``self._theta``.
+            
+        :param _y: (*array, optional*) 
+            Scaled training output values. If None, uses ``self._y``.
+            
+        :returns: (*tuple*) 
+            - gp: Fitted george.GP object
+            - timing: Time taken to fit the GP in seconds
+        """
 
         if _theta is None:
             _theta = self._theta
@@ -518,6 +554,13 @@ class SurrogateModel(object):
 
 
     def opt_gp(self):
+        """
+        Optimize GP hyperparameters by maximizing the log marginal likelihood.
+        
+        :returns: (*tuple*) 
+            - op_gp: Optimized george.GP object with updated hyperparameters
+            - timing: Time taken for optimization in seconds
+        """
 
         t0 = time.time()
 
@@ -766,7 +809,7 @@ class SurrogateModel(object):
         self.gp, _ = self.opt_gp()
         
     
-    def eval_gp_at_iteration(self, iter):
+    def eval_gp_at_iteration(self, iter, return_var=False):
         
         gp_iter = self.gp 
         if len(self.training_results["iteration"]) == 0:
@@ -786,38 +829,93 @@ class SurrogateModel(object):
             
         gp_iter.compute(_theta_cond)
 
-        return lambda x: gp_iter.predict(_y_cond, x, return_var=False, return_cov=False)
+        return lambda x: gp_iter.predict(_y_cond, x, return_var=return_var, return_cov=False)
 
 
-    def surrogate_log_likelihood(self, theta_xs, iter=-1):
+    def surrogate_log_likelihood(self, theta_xs, iter=-1, return_var=False):
         """
-        Evaluate predictive mean of the GP at point ``theta_xs``
+        Evaluate predictive mean of the GP at point(s) ``theta_xs``
+        
+        This method is vectorized to handle both single parameter vectors and
+        arrays of parameter vectors efficiently.
 
-        :param theta_xs: (*array, required*) Point to evaluate GP mean at.
+        :param theta_xs: Point(s) to evaluate GP mean at. Can be:
+            - 1D array of shape (ndim,) for single point
+            - 2D array of shape (npoints, ndim) for multiple points
+        :type theta_xs: *array-like*
+        :param iter: Iteration number of GP to use. If -1, uses most recent GP.
+        :type iter: *int, optional*
+        :param return_var: Whether to also return variance predictions.
+        :type return_var: *bool, optional*
 
-        :returns ypred: (*float*) GP mean evaluated at ``theta_xs``.
+        :returns: 
+            - **ypred** (*array*) -- GP mean(s) evaluated at ``theta_xs``. Shape matches input.
+            - **varpred** (*array, optional*) -- GP variance(s) if return_var=True.
+        :rtype: *array or tuple of arrays*
         """
-            
-        theta_xs = np.asarray(theta_xs).reshape(1,-1)
+        
+        # Convert input to numpy array and handle dimensionality
+        theta_xs = np.asarray(theta_xs)
+        original_shape_1d = False
+        
+        # Handle 1D input (single point)
+        if theta_xs.ndim == 1:
+            theta_xs = theta_xs.reshape(1, -1)
+            original_shape_1d = True
+        elif theta_xs.ndim != 2:
+            raise ValueError(f"theta_xs must be 1D or 2D array, got {theta_xs.ndim}D")
+        
+        # Apply scaling transformation
         _theta_xs = self.theta_scaler.transform(theta_xs)
+        
+        # Get GP at specified iteration
+        if hasattr(self, "training_results") and len(self.training_results["iteration"]) > 0:
+            gp_ii = self.eval_gp_at_iteration(iter, return_var=return_var)
+        else:
+            gp_ii = lambda x: self.gp.predict(self._y, x, return_var=return_var, return_cov=False)
 
-        # apply the GP
-        gp_ii = self.eval_gp_at_iteration(iter)
+        # Apply the GP and handle return values
+        if return_var == False:
+            _ypred = gp_ii(_theta_xs)
+            ypred = self.y_scaler.inverse_transform(_ypred.reshape(-1, 1)).flatten()
             
-        _ypred = gp_ii(_theta_xs)
-        ypred = self.y_scaler.inverse_transform(_ypred.reshape(-1, 1)).flatten()[0]
+            # Return single value if input was 1D, otherwise return array
+            if original_shape_1d:
+                return ypred[0]
+            else:
+                return ypred
+                
+        else:
+            _ypred, _varpred = gp_ii(_theta_xs)
+            ypred = self.y_scaler.inverse_transform(_ypred.reshape(-1, 1)).flatten()
+            varpred = self.y_scaler.inverse_transform(_varpred.reshape(-1, 1)).flatten()
 
-        return ypred
+            # Return single values if input was 1D, otherwise return arrays
+            if original_shape_1d:
+                return ypred[0], varpred[0]
+            else:
+                return ypred, varpred
     
     
     def surrogate_likelihood(self, theta_xs):
         """
-        Evaluate predictive probability (not log-probability) of the GP at point theta_xs
+        Evaluate predictive probability (not log-probability) of the GP at point(s) theta_xs
+        
+        This method is vectorized to handle both single parameter vectors and
+        arrays of parameter vectors efficiently.
+        
+        :param theta_xs: Point(s) to evaluate GP probability at. Can be:
+            - 1D array of shape (ndim,) for single point
+            - 2D array of shape (npoints, ndim) for multiple points
+        :type theta_xs: *array-like*
+        
+        :returns: GP probability/probabilities evaluated at ``theta_xs``. Shape matches input.
+        :rtype: *float or array*
         """
-        # Get log-probability from GP
+        # Get log-probability from GP (already vectorized)
         log_prob = self.surrogate_log_likelihood(theta_xs)
         
-        # Convert to probability
+        # Convert to probability (works element-wise for arrays)
         prob = np.exp(log_prob)
         
         return prob
@@ -1463,7 +1561,6 @@ class SurrogateModel(object):
         Bayesian posteriors and evidences", MNRAS, 493, 3132-3158
         """
 
-        import dynesty
         from dynesty import NestedSampler
         from dynesty import DynamicNestedSampler
         from dynesty import utils as dyfunc
