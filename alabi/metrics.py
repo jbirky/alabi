@@ -310,22 +310,24 @@ def kl_divergence_kde(samples_p, samples_q, bandwidth=None, epsilon=1e-12, n_eva
     pdf_p = kde_p.pdf(eval_points)
     pdf_q = kde_q.pdf(eval_points)
     
-    # Ensure positive probabilities
+    # Both pdf_p and pdf_q are already normalized by gaussian_kde
+    # Ensure positive probabilities to avoid log(0)
     pdf_p = np.maximum(pdf_p, epsilon)
     pdf_q = np.maximum(pdf_q, epsilon)
     
-    # Weight by pdf_p for proper KL divergence estimation
-    weights = pdf_p / np.sum(pdf_p)  # Normalize weights
-    
-    # Compute weighted KL divergence
+    # Compute KL divergence: E_P[log(P/Q)]
+    # Since we're evaluating at random points, we approximate the expectation
+    # by weighting by the probability density pdf_p
     log_ratio = np.log(pdf_p / pdf_q)
     valid_mask = np.isfinite(log_ratio)
     
     if np.sum(valid_mask) == 0:
         return np.nan
     
-    # Weighted average
-    kl_div = np.sum(weights[valid_mask] * log_ratio[valid_mask])
+    # The weights should be pdf_p normalized by the sum of pdf_p values
+    # to ensure we're approximating the expectation under P
+    weights = pdf_p[valid_mask] / np.sum(pdf_p[valid_mask])
+    kl_div = np.sum(weights * log_ratio[valid_mask])
 
     return np.abs(kl_div) 
 
