@@ -540,10 +540,14 @@ Filename for cached test samples relative to savedir. Currently unused.</p></li>
 <p>This method must be called before init_gp() to provide training data for the
 Gaussian Process. The samples are automatically scaled using the configured
 theta_scaler and y_scaler.</p>
-<p>The method sets several important attributes:
-- _theta, _y: Scaled training samples used by GP
-- theta0, y0: Unscaled original training samples  
-- ntrain: Number of training samples</p>
+<dl class="simple">
+<dt>The method sets several important attributes:</dt><dd><ul class="simple">
+<li><p>_theta, _y: Scaled training samples used by GP</p></li>
+<li><p>theta0, y0: Unscaled original training samples</p></li>
+<li><p>ntrain: Number of training samples</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Example<span class="colon">:</span></dt>
 <dd class="field-odd"><p></p></dd>
@@ -815,12 +819,14 @@ Whether to display progress bar during training.</p></li>
 <dd class="field-even"><p></p></dd>
 </dl>
 <p>Active learning algorithms have different purposes:</p>
-<ul class="simple">
+<blockquote>
+<div><ul class="simple">
 <li><p><strong>BAPE</strong>: Best for uncertainty quantification and space-filling</p></li>
 <li><p><strong>Jones</strong>: Best for finding likelihood maxima/minima (optimization)</p></li>
 <li><p><strong>Alternate</strong>: Good balance for both exploration and exploitation</p></li>
 <li><p><strong>AGP</strong>: Another balanced approach</p></li>
 </ul>
+</div></blockquote>
 <p>The method automatically handles GP re-training and hyperparameter optimization
 based on the specified frequency. Training data is accumulated in _theta and _y
 attributes.</p>
@@ -969,11 +975,6 @@ Default is None.</p></li>
 <dt class="field-odd">note<span class="colon">:</span></dt>
 <dd class="field-odd"><p></p></dd>
 </dl>
-<p>The emcee algorithm uses an affine-invariant ensemble sampler that:
-- Does not require tuning of step sizes or proposal distributions
-- Works well for correlated and multi-modal posteriors
-- Scales well with parameter dimensionality
-- Provides built-in convergence diagnostics</p>
 <p>Burn-in and thinning are automatically estimated using autocorrelation
 analysis if not provided. The acceptance fraction should typically be
 between 0.2-0.5 for good performance.</p>

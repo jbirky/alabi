@@ -45,8 +45,9 @@ Issues <https://github.com/jbirky/alabi/issues>
 
 A python package for performing bayesian inference and optimization for computationally expensive functions.
 
-## 
-#### Contributors:
+![](active_learning_animation.gif)
+
+### Contributors:
 
 - [Jess Birky](https://github.com/jbirky)
 - [Rory Barnes](https://github.com/RoryBarnes)
