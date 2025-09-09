@@ -160,6 +160,17 @@ html_theme_options = {
         "color-brand-content": "#0059b3", # dark blue
         # "color-brand-primary": "#006600", # dark green
         # "color-brand-content": "#006600", # dark green
+        
+        # Custom header font sizes
+        "font-size--small": "0.875rem",
+        "font-size--normal": "1rem", 
+        "font-size--large": "1.125rem",
+        "font-size-h1": "2.2rem",
+        "font-size-h2": "1.8rem",
+        "font-size-h3": "1.5rem",
+        "font-size-h4": "1.3rem",
+        "font-size-h5": "1.1rem",
+        "font-size-h6": "1rem",
     },
 }
 
