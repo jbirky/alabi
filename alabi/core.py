@@ -88,7 +88,7 @@ class SurrogateModel(object):
     :param ignore_warnings: (*bool, optional, default=True*)
         Suppress sklearn and other package warnings
         
-    :param random_seed: (*int, optional, default=None*)
+    :param random_state: (*int, optional, default=None*)
         Random seed for reproducible results
 
     .. attribute:: gp
@@ -172,7 +172,7 @@ class SurrogateModel(object):
                  theta_scaler=preprocessing.MinMaxScaler(), y_scaler=no_scaler,
                  cache=True, savedir="results/", model_name="surrogate_model",
                  verbose=True, ncore=mp.cpu_count(), ignore_warnings=True,
-                 random_seed=None):
+                 random_state=None):
 
         # Check all required inputs are specified
         if lnlike_fn is None:
@@ -181,8 +181,11 @@ class SurrogateModel(object):
             raise ValueError("Must supply prior bounds.")
 
         # Set random seed for reproducibility
-        if random_seed is None:
-            np.random.seed(random_seed)
+        if random_state is None:
+            # Use a time-based seed to avoid clustering when called repeatedly
+            import time
+            random_state = int(time.time() * 1000000) % (2**32)
+        self.random_state = random_state
 
         # Set function for training the GP, and initial training samples
         # For bayesian inference problem this would be your log likelihood function
@@ -202,8 +205,8 @@ class SurrogateModel(object):
         self.y_scaler = y_scaler
 
         # define prior sampler with scaled and unscaled bounds 
-        self._prior_sampler = partial(ut.prior_sampler, bounds=self._bounds, sampler="uniform")
-        self.prior_sampler = partial(ut.prior_sampler, bounds=self.bounds, sampler="uniform")
+        self._prior_sampler = partial(ut.prior_sampler, bounds=self._bounds, sampler="uniform", random_state=self.random_state)
+        self.prior_sampler = partial(ut.prior_sampler, bounds=self.bounds, sampler="uniform", random_state=self.random_state)
 
         # Determine dimensionality 
         self.ndim = len(self._bounds)
@@ -327,7 +330,7 @@ class SurrogateModel(object):
         if nsample is None:
             nsample = 50 * self.ndim
 
-        _theta = self._prior_sampler(nsample=nsample, sampler=sampler)
+        _theta = self._prior_sampler(nsample=nsample, sampler=sampler, random_state=self.random_state)
         theta = self.theta_scaler.inverse_transform(_theta)
         
         y = ut.eval_fn(self.true_log_likelihood, theta, ncore=self.ncore).reshape(-1, 1)
@@ -405,9 +408,9 @@ class SurrogateModel(object):
         theta_scaler and y_scaler.
         
         The method sets several important attributes:
-        - _theta, _y: Scaled training samples used by GP
-        - theta0, y0: Unscaled original training samples  
-        - ntrain: Number of training samples
+            - _theta, _y: Scaled training samples used by GP
+            - theta0, y0: Unscaled original training samples  
+            - ntrain: Number of training samples
         
         :example:
         Basic usage with default uniform sampling:
@@ -570,7 +573,7 @@ class SurrogateModel(object):
 
         if failed == True:
             # create array of random initial hyperparameters:
-            p0 = ut.prior_sampler(bounds=self.hp_bounds, nsample=self.gp_nopt, sampler='uniform')
+            p0 = ut.prior_sampler(bounds=self.hp_bounds, nsample=self.gp_nopt, sampler='uniform', random_state=self.random_state)
             if hasattr(self, "gp"):
                 # if gp exists, use current hyperparameters as a starting point 
                 current_hp = self.gp.get_parameter_vector(include_frozen=False)
@@ -984,7 +987,7 @@ class SurrogateModel(object):
         :param save_progress: (*bool, optional, default=False*)
             Whether to save training progress data for later analysis.
             
-        :param obj_opt_method: (*str, optional, default="l-bfgs-b"*)
+        :param obj_opt_method: (*str, optional, default="nelder-mead"*)
             Optimization method for acquisition function. Options:
             - "l-bfgs-b": L-BFGS-B (good with gradients)
             - "nelder-mead": Nelder-Mead simplex (gradient-free)
@@ -1009,10 +1012,10 @@ class SurrogateModel(object):
         :note:
         Active learning algorithms have different purposes:
         
-        - **BAPE**: Best for uncertainty quantification and space-filling
-        - **Jones**: Best for finding likelihood maxima/minima (optimization)  
-        - **Alternate**: Good balance for both exploration and exploitation
-        - **AGP**: Another balanced approach
+            - **BAPE**: Best for uncertainty quantification and space-filling
+            - **Jones**: Best for finding likelihood maxima/minima (optimization)  
+            - **Alternate**: Good balance for both exploration and exploitation
+            - **AGP**: Another balanced approach
         
         The method automatically handles GP re-training and hyperparameter optimization
         based on the specified frequency. Training data is accumulated in _theta and _y
@@ -1285,12 +1288,6 @@ class SurrogateModel(object):
             Description of prior function used
             
         :note:
-        The emcee algorithm uses an affine-invariant ensemble sampler that:
-        - Does not require tuning of step sizes or proposal distributions
-        - Works well for correlated and multi-modal posteriors
-        - Scales well with parameter dimensionality
-        - Provides built-in convergence diagnostics
-        
         Burn-in and thinning are automatically estimated using autocorrelation
         analysis if not provided. The acceptance fraction should typically be
         between 0.2-0.5 for good performance.
@@ -1366,7 +1363,7 @@ class SurrogateModel(object):
             p0 = self.find_map(prior_fn=self.prior_fn)
         else:
             # start walkers at random points in the prior space
-            p0 = ut.prior_sampler(nsample=self.nwalkers, bounds=self.bounds, sampler="uniform")
+            p0 = ut.prior_sampler(nsample=self.nwalkers, bounds=self.bounds, sampler="uniform", random_state=self.random_state)
 
         # set up multiprocessing pool
         if multi_proc == True:
