@@ -9,7 +9,7 @@ You can run this script directly or copy sections into your own code.
 """
 
 # %% [markdown]
-# ## 2D Benchmarks
+# ## Test 2D Benchmarks
 # 
 # In this example we reproduce the 2D examples in Birky et al. 2025
 

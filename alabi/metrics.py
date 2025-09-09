@@ -338,7 +338,7 @@ def compute_kl_single_trial_joblib(trial, ii, base_dir, example, kernel):
     file_p = f"{base_dir}/{example}/{kernel}/{trial}/dynesty_samples_final_surrogate_iter_{ii}.npz"
     file_q = f"{base_dir}/{example}/{kernel}/dynesty_samples_final_true.npz"
     
-    if os.path.exits(file_p) is False:
+    if os.path.exists(file_p) is False:
         sm = load_model_cache(f"{base_dir}/{example}/{kernel}/{trial}/")
         print(f"Loaded model from cache for trial {trial}, iteration {ii}")
         sm.run_dynesty(like_fn=sm.surrogate_log_likelihood)

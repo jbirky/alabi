@@ -217,13 +217,17 @@
 <li class="toctree-l1"><a class="reference internal" href="../../mcmc_tutorial.html">MCMC sampling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_bayesian_optimization.html">Bayesian Optimization</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<p class="caption" role="heading"><span class="caption-text">Benchmark Examples</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_demo_1d.html">Visualize Active Learning</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../plot_demo_2d.html">2D Benchmarks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plot_demo_2d.html">Test 2D Benchmarks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_line_fit.html">Fit a line to data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../plot_kl_divergence.html">KL Divergence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plot_kl_divergence.html">KL Divergence: Gaussian</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_gaussian_nd.html">Test computational scaling</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Applications</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../trappist_stellar_evolution.html">Stellar Evolution</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul>
@@ -364,7 +368,7 @@
 <span class="sd">    :param ignore_warnings: (*bool, optional, default=True*)</span>
 <span class="sd">        Suppress sklearn and other package warnings</span>
 <span class="sd">        </span>
-<span class="sd">    :param random_seed: (*int, optional, default=None*)</span>
+<span class="sd">    :param random_state: (*int, optional, default=None*)</span>
 <span class="sd">        Random seed for reproducible results</span>
 
 <span class="sd">    .. attribute:: gp</span>
@@ -450,7 +454,7 @@
                  <span class="n">theta_scaler</span><span class="o">=</span><span class="n">preprocessing</span><span class="o">.</span><span class="n">MinMaxScaler</span><span class="p">(),</span> <span class="n">y_scaler</span><span class="o">=</span><span class="n">no_scaler</span><span class="p">,</span>
                  <span class="n">cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">savedir</span><span class="o">=</span><span class="s2">&quot;results/&quot;</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;surrogate_model&quot;</span><span class="p">,</span>
                  <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ncore</span><span class="o">=</span><span class="n">mp</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">(),</span> <span class="n">ignore_warnings</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                 <span class="n">random_seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                 <span class="n">random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
         <span class="c1"># Check all required inputs are specified</span>
         <span class="k">if</span> <span class="n">lnlike_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -459,8 +463,11 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Must supply prior bounds.&quot;</span><span class="p">)</span>
 
         <span class="c1"># Set random seed for reproducibility</span>
-        <span class="k">if</span> <span class="n">random_seed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="n">random_seed</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">random_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Use a time-based seed to avoid clustering when called repeatedly</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+            <span class="n">random_state</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">*</span> <span class="mi">1000000</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">32</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">random_state</span> <span class="o">=</span> <span class="n">random_state</span>
 
         <span class="c1"># Set function for training the GP, and initial training samples</span>
         <span class="c1"># For bayesian inference problem this would be your log likelihood function</span>
@@ -480,8 +487,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">y_scaler</span> <span class="o">=</span> <span class="n">y_scaler</span>
 
         <span class="c1"># define prior sampler with scaled and unscaled bounds </span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_prior_sampler</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">prior_sampler</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_bounds</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s2">&quot;uniform&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">prior_sampler</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">prior_sampler</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s2">&quot;uniform&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prior_sampler</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">prior_sampler</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_bounds</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s2">&quot;uniform&quot;</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prior_sampler</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">ut</span><span class="o">.</span><span class="n">prior_sampler</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s2">&quot;uniform&quot;</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="p">)</span>
 
         <span class="c1"># Determine dimensionality </span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_bounds</span><span class="p">)</span>
@@ -617,7 +624,7 @@
         <span class="k">if</span> <span class="n">nsample</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">nsample</span> <span class="o">=</span> <span class="mi">50</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndim</span>
 
-        <span class="n">_theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prior_sampler</span><span class="p">(</span><span class="n">nsample</span><span class="o">=</span><span class="n">nsample</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">)</span>
+        <span class="n">_theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prior_sampler</span><span class="p">(</span><span class="n">nsample</span><span class="o">=</span><span class="n">nsample</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="n">sampler</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="p">)</span>
         <span class="n">theta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">theta_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">_theta</span><span class="p">)</span>
         
         <span class="n">y</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">eval_fn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">true_log_likelihood</span><span class="p">,</span> <span class="n">theta</span><span class="p">,</span> <span class="n">ncore</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ncore</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
@@ -684,6 +691,7 @@
 <span class="sd">            </span>
 <span class="sd">        :param sampler: (*str, optional, default=&quot;uniform&quot;*)</span>
 <span class="sd">            Sampling method for generating parameter values. Options:</span>
+<span class="sd">            </span>
 <span class="sd">            - &quot;uniform&quot;: Uniform sampling within bounds (default)</span>
 <span class="sd">            - &quot;sobol&quot;: Low-discrepancy Sobol sequence sampling</span>
 <span class="sd">            - &quot;lhs&quot;: Latin hypercube sampling</span>
@@ -695,28 +703,30 @@
 <span class="sd">        :param test_file: (*str, optional, default=&quot;initial_test_sample.npz&quot;*)</span>
 <span class="sd">            Filename for cached test samples relative to savedir. Currently unused.</span>
 
-<span class="sd">        :note:</span>
-<span class="sd">        This method must be called before init_gp() to provide training data for the</span>
-<span class="sd">        Gaussian Process. The samples are automatically scaled using the configured</span>
-<span class="sd">        theta_scaler and y_scaler.</span>
+<span class="sd">        .. note::</span>
 <span class="sd">        </span>
-<span class="sd">        The method sets several important attributes:</span>
-<span class="sd">            - _theta, _y: Scaled training samples used by GP</span>
-<span class="sd">            - theta0, y0: Unscaled original training samples  </span>
-<span class="sd">            - ntrain: Number of training samples</span>
+<span class="sd">            This method must be called before init_gp() to provide training data for the</span>
+<span class="sd">            Gaussian Process. The samples are automatically scaled using the configured</span>
+<span class="sd">            theta_scaler and y_scaler.</span>
+<span class="sd">            </span>
+<span class="sd">            The method sets several important attributes:</span>
+<span class="sd">                - _theta, _y: Scaled training samples used by GP</span>
+<span class="sd">                - theta0, y0: Unscaled original training samples  </span>
+<span class="sd">                - ntrain: Number of training samples</span>
 <span class="sd">        </span>
-<span class="sd">        :example:</span>
-<span class="sd">        Basic usage with default uniform sampling:</span>
-<span class="sd">        </span>
-<span class="sd">        &gt;&gt;&gt; sm.init_samples(ntrain=200)</span>
-<span class="sd">        </span>
-<span class="sd">        Use Sobol sampling for better space coverage:</span>
-<span class="sd">        </span>
-<span class="sd">        &gt;&gt;&gt; sm.init_samples(ntrain=150, sampler=&quot;sobol&quot;)</span>
-<span class="sd">        </span>
-<span class="sd">        Reload from cached file:</span>
-<span class="sd">        </span>
-<span class="sd">        &gt;&gt;&gt; sm.init_samples(reload=True)</span>
+<span class="sd">        .. code-block:: python</span>
+
+<span class="sd">            Basic usage with default uniform sampling:</span>
+<span class="sd">            </span>
+<span class="sd">            &gt;&gt;&gt; sm.init_samples(ntrain=200)</span>
+<span class="sd">            </span>
+<span class="sd">            Use Sobol sampling for better space coverage:</span>
+<span class="sd">            </span>
+<span class="sd">            &gt;&gt;&gt; sm.init_samples(ntrain=150, sampler=&quot;sobol&quot;)</span>
+<span class="sd">            </span>
+<span class="sd">            Reload from cached file:</span>
+<span class="sd">            </span>
+<span class="sd">            &gt;&gt;&gt; sm.init_samples(reload=True)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c1"># Load or create training sample</span>
@@ -875,7 +885,7 @@
 
         <span class="k">if</span> <span class="n">failed</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
             <span class="c1"># create array of random initial hyperparameters:</span>
-            <span class="n">p0</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">prior_sampler</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hp_bounds</span><span class="p">,</span> <span class="n">nsample</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gp_nopt</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s1">&#39;uniform&#39;</span><span class="p">)</span>
+            <span class="n">p0</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">prior_sampler</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hp_bounds</span><span class="p">,</span> <span class="n">nsample</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gp_nopt</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s1">&#39;uniform&#39;</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;gp&quot;</span><span class="p">):</span>
                 <span class="c1"># if gp exists, use current hyperparameters as a starting point </span>
                 <span class="n">current_hp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gp</span><span class="o">.</span><span class="n">get_parameter_vector</span><span class="p">(</span><span class="n">include_frozen</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -983,12 +993,14 @@
 <span class="sd">        :raises Exception: </span>
 <span class="sd">            If GP initialization fails after multiple attempts with different scale lengths.</span>
 
-<span class="sd">        :note: </span>
+<span class="sd">        .. note:: </span>
+<span class="sd">        </span>
 <span class="sd">            This function must be called after init_samples() since it requires training data</span>
 <span class="sd">            to initialize the GP. The function will automatically retry initialization with</span>
 <span class="sd">            different random scale lengths if the initial attempt fails.</span>
 
-<span class="sd">        :example:</span>
+<span class="sd">        .. code-block:: python</span>
+
 <span class="sd">            &gt;&gt;&gt; # Basic initialization with default settings</span>
 <span class="sd">            &gt;&gt;&gt; sm.init_gp()</span>
 <span class="sd">            </span>
@@ -1329,19 +1341,21 @@
 <span class="sd">        :param show_progress: (*bool, optional, default=True*)</span>
 <span class="sd">            Whether to display progress bar during training.</span>
 
-<span class="sd">        :note:</span>
-<span class="sd">        Active learning algorithms have different purposes:</span>
+<span class="sd">        .. note::</span>
 <span class="sd">        </span>
+<span class="sd">            Active learning algorithms have different purposes:</span>
+<span class="sd">            </span>
 <span class="sd">            - **BAPE**: Best for uncertainty quantification and space-filling</span>
 <span class="sd">            - **Jones**: Best for finding likelihood maxima/minima (optimization)  </span>
 <span class="sd">            - **Alternate**: Good balance for both exploration and exploitation</span>
 <span class="sd">            - **AGP**: Another balanced approach</span>
+<span class="sd">            </span>
+<span class="sd">            The method automatically handles GP re-training and hyperparameter optimization</span>
+<span class="sd">            based on the specified frequency. Training data is accumulated in _theta and _y</span>
+<span class="sd">            attributes.</span>
 <span class="sd">        </span>
-<span class="sd">        The method automatically handles GP re-training and hyperparameter optimization</span>
-<span class="sd">        based on the specified frequency. Training data is accumulated in _theta and _y</span>
-<span class="sd">        attributes.</span>
-<span class="sd">        </span>
-<span class="sd">        :example:</span>
+<span class="sd">        .. code-block:: python</span>
+
 <span class="sd">        Basic active learning with BAPE:</span>
 <span class="sd">        </span>
 <span class="sd">        &gt;&gt;&gt; sm.active_train(niter=50, algorithm=&quot;bape&quot;)</span>
@@ -1616,12 +1630,9 @@
 <span class="sd">        prior_fn_comment : str</span>
 <span class="sd">            Description of prior function used</span>
 <span class="sd">            </span>
-<span class="sd">        :note:</span>
-<span class="sd">        Burn-in and thinning are automatically estimated using autocorrelation</span>
-<span class="sd">        analysis if not provided. The acceptance fraction should typically be</span>
-<span class="sd">        between 0.2-0.5 for good performance.</span>
 <span class="sd">        </span>
-<span class="sd">        :example:</span>
+<span class="sd">        .. code-block:: python</span>
+<span class="sd">        </span>
 <span class="sd">        Sample surrogate model with default settings:</span>
 <span class="sd">        </span>
 <span class="sd">        &gt;&gt;&gt; sm.run_emcee()</span>
@@ -1692,7 +1703,7 @@
             <span class="n">p0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_map</span><span class="p">(</span><span class="n">prior_fn</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">prior_fn</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># start walkers at random points in the prior space</span>
-            <span class="n">p0</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">prior_sampler</span><span class="p">(</span><span class="n">nsample</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nwalkers</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s2">&quot;uniform&quot;</span><span class="p">)</span>
+            <span class="n">p0</span> <span class="o">=</span> <span class="n">ut</span><span class="o">.</span><span class="n">prior_sampler</span><span class="p">(</span><span class="n">nsample</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nwalkers</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s2">&quot;uniform&quot;</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">random_state</span><span class="p">)</span>
 
         <span class="c1"># set up multiprocessing pool</span>
         <span class="k">if</span> <span class="n">multi_proc</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>

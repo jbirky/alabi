@@ -9,7 +9,7 @@ You can run this script directly or copy sections into your own code.
 """
 
 # %% [markdown]
-# ## KL Divergence
+# ## KL Divergence: Gaussian
 # 
 # In this example we show how the KL divergence of the surrogate model improves as a function of iteration.
 

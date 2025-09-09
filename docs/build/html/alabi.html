@@ -218,13 +218,17 @@
 <li class="toctree-l1"><a class="reference internal" href="mcmc_tutorial.html">MCMC sampling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot_bayesian_optimization.html">Bayesian Optimization</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<p class="caption" role="heading"><span class="caption-text">Benchmark Examples</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="plot_demo_1d.html">Visualize Active Learning</a></li>
-<li class="toctree-l1"><a class="reference internal" href="plot_demo_2d.html">2D Benchmarks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot_demo_2d.html">Test 2D Benchmarks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot_line_fit.html">Fit a line to data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="plot_kl_divergence.html">KL Divergence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot_kl_divergence.html">KL Divergence: Gaussian</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plot_gaussian_nd.html">Test computational scaling</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Applications</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="trappist_stellar_evolution.html">Stellar Evolution</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul class="current">
@@ -325,7 +329,7 @@
 </section>
 <dl class="py class">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">alabi.core.</span></span><span class="sig-name descname"><span class="pre">SurrogateModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lnlike_fn=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_names=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta_scaler=MinMaxScaler()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_scaler=FunctionTransformer(func=&lt;function</span> <span class="pre">no_scale&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverse_func=&lt;function</span> <span class="pre">no_scale&gt;)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">savedir='results/'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_name='surrogate_model'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncore=128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_warnings=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_seed=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel" title="Link to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">alabi.core.</span></span><span class="sig-name descname"><span class="pre">SurrogateModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lnlike_fn=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_names=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta_scaler=MinMaxScaler()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_scaler=FunctionTransformer(func=&lt;function</span> <span class="pre">no_scale&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverse_func=&lt;function</span> <span class="pre">no_scale&gt;)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">savedir='results/'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_name='surrogate_model'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncore=128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_warnings=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel" title="Link to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Gaussian Process surrogate model for Bayesian inference and optimization.</p>
 <p>A SurrogateModel uses a Gaussian Process to create a fast approximation of expensive
@@ -366,7 +370,7 @@ Print progress information during training and inference</p></li>
 Number of CPU cores to use for parallel computation</p></li>
 <li><p><strong>ignore_warnings</strong> – (<em>bool, optional, default=True</em>)
 Suppress sklearn and other package warnings</p></li>
-<li><p><strong>random_seed</strong> – (<em>int, optional, default=None</em>)
+<li><p><strong>random_state</strong> – (<em>int, optional, default=None</em>)
 Random seed for reproducible results</p></li>
 </ul>
 </dd>
@@ -453,7 +457,7 @@ Random seed for reproducible results</p></li>
 </div>
 <dl class="py method">
 <dt class="sig sig-object py" id="alabi.core.SurrogateModel.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lnlike_fn=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_names=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta_scaler=MinMaxScaler()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_scaler=FunctionTransformer(func=&lt;function</span> <span class="pre">no_scale&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverse_func=&lt;function</span> <span class="pre">no_scale&gt;)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">savedir='results/'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_name='surrogate_model'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncore=128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_warnings=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_seed=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.__init__" title="Link to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lnlike_fn=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_names=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">theta_scaler=MinMaxScaler()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y_scaler=FunctionTransformer(func=&lt;function</span> <span class="pre">no_scale&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverse_func=&lt;function</span> <span class="pre">no_scale&gt;)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">savedir='results/'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_name='surrogate_model'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncore=128</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_warnings=True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_state=None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/alabi/core.html#SurrogateModel.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#alabi.core.SurrogateModel.__init__" title="Link to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="py method">
@@ -522,11 +526,14 @@ Number of test samples to generate. Currently unused.</p></li>
 <li><p><strong>reload</strong> – (<em>bool, optional, default=False</em>)
 Whether to attempt loading cached samples from previous runs.
 If True, tries to load from default cache files first.</p></li>
-<li><p><strong>sampler</strong> – (<em>str, optional, default=”uniform”</em>)
-Sampling method for generating parameter values. Options:
-- “uniform”: Uniform sampling within bounds (default)
-- “sobol”: Low-discrepancy Sobol sequence sampling
-- “lhs”: Latin hypercube sampling</p></li>
+<li><p><strong>sampler</strong> – <p>(<em>str, optional, default=”uniform”</em>)
+Sampling method for generating parameter values. Options:</p>
+<ul>
+<li><p>”uniform”: Uniform sampling within bounds (default)</p></li>
+<li><p>”sobol”: Low-discrepancy Sobol sequence sampling</p></li>
+<li><p>”lhs”: Latin hypercube sampling</p></li>
+</ul>
+</p></li>
 <li><p><strong>train_file</strong> – (<em>str, optional, default=”initial_training_sample.npz”</em>)
 Filename for cached training samples relative to savedir.
 Format: .npz file containing ‘theta’ and ‘y’ arrays.</p></li>
@@ -534,9 +541,9 @@ Format: .npz file containing ‘theta’ and ‘y’ arrays.</p></li>
 Filename for cached test samples relative to savedir. Currently unused.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Note<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
 <p>This method must be called before init_gp() to provide training data for the
 Gaussian Process. The samples are automatically scaled using the configured
 theta_scaler and y_scaler.</p>
@@ -548,20 +555,18 @@ theta_scaler and y_scaler.</p>
 </ul>
 </dd>
 </dl>
-<dl class="field-list simple">
-<dt class="field-odd">Example<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
-<p>Basic usage with default uniform sampling:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">init_samples</span><span class="p">(</span><span class="n">ntrain</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
-</pre></div>
 </div>
-<p>Use Sobol sampling for better space coverage:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">init_samples</span><span class="p">(</span><span class="n">ntrain</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s2">&quot;sobol&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Reload from cached file:</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">init_samples</span><span class="p">(</span><span class="n">reload</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Basic</span> <span class="n">usage</span> <span class="k">with</span> <span class="n">default</span> <span class="n">uniform</span> <span class="n">sampling</span><span class="p">:</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">sm</span><span class="o">.</span><span class="n">init_samples</span><span class="p">(</span><span class="n">ntrain</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+
+<span class="n">Use</span> <span class="n">Sobol</span> <span class="n">sampling</span> <span class="k">for</span> <span class="n">better</span> <span class="n">space</span> <span class="n">coverage</span><span class="p">:</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">sm</span><span class="o">.</span><span class="n">init_samples</span><span class="p">(</span><span class="n">ntrain</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s2">&quot;sobol&quot;</span><span class="p">)</span>
+
+<span class="n">Reload</span> <span class="kn">from</span><span class="w"> </span><span class="nn">cached</span> <span class="n">file</span><span class="p">:</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">sm</span><span class="o">.</span><span class="n">init_samples</span><span class="p">(</span><span class="n">reload</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </dd></dl>
@@ -621,7 +626,7 @@ Scaled training output values. If None, uses <code class="docutils literal notra
 <p>This function sets up a Gaussian Process (GP) using the george library with the specified 
 kernel type and configuration. The GP is initialized with random scale lengths and then
 fitted to the current training data.</p>
-<dl class="field-list">
+<dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>kernel</strong> – <p>(<em>str or george kernel object, optional</em>) 
@@ -678,31 +683,28 @@ Default is {“max_iter”: 50}.</p></li>
 <li><p><strong>Exception</strong> – If GP initialization fails after multiple attempts with different scale lengths.</p></li>
 </ul>
 </dd>
-<dt class="field-odd">Note<span class="colon">:</span></dt>
-<dd class="field-odd"><p>This function must be called after init_samples() since it requires training data
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function must be called after init_samples() since it requires training data
 to initialize the GP. The function will automatically retry initialization with
 different random scale lengths if the initial attempt fails.</p>
-</dd>
-<dt class="field-even">Example<span class="colon">:</span></dt>
-<dd class="field-even"><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Basic initialization with default settings</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">init_gp</span><span class="p">()</span>
-</pre></div>
 </div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Custom kernel with specific hyperparameter settings</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># Basic initialization with default settings</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">init_gp</span><span class="p">()</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># Custom kernel with specific hyperparameter settings</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">init_gp</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="s2">&quot;Matern52Kernel&quot;</span><span class="p">,</span> 
 <span class="gp">... </span>           <span class="n">fit_white_noise</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
 <span class="gp">... </span>           <span class="n">white_noise</span><span class="o">=-</span><span class="mi">10</span><span class="p">,</span>
 <span class="gp">... </span>           <span class="n">gp_scale_rng</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
-</pre></div>
-</div>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="c1"># High-precision optimization</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># High-precision optimization</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">init_gp</span><span class="p">(</span><span class="n">gp_opt_method</span><span class="o">=</span><span class="s2">&quot;l-bfgs-b&quot;</span><span class="p">,</span>
 <span class="gp">... </span>           <span class="n">gp_nopt</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
 <span class="gp">... </span>           <span class="n">optimizer_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;max_iter&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;ftol&quot;</span><span class="p">:</span> <span class="mf">1e-9</span><span class="p">})</span>
 </pre></div>
 </div>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="py method">
@@ -815,25 +817,23 @@ Additional keyword arguments passed to the optimizer.</p></li>
 Whether to display progress bar during training.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Note<span class="colon">:</span></dt>
-<dd class="field-even"><p></p></dd>
 </dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
 <p>Active learning algorithms have different purposes:</p>
-<blockquote>
-<div><ul class="simple">
+<ul class="simple">
 <li><p><strong>BAPE</strong>: Best for uncertainty quantification and space-filling</p></li>
 <li><p><strong>Jones</strong>: Best for finding likelihood maxima/minima (optimization)</p></li>
 <li><p><strong>Alternate</strong>: Good balance for both exploration and exploitation</p></li>
 <li><p><strong>AGP</strong>: Another balanced approach</p></li>
 </ul>
-</div></blockquote>
 <p>The method automatically handles GP re-training and hyperparameter optimization
 based on the specified frequency. Training data is accumulated in _theta and _y
 attributes.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Example<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
 <p>Basic active learning with BAPE:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">active_train</span><span class="p">(</span><span class="n">niter</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">algorithm</span><span class="o">=</span><span class="s2">&quot;bape&quot;</span><span class="p">)</span>
 </pre></div>
@@ -971,17 +971,9 @@ Default is None.</p></li>
 <dt>prior_fn_comment<span class="classifier">str</span></dt><dd><p>Description of prior function used</p>
 </dd>
 </dl>
-<dl class="field-list simple">
-<dt class="field-odd">note<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
-<p>Burn-in and thinning are automatically estimated using autocorrelation
-analysis if not provided. The acceptance fraction should typically be
-between 0.2-0.5 for good performance.</p>
-<dl class="field-list simple">
-<dt class="field-odd">example<span class="colon">:</span></dt>
-<dd class="field-odd"><p></p></dd>
-</dl>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
 <p>Sample surrogate model with default settings:</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sm</span><span class="o">.</span><span class="n">run_emcee</span><span class="p">()</span>
 </pre></div>

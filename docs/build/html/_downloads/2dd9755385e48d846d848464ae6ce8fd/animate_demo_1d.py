@@ -18,6 +18,8 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
+import os
+
 
 
 import alabi
@@ -69,7 +71,7 @@ def plot_current_gp(sm, save_frame=False, frame_dir="frames", iteration=0):
 
 
 
-    fig, ax = plt.subplots(1, 1, figsize=[10,6])
+    fig, ax = plt.subplots(1, 1, figsize=[10,4])
 
     plt.subplots_adjust(hspace=0)
 
@@ -124,10 +126,6 @@ def plot_current_gp(sm, save_frame=False, frame_dir="frames", iteration=0):
     return fig
 
 # %%
-np.random.seed(7)
-
-
-
 sm = SurrogateModel(lnlike_fn=test1d_fn, 
 
                     bounds=bounds, 
@@ -138,7 +136,9 @@ sm = SurrogateModel(lnlike_fn=test1d_fn,
 
                     y_scaler=alabi.no_scaler,
 
-                    cache=False)
+                    cache=False,
+
+                    random_state=7)
 
 
 
@@ -151,15 +151,6 @@ plot_current_gp(sm)
 
 # %% [markdown]
 # Define a plot function for inspecting the current GP fit so that we can compare the fit before and after active learning training.
-
-# %%
-# Additional imports for animation
-
-import os
-
-from PIL import Image
-
-import io
 
 # %%
 def create_animation_gif(sm, niter=20, algorithm="bape", frame_dir="frames", gif_name="active_learning_animation.gif"):
@@ -216,116 +207,18 @@ def create_animation_gif(sm, niter=20, algorithm="bape", frame_dir="frames", gif
 
     # # Create GIF from frames
 
-    # frames = []
+    os.system(f"convert -delay 40 -loop 0 -dispose previous -units PixelsPerInch {frame_dir}/*.png -density 300 {gif_name}")
 
-    # frame_files = sorted([f for f in os.listdir(frame_dir) if f.endswith('.png')])
-
-    
-
-    # for frame_file in frame_files:
-
-    #     frame_path = os.path.join(frame_dir, frame_file)
-
-    #     frames.append(Image.open(frame_path))
-
-    
-
-    # # Save as GIF with slower frame rate for better viewing
-
-    # frames[0].save(
-
-    #     gif_name,
-
-    #     save_all=True,
-
-    #     append_images=frames[1:],
-
-    #     duration=800,  # 800ms per frame
-
-    #     loop=0
-
-    # )
-
-    
-
-    # print(f"Animation saved as {gif_name}")
-
-    return gif_name
+    print(f"Animation saved as {gif_name}")
 
 # %%
-create_animation_gif(sm, niter=20, algorithm="bape", frame_dir="frames", gif_name="active_learning_animation.gif")
+algorithm = "jones"
 
-# %%
-os.system("convert -delay 40 -loop 0 -dispose previous -units PixelsPerInch frames/*.png -density 400 active_learning_animation.gif")
+create_animation_gif(sm, niter=20, algorithm=algorithm, 
 
+                     frame_dir="results/frames", 
 
-# %%
-import os
-
-# Change ImageMagick resolution - resize to 50% of original size for smaller file
-
-# os.system("convert -delay 40 -loop 0 -dispose previous -resize 50% frames/*.png active_learning_animation.gif")
-
-
-
-# Alternative options:
-
-# For specific pixel dimensions:
-
-# os.system("convert -delay 40 -loop 0 -dispose previous -resize 800x600 frames/*.png active_learning_animation.gif")
-
-
-
-# For higher quality but larger file:
-
-os.system("convert -delay 40 -loop 0 -dispose previous -resize 150% frames/*.png active_learning_animation.gif")
-
-
-
-# For lower quality but much smaller file:
-
-# os.system("convert -delay 40 -loop 0 -dispose previous -resize 30% frames/*.png active_learning_animation.gif")
-
-# %%
-plot_current_gp(sm)
-
-# %%
-# Create animated GIF showing active learning process
-
-gif_filename = create_animation_gif(sm, niter=20, algorithm="bape", 
-
-                                  frame_dir="frames", 
-
-                                  gif_name="active_learning_evolution.gif")
-
-
-
-print(f"Animation complete! Saved as: {gif_filename}")
-
-# %% [markdown]
-# ## Animated Active Learning Process
-# 
-# The following animation shows how the Gaussian Process surrogate model evolves during active learning:
-# 
-# - **Top panel**: Shows the true function (black dashed), GP mean (red line), GP uncertainty (red shaded area), and training points (red dots)
-# - **Bottom panel**: Shows the acquisition functions (AGP in green, BAPE in blue) that guide where to sample next
-# - **Vertical dotted lines**: Indicate the optimal next sampling location according to each acquisition function
-# 
-# Watch how the GP progressively learns the true function shape and the acquisition functions adapt to focus on different regions as uncertainty is reduced.
-
-# %%
-# Display the animation in the notebook
-
-from IPython.display import Image as IPImage, display
-
-
-
-# Display the GIF
-
-display(IPImage(filename=gif_filename))
-
-# %% [markdown]
-# After 20 iterations the convergence is much better, particularly in the high likelihood regions which are most important for sampling.
+                     gif_name=f"active_learning_animation_{algorithm}.gif")
 
 # %%
 plot_current_gp(sm)

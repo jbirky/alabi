@@ -1,0 +1,54 @@
+==================================================================
+GP summary 
+==================================================================
+
+Configuration: 
+-------------- 
+Kernel: ExpSquaredKernel 
+Function bounds: [[0 1]
+ [0 1]] 
+fit mean: True 
+fit amplitude: True 
+fit white_noise: True 
+GP white noise: -12 
+Hyperparameter bounds: [[-1.54768119e+02 -8.22289246e+01]
+ [-1.50000000e+01 -9.00000000e+00]
+ [ 1.00000000e-01  1.00000000e+01]
+ [-2.00000000e+00  2.00000000e+00]
+ [-2.00000000e+00  2.00000000e+00]] 
+Active learning algorithm : bape 
+
+Number of total training samples: 300 
+Number of initial training samples: 50 
+Number of active training samples: 250 
+Number of test samples: 0 
+
+Results: 
+-------- 
+GP final hyperparameters: 
+   [mean:value] 	-130.90350223632285 
+   [white_noise:value] 	-12.0 
+   [kernel:k1:log_constant] 	6.4888125130388765 
+   [kernel:k2:metric:log_M_0_0] 	1.8003355935350918 
+   [kernel:k2:metric:log_M_1_1] 	1.4556114140467633 
+
+Active learning train runtime (s): 24.0 
+
+Final test error (MSE): nan 
+
+==================================================================
+dynesty summary 
+==================================================================
+
+Configuration: 
+-------------- 
+Results: 
+-------- 
+Total weighted samples: 11231 
+
+Dynesty runtime (s): 134.0 
+
+Summary statistics: 
+theta_{i} = 0.7315315844029497 +/- 0.029956205059187876 
+theta_{i} = 0.156243500321986 +/- 0.015972350998249334 
+

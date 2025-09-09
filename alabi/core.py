@@ -391,6 +391,7 @@ class SurrogateModel(object):
             
         :param sampler: (*str, optional, default="uniform"*)
             Sampling method for generating parameter values. Options:
+            
             - "uniform": Uniform sampling within bounds (default)
             - "sobol": Low-discrepancy Sobol sequence sampling
             - "lhs": Latin hypercube sampling
@@ -402,28 +403,30 @@ class SurrogateModel(object):
         :param test_file: (*str, optional, default="initial_test_sample.npz"*)
             Filename for cached test samples relative to savedir. Currently unused.
 
-        :note:
-        This method must be called before init_gp() to provide training data for the
-        Gaussian Process. The samples are automatically scaled using the configured
-        theta_scaler and y_scaler.
+        .. note::
         
-        The method sets several important attributes:
-            - _theta, _y: Scaled training samples used by GP
-            - theta0, y0: Unscaled original training samples  
-            - ntrain: Number of training samples
+            This method must be called before init_gp() to provide training data for the
+            Gaussian Process. The samples are automatically scaled using the configured
+            theta_scaler and y_scaler.
+            
+            The method sets several important attributes:
+                - _theta, _y: Scaled training samples used by GP
+                - theta0, y0: Unscaled original training samples  
+                - ntrain: Number of training samples
         
-        :example:
-        Basic usage with default uniform sampling:
-        
-        >>> sm.init_samples(ntrain=200)
-        
-        Use Sobol sampling for better space coverage:
-        
-        >>> sm.init_samples(ntrain=150, sampler="sobol")
-        
-        Reload from cached file:
-        
-        >>> sm.init_samples(reload=True)
+        .. code-block:: python
+
+            Basic usage with default uniform sampling:
+            
+            >>> sm.init_samples(ntrain=200)
+            
+            Use Sobol sampling for better space coverage:
+            
+            >>> sm.init_samples(ntrain=150, sampler="sobol")
+            
+            Reload from cached file:
+            
+            >>> sm.init_samples(reload=True)
         """
 
         # Load or create training sample
@@ -678,12 +681,14 @@ class SurrogateModel(object):
         :raises Exception: 
             If GP initialization fails after multiple attempts with different scale lengths.
 
-        :note: 
+        .. note:: 
+        
             This function must be called after init_samples() since it requires training data
             to initialize the GP. The function will automatically retry initialization with
             different random scale lengths if the initial attempt fails.
 
-        :example:
+        .. code-block:: python
+
             >>> # Basic initialization with default settings
             >>> sm.init_gp()
             
@@ -1009,19 +1014,21 @@ class SurrogateModel(object):
         :param show_progress: (*bool, optional, default=True*)
             Whether to display progress bar during training.
 
-        :note:
-        Active learning algorithms have different purposes:
+        .. note::
         
+            Active learning algorithms have different purposes:
+            
             - **BAPE**: Best for uncertainty quantification and space-filling
             - **Jones**: Best for finding likelihood maxima/minima (optimization)  
             - **Alternate**: Good balance for both exploration and exploitation
             - **AGP**: Another balanced approach
+            
+            The method automatically handles GP re-training and hyperparameter optimization
+            based on the specified frequency. Training data is accumulated in _theta and _y
+            attributes.
         
-        The method automatically handles GP re-training and hyperparameter optimization
-        based on the specified frequency. Training data is accumulated in _theta and _y
-        attributes.
-        
-        :example:
+        .. code-block:: python
+
         Basic active learning with BAPE:
         
         >>> sm.active_train(niter=50, algorithm="bape")
@@ -1287,12 +1294,9 @@ class SurrogateModel(object):
         prior_fn_comment : str
             Description of prior function used
             
-        :note:
-        Burn-in and thinning are automatically estimated using autocorrelation
-        analysis if not provided. The acceptance fraction should typically be
-        between 0.2-0.5 for good performance.
         
-        :example:
+        .. code-block:: python
+        
         Sample surrogate model with default settings:
         
         >>> sm.run_emcee()
