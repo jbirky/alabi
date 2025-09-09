@@ -1,12 +1,16 @@
 import numpy as np
 from scipy.stats import qmc, gaussian_kde
 from scipy import integrate
+import os
+from .cache_utils import load_model_cache
 
 
 __all__ = ["kl_divergence_gaussian",
            "js_divergence_gaussian",
+           "kl_divergence_integral",
            "kl_divergence_kde",
-           "kl_divergence_integral",]
+           "compute_kl_single_trial_joblib",
+           "compute_kl_full_parallel"]
 
 def kl_divergence_gaussian(mu1, cov1, mu2, cov2):
     """
@@ -199,7 +203,7 @@ def kl_divergence_integral(log_p, log_q, bounds, method='qmc',
         raise ValueError("Invalid method. Choose 'quad', 'mc', or 'qmc'")
 
 
-def kl_divergence_kde(samples_p, samples_q, bandwidth=None):
+def kl_divergence_kde(samples_p, samples_q, bandwidth=None, epsilon=1e-12, n_eval=1000):
     """
     Compute KL divergence between two sets of samples from distributions P and Q
     using kernel density estimation (KDE).
@@ -275,16 +279,117 @@ def kl_divergence_kde(samples_p, samples_q, bandwidth=None):
         samples_p = samples_p.reshape(-1, 1)
     if samples_q.ndim == 1:
         samples_q = samples_q.reshape(-1, 1)
+
+    if samples_p.shape[1] != samples_q.shape[1]:
+        raise ValueError("Samples must have same dimensionality")
+
+    # Fit KDE
+    if bandwidth is not None:
+        kde_p = gaussian_kde(samples_p.T, bw_method="scott")
+        kde_q = gaussian_kde(samples_q.T, bw_method="scott")
+    else:
+        kde_p = gaussian_kde(samples_p.T)
+        kde_q = gaussian_kde(samples_q.T)
     
-    # Fit KDEs to both distributions
-    kde_p = gaussian_kde(samples_p.T, bw_method=bandwidth)
-    kde_q = gaussian_kde(samples_q.T, bw_method=bandwidth)
+    # Method 1: Use a separate evaluation set (recommended)
+    # Create evaluation points by sampling from the combined range
+    n_dim = samples_p.shape[1]
+    all_samples = np.vstack([samples_p, samples_q])
     
-    # Evaluate densities at P samples
-    log_p = kde_p.logpdf(samples_p.T)
-    log_q = kde_q.logpdf(samples_p.T)
+    # Generate evaluation points in the support region
+    min_vals = np.min(all_samples, axis=0)
+    max_vals = np.max(all_samples, axis=0)
     
-    # KL divergence: E_P[log(P/Q)] = E_P[log(P) - log(Q)]
-    kl_div = np.mean(log_p - log_q)
+    # Random evaluation points in the support
+    eval_samples = np.random.uniform(
+        min_vals, max_vals, size=(n_eval, n_dim)
+    )
+    eval_points = eval_samples.T
     
-    return kl_div
+    # Evaluate KDEs at independent points
+    pdf_p = kde_p.pdf(eval_points)
+    pdf_q = kde_q.pdf(eval_points)
+    
+    # Ensure positive probabilities
+    pdf_p = np.maximum(pdf_p, epsilon)
+    pdf_q = np.maximum(pdf_q, epsilon)
+    
+    # Weight by pdf_p for proper KL divergence estimation
+    weights = pdf_p / np.sum(pdf_p)  # Normalize weights
+    
+    # Compute weighted KL divergence
+    log_ratio = np.log(pdf_p / pdf_q)
+    valid_mask = np.isfinite(log_ratio)
+    
+    if np.sum(valid_mask) == 0:
+        return np.nan
+    
+    # Weighted average
+    kl_div = np.sum(weights[valid_mask] * log_ratio[valid_mask])
+
+    return np.abs(kl_div) 
+
+
+def compute_kl_single_trial_joblib(trial, ii, base_dir, example, kernel):
+    """Compute KL divergence for a single trial and iteration (joblib version)"""
+    
+    file_p = f"{base_dir}/{example}/{kernel}/{trial}/dynesty_samples_final_surrogate_iter_{ii}.npz"
+    file_q = f"{base_dir}/{example}/{kernel}/dynesty_samples_final_true.npz"
+    
+    if os.path.exits(file_p) is False:
+        sm = load_model_cache(f"{base_dir}/{example}/{kernel}/{trial}/")
+        print(f"Loaded model from cache for trial {trial}, iteration {ii}")
+        sm.run_dynesty(like_fn=sm.surrogate_log_likelihood)
+        
+    if os.path.exists(file_q) is False:
+        sm = load_model_cache(f"{base_dir}/{example}/{kernel}/")
+        print(f"Loaded true model from cache for trial {trial}, iteration {ii}")
+        sm.run_dynesty(like_fn=sm.lnlike_fn)
+        
+    try:
+        samples_p = np.load(f"{base_dir}/{example}/{kernel}/{trial}/dynesty_samples_final_surrogate_iter_{ii}.npz")["samples"]
+        samples_q = np.load(f"{base_dir}/{example}/{kernel}/dynesty_samples_final_true.npz")["samples"]
+        
+        return kl_divergence_kde(samples_p, samples_q)
+    except Exception as e:
+        print(f"Error processing trial {trial}, iteration {ii}: {e}")
+        return np.nan
+
+
+def compute_kl_full_parallel(base_dir, example, kernel, trials=np.arange(0, 30), 
+                           iterations=np.arange(10, 250, 10), n_jobs=16):
+    """Compute all KL divergences for a configuration in parallel"""
+    
+    from joblib import Parallel, delayed
+    
+    # Create all (trial, iteration) combinations
+    all_tasks = [(trial, ii, base_dir, example, kernel) 
+                 for trial in trials 
+                 for ii in iterations]
+    
+    print(f"Processing {len(all_tasks)} tasks for {base_dir}/{example}/{kernel}")
+    
+    # Parallel execution over all trial-iteration combinations
+    results = Parallel(n_jobs=n_jobs, verbose=1)(
+        delayed(compute_kl_single_trial_joblib)(trial, ii, base_dir, example, kernel)
+        for trial, ii, base_dir, example, kernel in all_tasks
+    )
+    
+    # Reorganize results by iteration
+    kl_by_iteration = {}
+    for idx, (trial, ii, _, _, _) in enumerate(all_tasks):
+        if ii not in kl_by_iteration:
+            kl_by_iteration[ii] = []
+        kl_by_iteration[ii].append(results[idx])
+    
+    # Compute mean and std for each iteration
+    iteration_results = []
+    for ii in iterations:
+        valid_kl = [kl for kl in kl_by_iteration[ii] if not np.isnan(kl)]
+        if len(valid_kl) > 0:
+            stat_results = np.array([np.mean(valid_kl), np.std(valid_kl), np.percentile(valid_kl, 25), np.median(valid_kl), np.percentile(valid_kl, 75)])
+            iteration_results.append(stat_results)
+        else:
+            iteration_results.append([np.nan, np.nan, np.nan, np.nan, np.nan])
+
+    return np.array(iteration_results)
