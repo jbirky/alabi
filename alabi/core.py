@@ -8,6 +8,7 @@ from alabi import visualization as vis
 from alabi import gp_utils
 from alabi import mcmc_utils 
 from alabi import cache_utils
+from alabi import parallel_utils
 
 import numpy as np
 from sklearn import preprocessing
@@ -164,8 +165,10 @@ class SurrogateModel(object):
         :meth:`init_samples` : Initialize training data
         :meth:`init_gp` : Initialize Gaussian Process
         :meth:`active_train` : Perform active learning
-        :meth:`run_dynesty` : Run nested sampling
-        :meth:`run_emcee` : Run MCMC sampling
+        :meth:`run_dynesty` : Run nested sampling with dynesty
+        :meth:`run_emcee` : Run MCMC sampling with emcee
+        :meth:`run_ultranest` : Run nested sampling with UltraNest
+        :meth:`run_pymultinest` : Run nested sampling with PyMultiNest
     """
 
     def __init__(self, lnlike_fn=None, bounds=None, param_names=None,
@@ -189,6 +192,7 @@ class SurrogateModel(object):
 
         # Set function for training the GP, and initial training samples
         # For bayesian inference problem this would be your log likelihood function
+        self.lnlike_fn = lnlike_fn
         self.true_log_likelihood = lnlike_fn
 
         # unscaled bounds for theta
@@ -248,9 +252,10 @@ class SurrogateModel(object):
         else:
             self.ncore = ncore
 
-        # false if emcee and dynesty have not been run for this object
+        # false if emcee, dynesty, and ultranest have not been run for this object
         self.emcee_run = False
         self.dynesty_run = False
+        self.ultranest_run = False
         
         self.training_results = {"iteration" : [], 
                                  "gp_hyperparameters" : [],  
@@ -1166,7 +1171,7 @@ class SurrogateModel(object):
             Array of model input parameters to evaluate model probability at.
         """
 
-        if not hasattr(self, 'gp'):
+        if (self.like_fn_name == "surrogate") and (not hasattr(self, 'gp')):
             raise NameError("GP has not been trained")
 
         if not hasattr(self, 'prior_fn'):
@@ -1188,7 +1193,7 @@ class SurrogateModel(object):
 
 
     def run_emcee(self, like_fn=None, prior_fn=None, nwalkers=None, nsteps=int(5e4), sampler_kwargs={}, run_kwargs={},
-                  opt_init=False, multi_proc=True, prior_fn_comment=None, burn=None, thin=None):
+                  opt_init=False, multi_proc=True, prior_fn_comment=None, burn=None, thin=None, samples_file=None):
         """
         Sample the posterior using the emcee affine-invariant MCMC algorithm.
         
@@ -1255,6 +1260,10 @@ class SurrogateModel(object):
         :param thin: (*int or None, optional*)
             Thinning factor - keep every thin-th sample to reduce autocorrelation.
             If None, automatically estimates based on autocorrelation time.
+            Default is None.
+            
+        :param samples_file: (*str or None, optional*)
+            If provided, saves the final samples to this file in NumPy .npz format.
             Default is None.
             
         Attributes Set
@@ -1369,10 +1378,13 @@ class SurrogateModel(object):
             # start walkers at random points in the prior space
             p0 = ut.prior_sampler(nsample=self.nwalkers, bounds=self.bounds, sampler="uniform", random_state=self.random_state)
 
-        # set up multiprocessing pool
+        # set up multiprocessing pool with MPI safety
         if multi_proc == True:
-            pool = mp.Pool(self.ncore)
-            emcee_ncore = self.ncore
+            pool = parallel_utils.safe_multiprocessing_pool(self.ncore)
+            if pool is not None:
+                emcee_ncore = self.ncore
+            else:
+                emcee_ncore = 1
         else:
             pool = None
             emcee_ncore = 1
@@ -1382,20 +1394,20 @@ class SurrogateModel(object):
 
         # Run the sampler!
         emcee_t0 = time.time()
-        self.sampler = emcee.EnsembleSampler(self.nwalkers, 
+        self.emcee_sampler = emcee.EnsembleSampler(self.nwalkers, 
                                              self.ndim, 
                                              self.lnprob, 
                                              pool=pool,
                                              **sampler_kwargs)
 
-        self.sampler.run_mcmc(p0, self.nsteps, progress=True, **run_kwargs)
+        self.emcee_sampler.run_mcmc(p0, self.nsteps, progress=True, **run_kwargs)
 
         # record emcee runtime
         self.emcee_runtime = time.time() - emcee_t0
 
         # burn, thin, and flatten samples
-        self.iburn, self.ithin = mcmc_utils.estimate_burnin(self.sampler, verbose=self.verbose)
-        self.emcee_samples_full = self.sampler.get_chain()
+        self.iburn, self.ithin = mcmc_utils.estimate_burnin(self.emcee_sampler, verbose=self.verbose)
+        self.emcee_samples_full = self.emcee_sampler.get_chain()
 
         if burn is None:
             self.burn = self.iburn
@@ -1407,7 +1419,7 @@ class SurrogateModel(object):
         else:
             self.thin = thin
         
-        self.emcee_samples = self.sampler.get_chain(discard=self.burn, flat=True, thin=self.thin) 
+        self.emcee_samples = self.emcee_sampler.get_chain(discard=self.burn, flat=True, thin=self.thin) 
         
         if self.like_fn_name == "true":
             self.emcee_samples_true = self.emcee_samples
@@ -1415,8 +1427,8 @@ class SurrogateModel(object):
             self.emcee_samples_gp = self.emcee_samples
 
         # get acceptance fraction and autocorrelation time
-        self.acc_frac = np.mean(self.sampler.acceptance_fraction)
-        self.autcorr_time = np.mean(self.sampler.get_autocorr_time())
+        self.acc_frac = np.mean(self.emcee_sampler.acceptance_fraction)
+        self.autcorr_time = np.mean(self.emcee_sampler.get_autocorr_time())
         if self.verbose:
             print(f"Total samples: {self.emcee_samples.shape[0]}")
             print("Mean acceptance fraction: {0:.3f}".format(self.acc_frac))
@@ -1435,18 +1447,23 @@ class SurrogateModel(object):
             except:
                 pass
 
-            if self.like_fn_name == "true":
-                np.savez(f"{self.savedir}/emcee_samples_final_{self.like_fn_name}.npz", samples=self.emcee_samples)
+            if samples_file is not None:
+                fname = f"{self.savedir}/{samples_file}"
             else:
-                if len(self.training_results["iteration"]) == 0:
-                    current_iter = 0
-                else:   
-                    current_iter = self.training_results["iteration"][-1]
-                np.savez(f"{self.savedir}/emcee_samples_final_{self.like_fn_name}_iter_{current_iter}.npz", samples=self.emcee_samples)
-                
+                if self.like_fn_name == "true":
+                    fname = "{self.savedir}/emcee_samples_final_{self.like_fn_name}.npz"
+                else:
+                    if len(self.training_results["iteration"]) == 0:
+                        current_iter = 0
+                    else:   
+                        current_iter = self.training_results["iteration"][-1]
+                    fname = f"{self.savedir}/emcee_samples_final_{self.like_fn_name}_iter_{current_iter}.npz"
+            print(f"Saving final emcee samples to {fname} ...")
+            np.savez(fname, samples=self.emcee_samples)
+            
 
     def run_dynesty(self, like_fn=None, prior_transform=None, mode="dynamic", sampler_kwargs={}, run_kwargs={},
-                    multi_proc=False, save_iter=None, prior_transform_comment=None):
+                    multi_proc=False, save_iter=None, prior_transform_comment=None, samples_file=None):
         """
         Sample the posterior using the dynesty nested sampling algorithm.
         
@@ -1503,6 +1520,10 @@ class SurrogateModel(object):
         :param prior_transform_comment: (*str or None, optional*)
             Comment describing the prior transform for logging purposes. If None
             and prior_transform is provided, attempts to extract function name.
+            Default is None.
+            
+        :param samples_file: (*str or None, optional*)
+            If provided, saves the final samples to this file in NumPy .npz format.
             Default is None.
             
         Attributes Set
@@ -1638,14 +1659,18 @@ class SurrogateModel(object):
             if key not in sampler_kwargs:
                 sampler_kwargs[key] = default_sampler_kwargs[key]
         
-        # set up multiprocessing pool
+        # set up multiprocessing pool with MPI safety
         # default to false. multiprocessing usually slower for some reason
         if multi_proc == True:
-            pool = mp.Pool(self.ncore)
-            pool.size = self.ncore
-            sampler_kwargs["pool"] = pool
-            sampler_kwargs["queue_size"] = self.ncore
-            dynesty_ncore = self.ncore
+            pool = parallel_utils.safe_multiprocessing_pool(self.ncore)
+            if pool is not None:
+                pool.size = self.ncore
+                sampler_kwargs["pool"] = pool
+                sampler_kwargs["queue_size"] = self.ncore
+                dynesty_ncore = self.ncore
+            else:
+                sampler_kwargs["pool"] = None
+                dynesty_ncore = 1
         else:
             sampler_kwargs["pool"] = None
             dynesty_ncore = 1
@@ -1684,7 +1709,7 @@ class SurrogateModel(object):
             last_iter = 0
             while run_sampler == True:
                 dsampler.run_nested(maxiter=save_iter, **run_kwargs)
-                self.res = dsampler.results
+                self.dynesty_results = dsampler.results
 
                 file = os.path.join(self.savedir, f"dynesty_sampler_{self.like_fn_name}.pkl")
 
@@ -1702,9 +1727,14 @@ class SurrogateModel(object):
         else:
             dsampler.run_nested(**run_kwargs)
 
-        self.res = dsampler.results
-        samples = self.res.samples  # samples
-        weights = np.exp(self.res.logwt - self.res.logz[-1])
+        self.dynesty_sampler = dsampler
+        self.dynesty_results = dsampler.results
+        self.dynesty_logz = self.dynesty_results.logz[-1]
+        self.dynesty_logz_err = self.dynesty_results.logzerr[-1]
+        
+        # resample weighted samples to get posterior samples
+        samples = self.dynesty_results.samples  # samples
+        weights = np.exp(self.dynesty_results.logwt - self.dynesty_results.logz[-1])
 
         # Resample weighted samples.
         self.dynesty_samples = dyfunc.resample_equal(samples, weights)
@@ -1730,14 +1760,751 @@ class SurrogateModel(object):
             except:
                 pass
 
-            if self.like_fn_name == "true":
-                np.savez(f"{self.savedir}/dynesty_samples_final_{self.like_fn_name}.npz", samples=self.dynesty_samples)
+            if samples_file is not None:
+                fname = f"{self.savedir}/{samples_file}"
             else:
-                if len(self.training_results["iteration"]) == 0:
+                if self.like_fn_name == "true":
+                    fname = f"{self.savedir}/dynesty_samples_final_{self.like_fn_name}.npz"
+                else:
+                    if len(self.training_results["iteration"]) == 0:
+                        current_iter = 0
+                    else:
+                        current_iter = self.training_results["iteration"][-1]
+                    fname = f"{self.savedir}/dynesty_samples_final_{self.like_fn_name}_iter_{current_iter}.npz"
+            print(f"Saved dynesty samples to {fname}")
+            np.savez(fname, samples=self.dynesty_samples)
+
+
+    def run_pymultinest(self, like_fn=None, prior_fn=None, sampler_kwargs={}, multi_proc=True, 
+                        prior_fn_comment=None, samples_file=None, prefix=None, resume=False, 
+                        n_clustering_params=None, outputfiles_basename=None):
+        """
+        Sample the posterior using the PyMultiNest nested sampling algorithm.
+        
+        This method uses the PyMultiNest package (Python wrapper for MultiNest) to perform 
+        nested sampling on either the trained GP surrogate model or the true likelihood function.
+        MultiNest is particularly effective for multi-modal posteriors and computing Bayesian 
+        evidence with high accuracy.
+        
+        :param like_fn: (*callable, str, or None, optional*)
+            Likelihood function to sample. Options:
+            - None (default): Uses the trained GP surrogate model (self.surrogate_log_likelihood)
+            - "surrogate", "gp": Uses the GP surrogate model explicitly
+            - "true": Uses the true likelihood function (self.true_log_likelihood)
+            - callable: Custom likelihood function with signature like_fn(theta)
+            Default is None.
+            
+        :param prior_fn: (*callable or None, optional*)
+            Prior transformation function that maps from unit hypercube [0,1]^ndim
+            to the parameter space. Should have signature prior_fn(cube) where cube
+            is array of shape (ndim,) with values in [0,1]. The function should modify
+            cube in-place. If None, uses uniform prior with bounds from self.bounds.
+            Default is None.
+            
+        :param sampler_kwargs: (*dict, optional*)
+            Additional keyword arguments passed to pymultinest.run().
+            Common options include:
+            - 'n_live_points': Number of live points (default: 1000)
+            - 'evidence_tolerance': Target evidence uncertainty (default: 0.5)
+            - 'sampling_efficiency': Sampling efficiency parameter (default: 0.8)
+            - 'n_iter_before_update': Iterations before evidence/posterior update (default: 100)
+            - 'null_log_evidence': Null evidence for model comparison (default: -1e90)
+            - 'max_modes': Maximum number of modes to find (default: 100)
+            - 'mode_tolerance': Mode separation tolerance (default: -1e90)
+            - 'seed': Random seed for reproducibility (default: -1, auto)
+            - 'verbose': Verbosity level (default: True)
+            - 'importance_nested_sampling': Use importance nested sampling (default: True)
+            - 'multimodal': Enable multimodal mode detection (default: True)
+            - 'const_efficiency_mode': Use constant efficiency mode (default: False)
+            Default is {}.
+            
+        :param multi_proc: (*bool, optional*)
+            Whether to use multiprocessing. If True, uses self.ncore processes.
+            MultiNest handles parallelization internally when MPI is available.
+            
+            .. note::
+                This parameter is ignored for PyMultiNest as it uses MPI for 
+                parallelization, not Python's multiprocessing. When PyMultiNest
+                runs with MPI, other alabi functions automatically disable their
+                multiprocessing pools to avoid conflicts.
+                
+            Default is True.
+            
+        :param prior_fn_comment: (*str or None, optional*)
+            Comment describing the prior function for logging purposes. If None
+            and prior_fn is provided, attempts to extract function name.
+            Default is None.
+            
+        :param samples_file: (*str or None, optional*)
+            If provided, saves the final samples to this file in NumPy .npz format.
+            Default is None.
+            
+        :param prefix: (*str or None, optional*)
+            Prefix for MultiNest output files. If None, uses default based on
+            likelihood function name and current directory. Default is None.
+            
+        :param resume: (*bool, optional*)
+            Whether to resume from previous run if output files exist.
+            Default is False.
+            
+        :param n_clustering_params: (*int or None, optional*)
+            Number of parameters to use for mode clustering. If None, uses all
+            parameters (ndim). Set to lower value if some parameters are nuisance.
+            Default is None.
+            
+        :param outputfiles_basename: (*str or None, optional*)
+            Base name for MultiNest output files. If None, constructs from savedir
+            and likelihood function name. Default is None.
+            
+        Attributes Set
+        --------------
+        pymultinest_samples : ndarray of shape (nsamples, ndim)
+            Posterior samples from MultiNest
+        pymultinest_samples_true : ndarray of shape (nsamples, ndim)
+            Posterior samples when using true likelihood (like_fn="true")
+        pymultinest_samples_surrogate : ndarray of shape (nsamples, ndim)
+            Posterior samples when using surrogate likelihood
+        pymultinest_weights : ndarray of shape (nsamples,)
+            Sample weights from nested sampling
+        pymultinest_logz : float
+            Log Bayesian evidence estimate
+        pymultinest_logz_err : float
+            Uncertainty in log evidence estimate
+        pymultinest_run : bool
+            Flag indicating PyMultiNest has been successfully run
+        pymultinest_runtime : float
+            Wall-clock time taken for MultiNest sampling in seconds
+        pymultinest_analyzer : pymultinest.Analyzer
+            MultiNest analyzer object for accessing detailed results
+        like_fn_name : str
+            Name of likelihood function used ("true", "surrogate", or "custom")
+        prior_fn_comment : str
+            Description of prior function used
+            
+        .. note::
+            PyMultiNest is particularly well-suited for:
+            
+            - Multi-modal posterior exploration with automatic mode detection
+            - High-accuracy Bayesian evidence computation for model comparison
+            - Robust sampling without manual tuning of MCMC parameters
+            - Handling complex, irregular posterior shapes
+            
+            MultiNest generates several output files including detailed posterior
+            samples, evidence estimates, and mode information. These files are
+            saved to the model's savedir for later analysis.
+            
+            **MPI and Multiprocessing Compatibility:**
+            
+            PyMultiNest uses MPI for parallelization across multiple nodes/cores.
+            When MPI is active, alabi automatically disables Python multiprocessing
+            in other functions (run_emcee, run_dynesty, eval_fn) to prevent conflicts.
+            This ensures that:
+            
+            - PyMultiNest can run efficiently with MPI
+            - Other alabi functions fall back to serial execution when MPI is detected
+            - No deadlocks or resource conflicts occur between MPI and multiprocessing
+            
+            To run PyMultiNest with MPI:
+            
+            >>> # Single node, multiple cores
+            >>> sm.run_pymultinest()  # Uses OpenMP if available
+            
+            >>> # Multiple nodes with MPI (run from command line)
+            >>> # mpirun -n 4 python your_script.py
+            
+        :example:
+            Sample surrogate model with default settings:
+            
+            >>> sm.run_pymultinest()
+            
+            Sample true likelihood with more live points:
+            
+            >>> sm.run_pymultinest(like_fn="true", 
+            ...                   sampler_kwargs={'n_live_points': 2000})
+            
+            Use custom prior with bounds [-10, 10] for each parameter:
+            
+            >>> def my_prior(cube):
+            ...     for i in range(len(cube)):
+            ...         cube[i] = 20*cube[i] - 10  # maps [0,1] to [-10,10]
+            >>> sm.run_pymultinest(prior_fn=my_prior)
+            
+            Enable multimodal mode detection with high accuracy:
+            
+            >>> sm.run_pymultinest(sampler_kwargs={
+            ...     'multimodal': True,
+            ...     'evidence_tolerance': 0.1,
+            ...     'max_modes': 20
+            ... })
+            
+            Run with custom output file prefix and resume capability:
+            
+            >>> sm.run_pymultinest(prefix="my_run_", resume=True)
+            
+        References
+        ----------
+        PyMultiNest documentation: https://johannesbuchner.github.io/PyMultiNest/
+        Feroz et al. (2009): "MultiNest: an efficient and robust Bayesian inference
+        tool for cosmology and particle physics", MNRAS, 398, 1601-1614
+        """
+        
+        try:
+            import pymultinest
+        except ImportError:
+            raise ImportError("PyMultiNest is required but not installed. "
+                            "Install with: pip install pymultinest")
+        
+        # Start timing
+        pymultinest_t0 = time.time()
+        
+        # Determine likelihood function and name
+        if like_fn is None:
+            print("Initializing PyMultiNest with self.surrogate_log_likelihood surrogate model as likelihood.")
+            self.like_fn_name = "surrogate"
+            self.like_fn = self.surrogate_log_likelihood
+        elif callable(like_fn):
+            # like_fn is a function/callable
+            if like_fn == self.surrogate_log_likelihood:
+                print("Initializing PyMultiNest with self.surrogate_log_likelihood surrogate model as likelihood.")
+                self.like_fn_name = "surrogate"
+                self.like_fn = self.surrogate_log_likelihood
+            elif like_fn == self.true_log_likelihood:
+                print("Initializing PyMultiNest with self.true_log_likelihood as likelihood.")
+                self.like_fn_name = "true"
+                self.like_fn = like_fn
+            else:
+                # Custom function provided
+                print("Initializing PyMultiNest with user-provided likelihood function.")
+                self.like_fn_name = "custom"
+                self.like_fn = like_fn
+        elif isinstance(like_fn, str):
+            if like_fn.lower() in ["surrogate", "gp"]:
+                print("Initializing PyMultiNest with self.surrogate_log_likelihood surrogate model as likelihood.")
+                self.like_fn_name = "surrogate"
+                self.like_fn = self.surrogate_log_likelihood
+            elif like_fn.lower() == "true":
+                print("Initializing PyMultiNest with self.true_log_likelihood as likelihood.")
+                self.like_fn_name = "true"
+                self.like_fn = self.true_log_likelihood
+            else:
+                raise ValueError(f"Invalid like_fn string: {like_fn}. "
+                               "Must be 'surrogate', 'gp', 'true', or callable.")
+        else:
+            raise ValueError(f"like_fn must be callable, string, or None. Got {type(like_fn)}")
+        
+        # Set up prior transformation function
+        if prior_fn is None:
+            # Default uniform prior using self.bounds
+            def prior_transform(cube):
+                for i in range(len(cube)):
+                    cube[i] = cube[i] * (self.bounds[i][1] - self.bounds[i][0]) + self.bounds[i][0]
+            self.prior_fn_comment = f"Uniform prior with bounds {self.bounds}"
+        else:
+            prior_transform = prior_fn
+            if prior_fn_comment is None:
+                if hasattr(prior_fn, '__name__'):
+                    self.prior_fn_comment = f"Custom prior function: {prior_fn.__name__}"
+                else:
+                    self.prior_fn_comment = "Custom prior function"
+            else:
+                self.prior_fn_comment = prior_fn_comment
+        
+        # Set up output file basename
+        if outputfiles_basename is None:
+            if prefix is None:
+                if len(self.training_results.get("iteration", [])) == 0:
                     current_iter = 0
                 else:
                     current_iter = self.training_results["iteration"][-1]
-                np.savez(f"{self.savedir}/dynesty_samples_final_{self.like_fn_name}_iter_{current_iter}.npz", samples=self.dynesty_samples)
+                prefix = f"pymultinest_{self.like_fn_name}_iter_{current_iter}_"
+            outputfiles_basename = f"{self.savedir}/{prefix}"
+        
+        # Set default sampler kwargs
+        default_sampler_kwargs = {
+            'n_live_points': 1000,
+            'evidence_tolerance': 0.5,
+            'sampling_efficiency': 0.8,
+            'n_iter_before_update': 100,
+            'null_log_evidence': -1e90,
+            'max_modes': 100,
+            'mode_tolerance': -1e90,
+            'seed': -1,
+            'verbose': True,
+            'importance_nested_sampling': True,
+            'multimodal': True,
+            'const_efficiency_mode': False,
+        }
+        
+        # Update with user-provided kwargs
+        final_sampler_kwargs = {**default_sampler_kwargs, **sampler_kwargs}
+        
+        # Set clustering parameters
+        if n_clustering_params is None:
+            n_clustering_params = self.ndim
+            
+        # Define likelihood function for MultiNest (must return log-likelihood)
+        def multinest_loglike(cube, ndim, nparams):
+            # cube already contains transformed parameters from PyMultiNest
+            theta = np.array(cube[:ndim])
+            return self.like_fn(theta)
+        
+        # Define prior function for MultiNest  
+        def multinest_prior(cube, ndim, nparams):
+            theta = np.array(cube[:ndim])
+            prior_transform(theta)
+            for i in range(ndim):
+                cube[i] = theta[i]
+        
+        print(f"Running PyMultiNest with {final_sampler_kwargs['n_live_points']} live points...")
+        print(f"Evidence tolerance: {final_sampler_kwargs['evidence_tolerance']}")
+        print(f"Output files: {outputfiles_basename}*")
+        print(f"Prior: {self.prior_fn_comment}")
+        
+        # Run MultiNest
+        pymultinest.run(
+            LogLikelihood=multinest_loglike,
+            Prior=multinest_prior,
+            n_dims=self.ndim,
+            n_params=self.ndim,
+            n_clustering_params=n_clustering_params,
+            outputfiles_basename=outputfiles_basename,
+            resume=resume,
+            **final_sampler_kwargs
+        )
+        
+        # Analyze results
+        self.pymultinest_analyzer = pymultinest.Analyzer(
+            outputfiles_basename=outputfiles_basename,
+            n_params=self.ndim
+        )
+        
+        # Get samples and evidence
+        samples = self.pymultinest_analyzer.get_equal_weighted_posterior()
+        self.pymultinest_samples = samples[:, :-1]  # Remove log-likelihood column
+        self.pymultinest_weights = np.ones(len(self.pymultinest_samples))  # Equal weights
+        
+        # Get evidence estimates
+        stats = self.pymultinest_analyzer.get_stats()
+        self.pymultinest_logz = stats['global evidence']
+        self.pymultinest_logz_err = stats['global evidence error']
+        
+        # Store samples based on likelihood function used
+        if self.like_fn_name == "true":
+            self.pymultinest_samples_true = self.pymultinest_samples.copy()
+            print(f"PyMultiNest complete. {len(self.pymultinest_samples_true)} posterior samples collected.")
+        else:
+            self.pymultinest_samples_surrogate = self.pymultinest_samples.copy()
+            print(f"PyMultiNest complete. {len(self.pymultinest_samples_surrogate)} posterior samples collected.")
+        
+        print(f"Log Evidence: {self.pymultinest_logz:.3f} ± {self.pymultinest_logz_err:.3f}")
+        
+        # Record that PyMultiNest has been run
+        self.pymultinest_run = True
+        
+        # Record runtime
+        self.pymultinest_runtime = time.time() - pymultinest_t0
+        print(f"PyMultiNest runtime: {self.pymultinest_runtime:.2f} seconds")
+        
+        # Save results if caching is enabled
+        if self.cache:
+            try:
+                self.save()
+            except:
+                pass
+            
+            # Save samples to file
+            if samples_file is not None:
+                fname = f"{self.savedir}/{samples_file}"
+            else:
+                if self.like_fn_name == "true":
+                    fname = f"{self.savedir}/pymultinest_samples_final_{self.like_fn_name}.npz"
+                else:
+                    if len(self.training_results.get("iteration", [])) == 0:
+                        current_iter = 0
+                    else:
+                        current_iter = self.training_results["iteration"][-1]
+                    fname = f"{self.savedir}/pymultinest_samples_final_{self.like_fn_name}_iter_{current_iter}.npz"
+            
+            print(f"Saved PyMultiNest samples to {fname}")
+            np.savez(fname, 
+                    samples=self.pymultinest_samples,
+                    weights=self.pymultinest_weights,
+                    logz=self.pymultinest_logz,
+                    logz_err=self.pymultinest_logz_err)
+
+
+    def run_ultranest(self, like_fn=None, prior_transform=None, sampler_kwargs={}, run_kwargs={},
+                      multi_proc=False, prior_transform_comment=None, samples_file=None,
+                      log_dir=None, resume="overwrite"):
+        """
+        Sample the posterior using the UltraNest nested sampling algorithm.
+        
+        This method uses the UltraNest package to perform nested sampling on either
+        the trained GP surrogate model or the true likelihood function. UltraNest
+        is a highly robust nested sampling algorithm that automatically adapts to
+        the problem complexity and provides reliable evidence computation.
+        
+        :param like_fn: (*callable, str, or None, optional*)
+            Likelihood function to sample. Options:
+            - None (default): Uses the trained GP surrogate model (self.surrogate_log_likelihood)
+            - "surrogate", "gp": Uses the GP surrogate model explicitly
+            - "true": Uses the true likelihood function (self.true_log_likelihood)
+            - callable: Custom likelihood function with signature like_fn(theta)
+            Default is None.
+            
+        :param prior_transform: (*callable or None, optional*)
+            Prior transformation function that maps from unit hypercube [0,1]^ndim
+            to the parameter space. Should have signature prior_transform(cube) where
+            cube is array of shape (ndim,) with values in [0,1]. Must return transformed
+            parameters as array. If None, creates uniform prior from self.bounds.
+            Default is None.
+            
+        :param sampler_kwargs: (*dict, optional*)
+            Additional keyword arguments passed to UltraNest ReactiveNestedSampler().
+            Common options include:
+            - 'derived_param_names': List of derived parameter names (default: [])
+            - 'wrapped_params': List of bool indicating circular parameters (default: None)
+            - 'resume': Resume behavior 'resume'/'overwrite'/'subfolder' (default: 'subfolder')
+            - 'run_num': Run number for subdirectory creation (default: None)
+            - 'num_test_samples': Number of test samples for validation (default: 2)
+            - 'draw_multiple': Enable dynamic point drawing (default: True)  
+            - 'num_bootstraps': Number of bootstrap samples (default: 30)
+            - 'vectorized': Whether functions accept arrays (default: False)
+            - 'ndraw_min': Minimum points to draw per iteration (default: 128)
+            - 'ndraw_max': Maximum points to draw per iteration (default: 65536)
+            - 'storage_backend': Storage format 'hdf5'/'csv'/'tsv' (default: 'hdf5')
+            - 'warmstart_max_tau': Warmstart maximum tau (default: -1)
+            Default is {}.
+            
+        :param run_kwargs: (*dict, optional*)
+            Additional keyword arguments passed to sampler.run().
+            Common options include:
+            - 'update_interval_volume_fraction': Volume fraction for region updates (default: 0.8)
+            - 'update_interval_ncall': Number of calls between updates (optional, omit for auto)
+            - 'log_interval': Iterations between status updates (optional, omit for auto)
+            - 'show_status': Show integration progress (default: True)
+            - 'viz_callback': Visualization callback function (default: False, disabled)
+            - 'dlogz': Target log-evidence uncertainty (default: 0.5)
+            - 'dKL': Target posterior uncertainty in nats (default: 0.5)
+            - 'frac_remain': Fraction of evidence remaining to terminate (default: 0.01)
+            - 'Lepsilon': Likelihood contour tolerance (default: 0.001)
+            - 'min_ess': Target effective sample size (default: 400)
+            - 'max_iters': Maximum number of iterations (optional, omit for unlimited)
+            - 'max_ncalls': Maximum number of likelihood calls (optional, omit for unlimited)
+            - 'max_num_improvement_loops': Maximum improvement loops (default: -1)
+            - 'min_num_live_points': Minimum number of live points (default: 400)
+            - 'cluster_num_live_points': Live points per cluster (default: 40)
+            - 'insertion_test_zscore_threshold': Z-score threshold for insertion test (default: 4)
+            - 'insertion_test_window': Window size for insertion test (default: 10)
+            - 'region_class': Region sampling class (optional, can be passed via kwargs)
+            - 'widen_before_initial_plateau_num_warn': Warning threshold for plateau (default: 10000)
+            - 'widen_before_initial_plateau_num_max': Maximum plateau points (optional, omit for auto)
+            Default is {}.
+            
+        :param multi_proc: (*bool, optional*)
+            **Deprecated and ignored.** This parameter is kept for backwards compatibility
+            but no longer has any effect. UltraNest now runs in MPI-compatible mode without
+            multiprocessing pools to avoid conflicts with MPI environments.
+            Default is False.
+            
+        :param prior_transform_comment: (*str or None, optional*)
+            Comment describing the prior transform for logging purposes. If None
+            and prior_transform is provided, attempts to extract function name.
+            Default is None.
+            
+        :param samples_file: (*str or None, optional*)
+            If provided, saves the final samples to this file in NumPy .npz format.
+            Default is None.
+            
+        :param log_dir: (*str or None, optional*)
+            Directory to store UltraNest output files and logs. If None, uses
+            a subdirectory in self.savedir. Default is None.
+            
+        :param resume: (*str, optional*)
+            Resume behavior for interrupted runs. Options:
+            - 'resume': Resume if possible, otherwise start fresh
+            - 'resume-similar': Resume with similar but not identical setup
+            - 'overwrite': Always start fresh, overwriting existing files (default)
+            - 'subfolder': Create new timestamped subfolder
+            Default is 'overwrite'.
+            
+        Attributes Set
+        --------------
+        ultranest_results : ultranest.integrator.Result
+            Complete UltraNest results object with samples, evidence, etc.
+        ultranest_samples : ndarray of shape (nsamples, ndim)
+            Equally weighted posterior samples from UltraNest
+        ultranest_samples_true : ndarray of shape (nsamples, ndim)
+            Posterior samples when using true likelihood (like_fn="true")
+        ultranest_samples_surrogate : ndarray of shape (nsamples, ndim)
+            Posterior samples when using surrogate likelihood
+        ultranest_weights : ndarray of shape (nsamples,)
+            Sample weights (typically all equal after resampling)
+        ultranest_logz : float
+            Log Bayesian evidence estimate
+        ultranest_logz_err : float
+            Uncertainty in log evidence estimate
+        ultranest_run : bool
+            Flag indicating UltraNest has been successfully run
+        ultranest_runtime : float
+            Wall-clock time taken for UltraNest sampling in seconds
+        ultranest_sampler : ultranest.ReactiveNestedSampler
+            UltraNest sampler object for accessing detailed information
+        like_fn_name : str
+            Name of likelihood function used ("true", "surrogate", or "custom")
+        prior_transform_comment : str
+            Description of prior transform used
+            
+        .. note::
+            UltraNest is particularly well-suited for:
+            
+            - Robust nested sampling without manual tuning
+            - Automatic adaptation to problem complexity
+            - High-dimensional and multi-modal problems
+            - Reliable evidence computation for model comparison
+            - Problems with complex, irregular likelihood shapes
+            - MPI environments (runs in serial mode to avoid multiprocessing conflicts)
+            
+            UltraNest automatically determines the number of live points and
+            adapts its sampling strategy based on the problem characteristics.
+            It provides excellent performance across a wide range of problems
+            without requiring parameter tuning.
+            
+            **MPI Compatibility:** This function runs UltraNest in serial mode,
+            making it fully compatible with MPI environments. While UltraNest
+            itself can use MPI for parallelization, this implementation avoids
+            multiprocessing pools that can conflict with MPI.
+            
+        :example:
+            Sample surrogate model with default settings:
+            
+            >>> sm.run_ultranest()
+            
+            Sample true likelihood with custom termination criteria:
+            
+            >>> sm.run_ultranest(like_fn="true", 
+            ...                  run_kwargs={'dlogz': 0.1, 'min_ess': 1000})
+            
+            Use custom prior transform with bounds [-5, 5] for each parameter:
+            
+            >>> def my_prior_transform(cube):
+            ...     return 10 * cube - 5  # maps [0,1] to [-5,5]
+            >>> sm.run_ultranest(prior_transform=my_prior_transform)
+            
+            Run with increased live points for better accuracy:
+            
+            >>> sm.run_ultranest(like_fn="true",
+            ...                  run_kwargs={'min_num_live_points': 800})
+            
+            Customize output directory and resume behavior:
+            
+            >>> sm.run_ultranest(log_dir="ultranest_output", 
+            ...                  resume="overwrite")
+            
+        References
+        ----------
+        UltraNest documentation: https://johannesbuchner.github.io/UltraNest/
+        Buchner (2021): "UltraNest - a robust, general purpose Bayesian inference
+        library for cosmology and particle physics", Journal of Open Source Software
+        """
+        
+        try:
+            import ultranest
+            from ultranest import ReactiveNestedSampler
+        except ImportError:
+            raise ImportError("UltraNest is required but not installed. "
+                            "Install with: pip install ultranest")
+        
+        # Start timing
+        ultranest_t0 = time.time()
+        
+        # Determine likelihood function and name
+        if like_fn is None:
+            print("Initializing UltraNest with self.surrogate_log_likelihood surrogate model as likelihood.")
+            self.like_fn_name = "surrogate"
+            self.like_fn = self.surrogate_log_likelihood
+        elif callable(like_fn):
+            # like_fn is a function/callable
+            if like_fn == self.surrogate_log_likelihood:
+                print("Initializing UltraNest with self.surrogate_log_likelihood surrogate model as likelihood.")
+                self.like_fn_name = "surrogate"
+                self.like_fn = self.surrogate_log_likelihood
+            elif like_fn == self.true_log_likelihood:
+                print("Initializing UltraNest with self.true_log_likelihood as likelihood.")
+                self.like_fn_name = "true"
+                self.like_fn = like_fn
+            else:
+                # Custom function provided
+                print("Initializing UltraNest with user-provided likelihood function.")
+                self.like_fn_name = "custom"
+                self.like_fn = like_fn
+        elif isinstance(like_fn, str):
+            if like_fn.lower() in ["surrogate", "gp"]:
+                print("Initializing UltraNest with self.surrogate_log_likelihood surrogate model as likelihood.")
+                self.like_fn_name = "surrogate"
+                self.like_fn = self.surrogate_log_likelihood
+            elif like_fn.lower() == "true":
+                print("Initializing UltraNest with self.true_log_likelihood as likelihood.")
+                self.like_fn_name = "true"
+                self.like_fn = self.true_log_likelihood
+            else:
+                raise ValueError(f"Invalid like_fn string: {like_fn}. "
+                               "Must be 'surrogate', 'gp', 'true', or callable.")
+        else:
+            raise ValueError(f"like_fn must be callable, string, or None. Got {type(like_fn)}")
+        
+        # Set up prior transformation function
+        if prior_transform is None:
+            # Default uniform prior using self.bounds
+            prior_transform_fn = partial(ut.prior_transform_uniform, bounds=self.bounds)
+            self.prior_transform_comment = f"Uniform prior with bounds {self.bounds}"
+        else:
+            prior_transform_fn = prior_transform
+            if prior_transform_comment is None:
+                if hasattr(prior_transform, '__name__'):
+                    self.prior_transform_comment = f"Custom prior transform: {prior_transform.__name__}"
+                else:
+                    self.prior_transform_comment = "Custom prior transform"
+            else:
+                self.prior_transform_comment = prior_transform_comment
+        
+        # Set up log directory
+        if log_dir is None:
+            if len(self.training_results.get("iteration", [])) == 0:
+                current_iter = 0
+            else:
+                current_iter = self.training_results["iteration"][-1]
+            log_dir = f"{self.savedir}/ultranest_{self.like_fn_name}_iter_{current_iter}"
+        
+        # Set default sampler kwargs (these go to ReactiveNestedSampler constructor)
+        default_sampler_kwargs = {
+            'derived_param_names': [],
+            'wrapped_params': None,
+            'num_test_samples': 2,
+            'draw_multiple': True,
+            'num_bootstraps': 30,
+            'vectorized': True,
+            'ndraw_min': 128,
+            'ndraw_max': 65536,
+            'storage_backend': 'hdf5',
+            'warmstart_max_tau': -1,
+        }
+        
+        # Update with user-provided kwargs
+        final_sampler_kwargs = {**default_sampler_kwargs, **sampler_kwargs}
+        
+        # Set default run kwargs (these go to sampler.run() method)
+        default_run_kwargs = {
+            'update_interval_volume_fraction': 0.8,
+            'show_status': True,
+            'viz_callback': False,  # Disable visualization to avoid ipywidgets dependency
+            'dlogz': 0.5,
+            'dKL': 0.5,
+            'frac_remain': 0.01,
+            'Lepsilon': 0.001,
+            'min_ess': 400,
+            'max_num_improvement_loops': 5,
+            'min_num_live_points': 400,
+            'cluster_num_live_points': 40,
+            'insertion_test_zscore_threshold': 4,
+            'insertion_test_window': 10,
+            'widen_before_initial_plateau_num_warn': 10000,
+        }
+        
+        # Update with user-provided kwargs
+        final_run_kwargs = {**default_run_kwargs, **run_kwargs}
+        
+        # Check if MPI is active for informational purposes
+        if parallel_utils.is_mpi_active():
+            print("MPI environment detected. UltraNest will run in MPI-compatible mode.")
+        elif multi_proc:
+            print("Warning: multi_proc=True ignored. UltraNest now runs in MPI-compatible serial mode.")
+        
+        # Define wrapped likelihood function for UltraNest
+        def ultranest_likelihood(params):
+            """Likelihood function wrapper for UltraNest."""
+            return self.like_fn(params)
+        
+        print(f"Running UltraNest with {final_run_kwargs['min_num_live_points']} minimum live points...")
+        print(f"Log directory: {log_dir}")
+        print(f"Execution mode: MPI-compatible (no multiprocessing pools)")
+        print(f"Prior: {self.prior_transform_comment}")
+        print(f"Termination: dlogz={final_run_kwargs['dlogz']}, min_ess={final_run_kwargs['min_ess']}\n")
+        
+        # Create UltraNest sampler
+        self.ultranest_sampler = ReactiveNestedSampler(
+            param_names=[f"param_{i}" for i in range(self.ndim)],
+            loglike=ultranest_likelihood,
+            transform=prior_transform_fn,
+            log_dir=log_dir,
+            resume=resume,
+            **final_sampler_kwargs
+        )
+        
+        # Run UltraNest sampling (always in serial/MPI-compatible mode)
+        self.ultranest_results = self.ultranest_sampler.run(
+            **final_run_kwargs
+        )
+        
+        # Extract results (UltraNest format)
+        self.ultranest_samples = self.ultranest_results['samples']
+        
+        # Extract weights from weighted_samples if available, otherwise use equal weights
+        if 'weighted_samples' in self.ultranest_results:
+            self.ultranest_weights = self.ultranest_results['weighted_samples']['weights']
+        else:
+            # For equally weighted samples, create uniform weights
+            self.ultranest_weights = np.ones(len(self.ultranest_samples)) / len(self.ultranest_samples)
+        
+        # Get evidence estimates
+        self.ultranest_logz = self.ultranest_results['logz']
+        self.ultranest_logz_err = self.ultranest_results['logzerr']
+        
+        # Store samples based on likelihood function used
+        if self.like_fn_name == "true":
+            self.ultranest_samples_true = self.ultranest_samples.copy()
+            print(f"UltraNest complete. {len(self.ultranest_samples_true)} posterior samples collected.")
+        else:
+            self.ultranest_samples_surrogate = self.ultranest_samples.copy()
+            print(f"UltraNest complete. {len(self.ultranest_samples_surrogate)} posterior samples collected.")
+        
+        print(f"Log Evidence: {self.ultranest_logz:.3f} ± {self.ultranest_logz_err:.3f}")
+        print(f"Effective Sample Size: {self.ultranest_results.get('ess', 'N/A')}")
+        print(f"Number of likelihood evaluations: {self.ultranest_results.get('ncall', 'N/A')}")
+        
+        # Record that UltraNest has been run
+        self.ultranest_run = True
+        
+        # Record runtime
+        self.ultranest_runtime = time.time() - ultranest_t0
+        print(f"UltraNest runtime: {self.ultranest_runtime:.2f} seconds\n")
+        
+        # Save results if caching is enabled
+        if self.cache:
+            try:
+                self.save()
+            except:
+                pass
+            
+            # Save samples to file
+            if samples_file is not None:
+                fname = f"{self.savedir}/{samples_file}"
+            else:
+                if self.like_fn_name == "true":
+                    fname = f"{self.savedir}/ultranest_samples_final_true.npz"
+                else:
+                    if len(self.training_results.get("iteration", [])) == 0:
+                        current_iter = 0
+                    else:
+                        current_iter = self.training_results["iteration"][-1]
+                    fname = f"{self.savedir}/ultranest_samples_final_surrogate_iter_{current_iter}.npz"
+            
+            print(f"Saved UltraNest samples to {fname}")
+            np.savez(fname, 
+                    samples=self.ultranest_samples,
+                    weights=self.ultranest_weights,
+                    logz=self.ultranest_logz,
+                    logz_err=self.ultranest_logz_err)
 
 
     def plot(self, plots=None, show=False, cb_rng=[None, None], log_scale=False):

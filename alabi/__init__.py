@@ -8,5 +8,6 @@ from .gp_utils import *
 from .mcmc_utils import *
 from .cache_utils import *
 from .visualization import *
+from .parallel_utils import *
 from .benchmarks import *
 from .metrics import *

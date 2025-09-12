@@ -18,6 +18,13 @@ import multiprocessing as mp
 from functools import partial
 import warnings
 import time
+
+# Import parallel utilities for MPI-safe multiprocessing
+try:
+    from alabi import parallel_utils
+except ImportError:
+    # Fallback if parallel_utils is not available
+    parallel_utils = None
 import tqdm
 from .gp_utils import grad_gp_mean_prediction, grad_gp_var_prediction
 
@@ -244,8 +251,13 @@ def eval_fn(fn, theta, ncore=mp.cpu_count()):
         for ii, tt in tqdm.tqdm(enumerate(theta)):
             y[ii] = fn(tt)
     else:
-        with mp.Pool(ncore) as p:
-            y = np.array(p.map(fn, theta))
+        # Use MPI-safe multiprocessing
+        if parallel_utils is not None:
+            y = parallel_utils.safe_pool_map(fn, theta, ncore)
+        else:
+            # Fallback to original implementation
+            with mp.Pool(ncore) as p:
+                y = np.array(p.map(fn, theta))
 
     tf = time.time()
     print(f"Computed {len(theta)} function evaluations: {np.round(tf - t0)}s \n")
@@ -322,16 +334,20 @@ def prior_transform_uniform(theta, bounds):
     
     This function implements the inverse CDF transformation for uniform distributions,
     mapping from the unit hypercube [0,1]^ndim to the parameter space with given bounds.
-    It is commonly used in nested sampling algorithms like dynesty.
+    It is commonly used in nested sampling algorithms like dynesty and UltraNest.
     
-    :param theta: (*array-like of shape (ndim,)*)
-        Random variables uniformly distributed on [0,1] for each dimension.
+    :param theta: (*array-like*)
+        Random variables uniformly distributed on [0,1]. Can be:
+        - 1D array of shape (ndim,) for a single parameter vector
+        - 2D array of shape (nsamples, ndim) for multiple parameter vectors
         
     :param bounds: (*array-like of shape (ndim, 2)*)
         Parameter bounds as [(min, max), ...] for each dimension.
         
-    :returns: *ndarray of shape (ndim,)*
+    :returns: *ndarray*
         Transformed parameter values within the specified bounds.
+        - If input is 1D: returns 1D array of shape (ndim,)
+        - If input is 2D: returns 2D array of shape (nsamples, ndim)
         
     **Notes**
     
@@ -347,14 +363,22 @@ def prior_transform_uniform(theta, bounds):
     
     **Examples**
     
-    Transform unit cube samples to parameter bounds:
+    Transform single parameter vector:
     
     .. code-block:: python
     
         bounds = [(-2, 2), (0, 10)]
-        theta_unit = [0.25, 0.8]  # Uniform on [0,1]
+        theta_unit = [0.25, 0.8]  # Single vector
         theta_params = prior_transform_uniform(theta_unit, bounds)
         print(theta_params)  # [-1.0, 8.0]
+    
+    Transform multiple parameter vectors:
+    
+    .. code-block:: python
+    
+        theta_unit = [[0.25, 0.8], [0.5, 0.2]]  # Multiple vectors
+        theta_params = prior_transform_uniform(theta_unit, bounds)
+        print(theta_params)  # [[-1.0, 8.0], [0.0, 2.0]]
     
     Use with nested sampling:
     
@@ -362,14 +386,38 @@ def prior_transform_uniform(theta, bounds):
     
         def my_prior_transform(u):
             return prior_transform_uniform(u, bounds)
-        # Pass to dynesty sampler
+        # Pass to dynesty/UltraNest sampler
     """
-
-    pt = np.zeros(len(bounds))
-    for i, b in enumerate(bounds):
-        pt[i] = (b[1] - b[0]) * theta[i] + b[0]
-
-    return pt
+    
+    # Convert to numpy array and handle input validation
+    theta = np.asarray(theta, dtype=float)
+    bounds = np.asarray(bounds)
+    
+    # Determine if input is 1D or 2D
+    if theta.ndim == 1:
+        # Single parameter vector
+        ndim = len(theta)
+        if len(bounds) != ndim:
+            raise ValueError(f"Bounds length ({len(bounds)}) must match theta dimensions ({ndim})")
+        
+        pt = np.zeros(ndim)
+        for i, b in enumerate(bounds):
+            pt[i] = (b[1] - b[0]) * theta[i] + b[0]
+        return pt
+        
+    elif theta.ndim == 2:
+        # Multiple parameter vectors
+        nsamples, ndim = theta.shape
+        if len(bounds) != ndim:
+            raise ValueError(f"Bounds length ({len(bounds)}) must match theta dimensions ({ndim})")
+        
+        pt = np.zeros((nsamples, ndim))
+        for i, b in enumerate(bounds):
+            pt[:, i] = (b[1] - b[0]) * theta[:, i] + b[0]
+        return pt
+        
+    else:
+        raise ValueError(f"theta must be 1D or 2D array, got {theta.ndim}D array with shape {theta.shape}")
 
 
 def lnprior_normal(x, bounds, data):
@@ -384,17 +432,107 @@ def lnprior_normal(x, bounds, data):
 
 
 def prior_transform_normal(x, bounds, data):
-
-    pt = np.zeros(len(bounds))
-    for i, b in enumerate(bounds):
-        if data[i][0] is None:
-            # uniform prior transform
-            pt[i] = (b[1] - b[0]) * x[i] + b[0]
-        else:
-            # gaussian prior transform
-            pt[i] = scipy.stats.norm.ppf(x[i], data[i][0], data[i][1])
+    """
+    Transform uniform random variables to parameter space with mixed prior distributions.
     
-    return pt
+    This function implements prior transformations supporting both uniform and Gaussian
+    priors for different parameters. It maps from the unit hypercube [0,1]^ndim to
+    the parameter space, handling each dimension according to its specified prior type.
+    
+    :param x: (*array-like*)
+        Random variables uniformly distributed on [0,1]. Can be:
+        - 1D array of shape (ndim,) for a single parameter vector
+        - 2D array of shape (nsamples, ndim) for multiple parameter vectors
+        
+    :param bounds: (*array-like of shape (ndim, 2)*)
+        Parameter bounds as [(min, max), ...] for each dimension. Used for uniform priors.
+        
+    :param data: (*list of tuples*)
+        Prior specification for each dimension as [(mean, std), ...]. 
+        - If data[i] = (None, None): use uniform prior with bounds[i]
+        - If data[i] = (mean, std): use Gaussian prior with specified mean and standard deviation
+        
+    :returns: *ndarray*
+        Transformed parameter values according to their prior distributions.
+        - If input is 1D: returns 1D array of shape (ndim,)
+        - If input is 2D: returns 2D array of shape (nsamples, ndim)
+        
+    **Notes**
+    
+    For uniform priors (when data[i][0] is None):
+    
+    .. math::
+        \\theta'_i = (b_{i,\\text{max}} - b_{i,\\text{min}}) x_i + b_{i,\\text{min}}
+    
+    For Gaussian priors (when data[i] = (μ, σ)):
+    
+    .. math::
+        \\theta'_i = \\Phi^{-1}(x_i; \\mu_i, \\sigma_i)
+    
+    where Φ^{-1} is the inverse normal CDF (percent-point function).
+    
+    **Examples**
+    
+    Mixed uniform and Gaussian priors:
+    
+    .. code-block:: python
+    
+        bounds = [(-2, 2), (0, 10)]
+        data = [(None, None), (5.0, 1.0)]  # uniform, then Gaussian(5, 1)
+        x_unit = [0.5, 0.84]  # Single vector
+        x_params = prior_transform_normal(x_unit, bounds, data)
+        print(x_params)  # [0.0, ~6.0] (second value from normal inverse CDF)
+    
+    Vectorized transformation:
+    
+    .. code-block:: python
+    
+        x_unit = [[0.5, 0.84], [0.25, 0.16]]  # Multiple vectors
+        x_params = prior_transform_normal(x_unit, bounds, data)
+        # Returns 2D array with transformed parameters
+    """
+    
+    # Convert to numpy array and handle input validation
+    x = np.asarray(x, dtype=float)
+    bounds = np.asarray(bounds)
+    
+    # Determine if input is 1D or 2D
+    if x.ndim == 1:
+        # Single parameter vector
+        ndim = len(x)
+        if len(bounds) != ndim or len(data) != ndim:
+            raise ValueError(f"Bounds length ({len(bounds)}) and data length ({len(data)}) "
+                           f"must match x dimensions ({ndim})")
+        
+        pt = np.zeros(ndim)
+        for i, b in enumerate(bounds):
+            if data[i][0] is None:
+                # uniform prior transform
+                pt[i] = (b[1] - b[0]) * x[i] + b[0]
+            else:
+                # gaussian prior transform
+                pt[i] = scipy.stats.norm.ppf(x[i], data[i][0], data[i][1])
+        return pt
+        
+    elif x.ndim == 2:
+        # Multiple parameter vectors
+        nsamples, ndim = x.shape
+        if len(bounds) != ndim or len(data) != ndim:
+            raise ValueError(f"Bounds length ({len(bounds)}) and data length ({len(data)}) "
+                           f"must match x dimensions ({ndim})")
+        
+        pt = np.zeros((nsamples, ndim))
+        for i, b in enumerate(bounds):
+            if data[i][0] is None:
+                # uniform prior transform
+                pt[:, i] = (b[1] - b[0]) * x[:, i] + b[0]
+            else:
+                # gaussian prior transform
+                pt[:, i] = scipy.stats.norm.ppf(x[:, i], data[i][0], data[i][1])
+        return pt
+        
+    else:
+        raise ValueError(f"x must be 1D or 2D array, got {x.ndim}D array with shape {x.shape}")
 
 
 #===========================================================
@@ -1055,8 +1193,22 @@ def minimize_objective(obj_fn, grad_obj_fn, bounds=None, nopt=1, method="l-bfgs-
                                     options=options, 
                                     n_attempts=n_attempts)
 
-        with mp.Pool(min(ncore, nopt)) as pool:
-            results = pool.map(minimize_function, range(nopt))
+        # Use MPI-safe multiprocessing
+        if parallel_utils is not None:
+            pool = parallel_utils.safe_multiprocessing_pool(min(ncore, nopt))
+            if pool is not None:
+                try:
+                    results = pool.map(minimize_function, range(nopt))
+                finally:
+                    pool.close()
+                    pool.join()
+            else:
+                # Fallback to serial execution if MPI is active
+                results = [minimize_function(i) for i in range(nopt)]
+        else:
+            # Original implementation as fallback
+            with mp.Pool(min(ncore, nopt)) as pool:
+                results = pool.map(minimize_function, range(nopt))
         
         # Extract results
         res = []

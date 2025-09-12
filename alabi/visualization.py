@@ -35,7 +35,7 @@ __all__ = ["plot_error_vs_iteration",
            "plot_dynesty_traceplot",
            "plot_dynesty_runplot",
            "plot_mcmc_comparison",
-           "plot_emcee_dynesty_comparison",
+           "plot_sampler_comparison",
            "plot_2D_panel4"]
 
 
@@ -461,27 +461,88 @@ def plot_mcmc_comparison(samples1, samples2, bounds=None, param_names=None,
     return fig
 
 
-def plot_emcee_dynesty_comparison(sm, show=False):
+def plot_sampler_comparison(sm, show=False):
 
     lw = 1.5
-    colors = ["orange", "royalblue"]
+    colors = ["orange", "royalblue", "green"]
+    
+    # Determine which samplers are available
+    has_emcee = hasattr(sm, "emcee_samples")
+    has_dynesty = hasattr(sm, "dynesty_samples") and hasattr(sm, "res")
+    has_pymultinest = hasattr(sm, "pymultinest_samples")
+    
+    if not (has_emcee or has_dynesty or has_pymultinest):
+        raise ValueError("No MCMC/nested sampling results found.")
 
     warnings.simplefilter("ignore")
-    fig = corner.corner(sm.emcee_samples,  labels=sm.param_names, range=sm.bounds,
-                    show_titles=True, verbose=False, max_n_ticks=4,
-                    plot_contours=True, plot_datapoints=True, plot_density=True,
-                    color=colors[0], no_fill_contours=False, title_kwargs={"fontsize": 16},
-                    label_kwargs={"fontsize": 22}, hist_kwargs={"linewidth":2.0, "density":True})
-
-    fig = corner.corner(sm.dynesty_samples, labels=sm.param_names, range=sm.bounds, quantiles=[0.16, 0.5, 0.84],
-                        show_titles=True, verbose=False, max_n_ticks=4, title_fmt='.3f',
+    fig = None
+    legend_y = 0.725
+    legend_spacing = 0.175
+    
+    # Plot emcee samples first if available
+    if has_emcee:
+        fig = corner.corner(sm.emcee_samples, labels=sm.param_names, range=sm.bounds,
+                        show_titles=True, verbose=False, max_n_ticks=4,
                         plot_contours=True, plot_datapoints=True, plot_density=True,
-                        color=colors[1], no_fill_contours=False, title_kwargs={"fontsize": 16},
-                        label_kwargs={"fontsize": 22}, hist_kwargs={"linewidth":2.0, "density":True},
-                        fig=fig)
+                        color=colors[0], no_fill_contours=False, title_kwargs={"fontsize": 16},
+                        label_kwargs={"fontsize": 22}, hist_kwargs={"linewidth":2.0, "density":True})
+        
+        fig.axes[1].text(2.2, legend_y, r"--- emcee posterior", fontsize=26, color=colors[0], ha='left')
+        legend_y -= legend_spacing
 
-    fig.axes[1].text(2.2, 0.725, r"--- emcee posterior", fontsize=26, color=colors[0], ha='left')
-    fig.axes[1].text(2.2, 0.55, r"--- dynesty posterior", fontsize=26, color=colors[1], ha='left')
+    # Plot dynesty samples
+    if has_dynesty:
+        if fig is None:
+            fig = corner.corner(sm.dynesty_samples, labels=sm.param_names, range=sm.bounds, 
+                            quantiles=[0.16, 0.5, 0.84], show_titles=True, verbose=False, max_n_ticks=4, 
+                            title_fmt='.3f', plot_contours=True, plot_datapoints=True, plot_density=True,
+                            color=colors[1], no_fill_contours=False, title_kwargs={"fontsize": 16},
+                            label_kwargs={"fontsize": 22}, hist_kwargs={"linewidth":2.0, "density":True})
+        else:
+            fig = corner.corner(sm.dynesty_samples, labels=sm.param_names, range=sm.bounds, 
+                            quantiles=[0.16, 0.5, 0.84], show_titles=True, verbose=False, max_n_ticks=4, 
+                            title_fmt='.3f', plot_contours=True, plot_datapoints=True, plot_density=True,
+                            color=colors[1], no_fill_contours=False, title_kwargs={"fontsize": 16},
+                            label_kwargs={"fontsize": 22}, hist_kwargs={"linewidth":2.0, "density":True},
+                            fig=fig)
+        
+        fig.axes[1].text(2.2, legend_y, r"--- dynesty posterior", fontsize=26, color=colors[1], ha='left')
+        legend_y -= legend_spacing
+    
+    # Plot PyMultiNest samples
+    if has_pymultinest:
+        if fig is None:
+            fig = corner.corner(sm.pymultinest_samples, labels=sm.param_names, range=sm.bounds,
+                            quantiles=[0.16, 0.5, 0.84], show_titles=True, verbose=False, max_n_ticks=4,
+                            title_fmt='.3f', plot_contours=True, plot_datapoints=True, plot_density=True,
+                            color=colors[2], no_fill_contours=False, title_kwargs={"fontsize": 16},
+                            label_kwargs={"fontsize": 22}, hist_kwargs={"linewidth":2.0, "density":True})
+        else:
+            fig = corner.corner(sm.pymultinest_samples, labels=sm.param_names, range=sm.bounds,
+                            quantiles=[0.16, 0.5, 0.84], show_titles=True, verbose=False, max_n_ticks=4,
+                            title_fmt='.3f', plot_contours=True, plot_datapoints=True, plot_density=True,
+                            color=colors[2], no_fill_contours=False, title_kwargs={"fontsize": 16},
+                            label_kwargs={"fontsize": 22}, hist_kwargs={"linewidth":2.0, "density":True},
+                            fig=fig)
+        
+        fig.axes[1].text(2.2, legend_y, r"--- MultiNest posterior", fontsize=26, color=colors[2], ha='left')
+        legend_y -= legend_spacing
+
+    # Add log evidence information
+    text_y = legend_y - 0.05
+    if has_dynesty and hasattr(sm, 'res') and hasattr(sm.res, 'logz'):
+        # Dynesty log evidence
+        logz_dynesty = sm.res.logz[-1] if isinstance(sm.res.logz, np.ndarray) else sm.res.logz
+        logz_err_dynesty = sm.res.logzerr[-1] if isinstance(sm.res.logzerr, np.ndarray) else sm.res.logzerr
+        fig.axes[1].text(2.2, text_y, f"Dynesty log Z = {logz_dynesty:.2f} ± {logz_err_dynesty:.2f}", 
+                        fontsize=20, color=colors[1], ha='left')
+        text_y -= 0.125
+    
+    if has_pymultinest and hasattr(sm, 'pymultinest_logz') and hasattr(sm, 'pymultinest_logz_err'):
+        # PyMultiNest log evidence
+        fig.axes[1].text(2.2, text_y, f"MultiNest log Z = {sm.pymultinest_logz:.2f} ± {sm.pymultinest_logz_err:.2f}", 
+                        fontsize=20, color=colors[2], ha='left')
+        text_y -= 0.125
 
     savename = f"mcmc_comparison_{sm.like_fn_name}.png"
     print("Saving to ", f"{sm.savedir}/{savename}")
