@@ -6,19 +6,65 @@
 import numpy as np
 import pickle
 import os
+from . import parallel_utils
 
-__all__ = ["load_model_cache",
+__all__ = ["load_pickle",
+           "load_model_cache",
            "write_report_gp",
            "write_report_emcee",
            "write_report_dynesty"]
 
 
-def load_model_cache(savedir, fname="surrogate_model.pkl"):
+def load_pickle(savedir, fname="surrogate_model.pkl"):
 
     file = os.path.join(savedir, fname)
     with open(file, "rb") as f:
         sm = pickle.load(f)
 
+    return sm
+
+
+def load_model_cache(savedir):
+    """
+    MPI-safe model loading that prevents file corruption.
+    
+    :param savedir: Directory containing the model cache
+    :returns: Loaded surrogate model
+    """
+    
+    # Check if we're in an MPI environment
+    if parallel_utils.is_mpi_active():
+        try:
+            from mpi4py import MPI
+            comm = MPI.COMM_WORLD
+            rank = comm.Get_rank()
+        except ImportError:
+            rank = 0
+    else:
+        rank = 0
+    
+    # Only rank 0 loads the model
+    if rank == 0:
+        try:
+            sm = load_pickle(savedir)
+            print(f"Rank {rank}: Successfully loaded model from cache")
+        except Exception as e:
+            print(f"Rank {rank}: Failed to load model cache: {e}")
+
+    else:
+        sm = load_pickle(savedir)
+    
+    # Broadcast the model to all ranks if using MPI
+    if parallel_utils.is_mpi_active():
+        try:
+            from mpi4py import MPI
+            comm = MPI.COMM_WORLD
+            sm = comm.bcast(sm, root=0)
+            if rank != 0:
+                print(f"Rank {rank}: Received model from rank 0")
+        except ImportError:
+            pass
+    
     return sm
 
 

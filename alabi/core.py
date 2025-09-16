@@ -17,6 +17,7 @@ from george import kernels
 import multiprocessing as mp
 import time
 import os
+import re
 import warnings
 import tqdm
 import pickle
@@ -272,21 +273,49 @@ class SurrogateModel(object):
     
     def save(self):
         """
-        Pickle ``SurrogateModel`` object and write summary to a text file
+        Pickle ``SurrogateModel`` object and write summary to a text file.
+        MPI-safe: Only rank 0 writes to avoid file corruption.
         """
 
-        file = os.path.join(self.savedir, self.model_name)
+        # Check if we're using MPI and only let rank 0 save
+        if parallel_utils.is_mpi_active():
+            try:
+                from mpi4py import MPI
+                comm = MPI.COMM_WORLD
+                rank = comm.Get_rank()
+            except ImportError:
+                rank = 0
+        else:
+            rank = 0
+        
+        if rank == 0:
+            file = os.path.join(self.savedir, self.model_name)
 
-        # pickle surrogate model object
-        print(f"Caching model to {file}...")
-        with open(file+".pkl", "wb") as f:        
-            pickle.dump(self, f)
+            # pickle surrogate model object
+            print(f"Rank {rank}: Caching model to {file}...")
+            
+            # Create a temporary file first, then rename (atomic operation)
+            temp_file = file + ".pkl.tmp"
+            try:
+                with open(temp_file, "wb") as f:        
+                    pickle.dump(self, f)
+                # Atomic rename to prevent corruption
+                os.rename(temp_file, file + ".pkl")
+            except Exception as e:
+                # Clean up temp file if something went wrong
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+                raise e
 
-        if hasattr(self, "gp"):
-            cache_utils.write_report_gp(self, file)
+            if hasattr(self, "gp"):
+                cache_utils.write_report_gp(self, file)
 
-        if self.emcee_run == True:
-            cache_utils.write_report_emcee(self, file)
+            if self.emcee_run == True:
+                cache_utils.write_report_emcee(self, file)
+        else:
+            # Non-rank-0 processes just print a message
+            if parallel_utils.is_mpi_active():
+                print(f"Rank {rank}: Skipping save (only rank 0 saves to prevent conflicts)")
 
         if self.dynesty_run == True:
             cache_utils.write_report_dynesty(self, file)
@@ -842,7 +871,18 @@ class SurrogateModel(object):
             
         gp_iter.compute(_theta_cond)
 
-        return lambda x: gp_iter.predict(_y_cond, x, return_var=return_var, return_cov=False)
+        def gp_predict(x):
+            # Ensure x is properly shaped for george GP
+            x = np.atleast_2d(x)
+            if x.shape[0] == 1 and x.shape[1] != self.ndim:
+                # If we have a single point but wrong shape, transpose
+                if x.shape[1] == 1 and x.shape[0] == self.ndim:
+                    x = x.T
+                elif len(x.flatten()) == self.ndim:
+                    x = x.reshape(1, -1)
+            return gp_iter.predict(_y_cond, x, return_var=return_var, return_cov=False)
+        
+        return gp_predict
 
 
     def surrogate_log_likelihood(self, theta_xs, iter=-1, return_var=False):
@@ -1193,7 +1233,7 @@ class SurrogateModel(object):
 
 
     def run_emcee(self, like_fn=None, prior_fn=None, nwalkers=None, nsteps=int(5e4), sampler_kwargs={}, run_kwargs={},
-                  opt_init=False, multi_proc=True, prior_fn_comment=None, burn=None, thin=None, samples_file=None):
+                  opt_init=False, multi_proc=True, prior_fn_comment=None, burn=None, thin=None, samples_file=None, min_ess=0):
         """
         Sample the posterior using the emcee affine-invariant MCMC algorithm.
         
@@ -1265,6 +1305,11 @@ class SurrogateModel(object):
         :param samples_file: (*str or None, optional*)
             If provided, saves the final samples to this file in NumPy .npz format.
             Default is None.
+            
+        :param min_ess: (*int, optional*)
+            Minimum effective sample size. If the number of final samples is less than 
+            min_ess, will run additional sampling rounds and combine samples until the 
+            total number of samples exceeds min_ess. Default is 0 (no minimum required).
             
         Attributes Set
         --------------
@@ -1392,34 +1437,76 @@ class SurrogateModel(object):
         if self.verbose:
             print(f"Running emcee with {self.nwalkers} walkers for {self.nsteps} steps on {emcee_ncore} cores...")
 
-        # Run the sampler!
-        emcee_t0 = time.time()
-        self.emcee_sampler = emcee.EnsembleSampler(self.nwalkers, 
-                                             self.ndim, 
-                                             self.lnprob, 
-                                             pool=pool,
-                                             **sampler_kwargs)
-
-        self.emcee_sampler.run_mcmc(p0, self.nsteps, progress=True, **run_kwargs)
-
-        # record emcee runtime
-        self.emcee_runtime = time.time() - emcee_t0
-
-        # burn, thin, and flatten samples
-        self.iburn, self.ithin = mcmc_utils.estimate_burnin(self.emcee_sampler, verbose=self.verbose)
-        self.emcee_samples_full = self.emcee_sampler.get_chain()
-
-        if burn is None:
-            self.burn = self.iburn
-        else:
-            self.burn = burn
-
-        if thin is None:
-            self.thin = self.ithin
-        else:
-            self.thin = thin
+        # Multi-run setup for minimum effective sample size
+        all_chains = []
+        all_run_times = []
+        accumulated_samples = 0
+        run_number = 1
         
-        self.emcee_samples = self.emcee_sampler.get_chain(discard=self.burn, flat=True, thin=self.thin) 
+        while accumulated_samples < min_ess:
+            if min_ess > 0:
+                print(f"\nRun {run_number}: Need {max(0, min_ess - accumulated_samples)} more samples...")
+                print("="*50)
+            
+            # Run the sampler!
+            emcee_t0 = time.time()
+            self.emcee_sampler = emcee.EnsembleSampler(self.nwalkers, 
+                                                 self.ndim, 
+                                                 self.lnprob, 
+                                                 pool=pool,
+                                                 **sampler_kwargs)
+
+            self.emcee_sampler.run_mcmc(p0, self.nsteps, progress=True, **run_kwargs)
+
+            # record emcee runtime
+            current_runtime = time.time() - emcee_t0
+            all_run_times.append(current_runtime)
+
+            # burn, thin, and flatten samples for this run
+            current_iburn, current_ithin = mcmc_utils.estimate_burnin(self.emcee_sampler, verbose=self.verbose)
+            current_samples_full = self.emcee_sampler.get_chain()
+
+            current_burn = burn if burn is not None else current_iburn
+            current_thin = thin if thin is not None else current_ithin
+
+            current_samples = self.emcee_sampler.get_chain(discard=current_burn, thin=current_thin, flat=True)
+            all_chains.append(current_samples)
+            
+            current_nsamples = current_samples.shape[0]
+            accumulated_samples += current_nsamples
+            
+            if min_ess > 0:
+                print(f"Run {run_number} complete: {current_nsamples} samples")
+                print(f"Total accumulated samples: {accumulated_samples}")
+            
+            # If min_ess requirement met, break
+            if accumulated_samples >= min_ess:
+                break
+                
+            run_number += 1
+            
+            # Reset initial positions for next run (start from end of previous run)
+            if run_number <= 10:  # Limit to prevent infinite loops
+                # Use final positions from this run as starting positions for next run
+                p0 = self.emcee_sampler.get_last_sample().coords
+            else:
+                print(f"WARNING: Reached maximum of 10 runs, stopping with {accumulated_samples} samples")
+                break
+        
+        # Combine all chains and compute overall statistics
+        if len(all_chains) > 1:
+            self.emcee_samples = np.vstack(all_chains)
+            print(f"\nCombined {len(all_chains)} runs into {self.emcee_samples.shape[0]} total samples")
+        else:
+            self.emcee_samples = all_chains[0]
+        
+        # Use final run for chain statistics and samples_full
+        self.emcee_samples_full = current_samples_full
+        self.iburn = current_iburn
+        self.ithin = current_ithin 
+        self.burn = current_burn
+        self.thin = current_thin
+        self.emcee_runtime = sum(all_run_times) 
         
         if self.like_fn_name == "true":
             self.emcee_samples_true = self.emcee_samples
@@ -1447,23 +1534,23 @@ class SurrogateModel(object):
             except:
                 pass
 
-            if samples_file is not None:
-                fname = f"{self.savedir}/{samples_file}"
+        if samples_file is not None:
+            fname = f"{self.savedir}/{samples_file}"
+        else:
+            if self.like_fn_name == "true":
+                fname = "{self.savedir}/emcee_samples_final_{self.like_fn_name}.npz"
             else:
-                if self.like_fn_name == "true":
-                    fname = "{self.savedir}/emcee_samples_final_{self.like_fn_name}.npz"
-                else:
-                    if len(self.training_results["iteration"]) == 0:
-                        current_iter = 0
-                    else:   
-                        current_iter = self.training_results["iteration"][-1]
-                    fname = f"{self.savedir}/emcee_samples_final_{self.like_fn_name}_iter_{current_iter}.npz"
-            print(f"Saving final emcee samples to {fname} ...")
-            np.savez(fname, samples=self.emcee_samples)
+                if len(self.training_results["iteration"]) == 0:
+                    current_iter = 0
+                else:   
+                    current_iter = self.training_results["iteration"][-1]
+                fname = f"{self.savedir}/emcee_samples_final_{self.like_fn_name}_iter_{current_iter}.npz"
+        print(f"Saving final emcee samples to {fname} ...")
+        np.savez(fname, samples=self.emcee_samples)
             
 
     def run_dynesty(self, like_fn=None, prior_transform=None, mode="dynamic", sampler_kwargs={}, run_kwargs={},
-                    multi_proc=False, save_iter=None, prior_transform_comment=None, samples_file=None):
+                    multi_proc=False, save_iter=None, prior_transform_comment=None, samples_file=None, min_ess=0):
         """
         Sample the posterior using the dynesty nested sampling algorithm.
         
@@ -1526,6 +1613,11 @@ class SurrogateModel(object):
             If provided, saves the final samples to this file in NumPy .npz format.
             Default is None.
             
+        :param min_ess: (*int, optional*)
+            Minimum effective sample size. If the number of final samples is less than 
+            min_ess, will run additional sampling rounds and combine samples until the 
+            total number of samples exceeds min_ess. Default is 0 (no minimum required).
+            
         Attributes Set
         --------------
         res : dynesty.results.Results
@@ -1583,6 +1675,7 @@ class SurrogateModel(object):
         Bayesian posteriors and evidences", MNRAS, 493, 3132-3158
         """
 
+        import dynesty
         from dynesty import NestedSampler
         from dynesty import DynamicNestedSampler
         from dynesty import utils as dyfunc
@@ -1703,41 +1796,108 @@ class SurrogateModel(object):
         if self.verbose:
             print(f"Running dynesty with {sampler_kwargs['nlive']} live points on {dynesty_ncore} cores...")
 
-        # Pickle sampler?
-        if save_iter is not None:
-            run_sampler = True
-            last_iter = 0
-            while run_sampler == True:
-                dsampler.run_nested(maxiter=save_iter, **run_kwargs)
-                self.dynesty_results = dsampler.results
-
-                file = os.path.join(self.savedir, f"dynesty_sampler_{self.like_fn_name}.pkl")
-
-                # pickle dynesty sampler object
-                print(f"Caching model to {file}...")
-                with open(file, "wb") as f:        
-                    pickle.dump(dsampler, f)
-
-                # check if converged (i.e. hasn't run for more iterations)
-                if dsampler.results.niter > last_iter:
-                    last_iter = dsampler.results.niter
-                    run_sampler = True
-                else:
-                    run_sampler = False
-        else:
-            dsampler.run_nested(**run_kwargs)
-
-        self.dynesty_sampler = dsampler
-        self.dynesty_results = dsampler.results
-        self.dynesty_logz = self.dynesty_results.logz[-1]
-        self.dynesty_logz_err = self.dynesty_results.logzerr[-1]
+        # Multi-run setup for minimum effective sample size
+        all_samples = []
+        all_weights = []
+        all_logz = []
+        all_run_times = []
+        accumulated_samples = 0
+        run_number = 1
         
-        # resample weighted samples to get posterior samples
-        samples = self.dynesty_results.samples  # samples
-        weights = np.exp(self.dynesty_results.logwt - self.dynesty_results.logz[-1])
+        while accumulated_samples < min_ess:
+            if min_ess > 0:
+                print(f"\nRun {run_number}: Need {max(0, min_ess - accumulated_samples)} more samples...")
+                print("="*50)
+            
+            # Set timing for this run
+            run_start_time = dynesty_t0 if run_number == 1 else time.time()
+            
+            # Pickle sampler?
+            if save_iter is not None:
+                run_sampler = True
+                last_iter = 0
+                while run_sampler == True:
+                    dsampler.run_nested(maxiter=save_iter, **run_kwargs)
+                    current_results = dsampler.results
 
-        # Resample weighted samples.
-        self.dynesty_samples = dyfunc.resample_equal(samples, weights)
+                    file = os.path.join(self.savedir, f"dynesty_sampler_{self.like_fn_name}_run{run_number}.pkl")
+
+                    # pickle dynesty sampler object
+                    print(f"Caching model to {file}...")
+                    with open(file, "wb") as f:        
+                        pickle.dump(dsampler, f)
+
+                    # check if converged (i.e. hasn't run for more iterations)
+                    if dsampler.results.niter > last_iter:
+                        last_iter = dsampler.results.niter
+                        run_sampler = True
+                    else:
+                        run_sampler = False
+            else:
+                dsampler.run_nested(**run_kwargs)
+                current_results = dsampler.results
+
+            # Record current run statistics
+            current_runtime = time.time() - run_start_time
+            all_run_times.append(current_runtime)
+            
+            # Get samples and weights for this run
+            current_samples = current_results.samples
+            current_weights = np.exp(current_results.logwt - current_results.logz[-1])
+            current_logz = current_results.logz[-1]
+            
+            # Resample weighted samples for this run
+            current_resampled = dyfunc.resample_equal(current_samples, current_weights)
+            all_samples.append(current_resampled)
+            all_weights.append(current_weights)
+            all_logz.append(current_logz)
+            
+            current_nsamples = current_resampled.shape[0]
+            accumulated_samples += current_nsamples
+            
+            if min_ess > 0:
+                print(f"Run {run_number} complete: {current_nsamples} samples, logZ = {current_logz:.3f}")
+                print(f"Total accumulated samples: {accumulated_samples}")
+            
+            # If min_ess requirement met, break
+            if accumulated_samples >= min_ess:
+                break
+                
+            run_number += 1
+            
+            # Setup for next run
+            if run_number <= 10:  # Limit to prevent infinite loops
+                # Create a new sampler for the next run
+                if mode == "dynamic":
+                    dsampler = dynesty.DynamicNestedSampler(self.like_fn, 
+                                                            prior_transform, 
+                                                            ndim=self.ndim, 
+                                                            **sampler_kwargs)
+                else:
+                    dsampler = dynesty.NestedSampler(self.like_fn, 
+                                                     prior_transform, 
+                                                     ndim=self.ndim, 
+                                                     **sampler_kwargs)
+            else:
+                print(f"WARNING: Reached maximum of 10 runs, stopping with {accumulated_samples} samples")
+                break
+        
+        # Combine results from all runs
+        if len(all_samples) > 1:
+            self.dynesty_samples = np.vstack(all_samples)
+            # Use the best (highest) log evidence
+            self.dynesty_logz = max(all_logz)
+            print(f"\nCombined {len(all_samples)} runs into {self.dynesty_samples.shape[0]} total samples")
+            print(f"Best log evidence: {self.dynesty_logz:.3f}")
+        else:
+            self.dynesty_samples = all_samples[0]
+            self.dynesty_logz = all_logz[0]
+        
+        # Use final run for primary results
+        self.dynesty_sampler = dsampler
+        self.dynesty_results = current_results
+        self.dynesty_logz_err = current_results.logzerr[-1]
+        self.dynesty_runtime = sum(all_run_times)
         
         if self.like_fn_name == "true":
             self.dynesty_samples_true = self.dynesty_samples
@@ -1760,24 +1920,24 @@ class SurrogateModel(object):
             except:
                 pass
 
-            if samples_file is not None:
-                fname = f"{self.savedir}/{samples_file}"
+        if samples_file is not None:
+            fname = f"{self.savedir}/{samples_file}"
+        else:
+            if self.like_fn_name == "true":
+                fname = f"{self.savedir}/dynesty_samples_final_{self.like_fn_name}.npz"
             else:
-                if self.like_fn_name == "true":
-                    fname = f"{self.savedir}/dynesty_samples_final_{self.like_fn_name}.npz"
+                if len(self.training_results["iteration"]) == 0:
+                    current_iter = 0
                 else:
-                    if len(self.training_results["iteration"]) == 0:
-                        current_iter = 0
-                    else:
-                        current_iter = self.training_results["iteration"][-1]
-                    fname = f"{self.savedir}/dynesty_samples_final_{self.like_fn_name}_iter_{current_iter}.npz"
-            print(f"Saved dynesty samples to {fname}")
-            np.savez(fname, samples=self.dynesty_samples)
+                    current_iter = self.training_results["iteration"][-1]
+                fname = f"{self.savedir}/dynesty_samples_final_{self.like_fn_name}_iter_{current_iter}.npz"
+        print(f"Saved dynesty samples to {fname}")
+        np.savez(fname, samples=self.dynesty_samples)
 
 
-    def run_pymultinest(self, like_fn=None, prior_fn=None, sampler_kwargs={}, multi_proc=True, 
-                        prior_fn_comment=None, samples_file=None, prefix=None, resume=False, 
-                        n_clustering_params=None, outputfiles_basename=None):
+    def run_pymultinest(self, like_fn=None, prior_transform=None, sampler_kwargs={}, multi_proc=True, 
+                        prior_transform_comment=None, samples_file=None, prefix=None, resume=False, 
+                        n_clustering_params=None, outputfiles_basename=None, min_ess=0):
         """
         Sample the posterior using the PyMultiNest nested sampling algorithm.
         
@@ -1794,9 +1954,9 @@ class SurrogateModel(object):
             - callable: Custom likelihood function with signature like_fn(theta)
             Default is None.
             
-        :param prior_fn: (*callable or None, optional*)
+        :param prior_transform: (*callable or None, optional*)
             Prior transformation function that maps from unit hypercube [0,1]^ndim
-            to the parameter space. Should have signature prior_fn(cube) where cube
+            to the parameter space. Should have signature prior_transform(cube) where cube
             is array of shape (ndim,) with values in [0,1]. The function should modify
             cube in-place. If None, uses uniform prior with bounds from self.bounds.
             Default is None.
@@ -1830,9 +1990,9 @@ class SurrogateModel(object):
                 
             Default is True.
             
-        :param prior_fn_comment: (*str or None, optional*)
+        :param prior_transform_comment: (*str or None, optional*)
             Comment describing the prior function for logging purposes. If None
-            and prior_fn is provided, attempts to extract function name.
+            and prior_transform is provided, attempts to extract function name.
             Default is None.
             
         :param samples_file: (*str or None, optional*)
@@ -1856,6 +2016,11 @@ class SurrogateModel(object):
             Base name for MultiNest output files. If None, constructs from savedir
             and likelihood function name. Default is None.
             
+        :param min_ess: (*int, optional*)
+            Minimum effective sample size. If the number of final samples is less than 
+            min_ess, will run additional sampling rounds and combine samples until the 
+            total number of samples exceeds min_ess. Default is 0 (no minimum required).
+            
         Attributes Set
         --------------
         pymultinest_samples : ndarray of shape (nsamples, ndim)
@@ -1878,7 +2043,7 @@ class SurrogateModel(object):
             MultiNest analyzer object for accessing detailed results
         like_fn_name : str
             Name of likelihood function used ("true", "surrogate", or "custom")
-        prior_fn_comment : str
+        prior_transform_comment : str
             Description of prior function used
             
         .. note::
@@ -1927,7 +2092,7 @@ class SurrogateModel(object):
             >>> def my_prior(cube):
             ...     for i in range(len(cube)):
             ...         cube[i] = 20*cube[i] - 10  # maps [0,1] to [-10,10]
-            >>> sm.run_pymultinest(prior_fn=my_prior)
+            >>> sm.run_pymultinest(prior_transform=my_prior)
             
             Enable multimodal mode detection with high accuracy:
             
@@ -1993,21 +2158,49 @@ class SurrogateModel(object):
             raise ValueError(f"like_fn must be callable, string, or None. Got {type(like_fn)}")
         
         # Set up prior transformation function
-        if prior_fn is None:
+        if prior_transform is None:
             # Default uniform prior using self.bounds
-            def prior_transform(cube):
-                for i in range(len(cube)):
-                    cube[i] = cube[i] * (self.bounds[i][1] - self.bounds[i][0]) + self.bounds[i][0]
-            self.prior_fn_comment = f"Uniform prior with bounds {self.bounds}"
+            prior_transform_fn = partial(ut.prior_transform_uniform, bounds=self.bounds)
+            self.prior_transform_comment = f"Default uniform prior transform.\nPrior function: ut.prior_transform_uniform\nBounds: {self.bounds}"
         else:
-            prior_transform = prior_fn
-            if prior_fn_comment is None:
-                if hasattr(prior_fn, '__name__'):
-                    self.prior_fn_comment = f"Custom prior function: {prior_fn.__name__}"
+            prior_transform_fn = prior_transform
+            if prior_transform_comment is None:
+                if hasattr(prior_transform, '__name__'):
+                    self.prior_transform_comment = f"Custom prior function: {prior_transform.__name__}"
                 else:
-                    self.prior_fn_comment = "Custom prior function"
+                    self.prior_transform_comment = "Custom prior function"
             else:
-                self.prior_fn_comment = prior_fn_comment
+                self.prior_transform_comment = prior_transform_comment
+        
+        # Create PyMultiNest-compatible wrapper for prior transform
+        # PyMultiNest expects Prior(cube, ndim, nparams) where cube is modified in-place
+        def pymultinest_prior_wrapper(cube, ndim, nparams):
+            """Wrapper to make prior transform compatible with PyMultiNest calling convention."""
+            # Extract values from ctypes array to regular Python list
+            cube_values = [cube[i] for i in range(ndim)]
+            cube_array = np.array(cube_values)
+            
+            # Apply the prior transformation
+            transformed = prior_transform_fn(cube_array)
+            
+            # Modify cube in-place as expected by PyMultiNest
+            for i in range(ndim):
+                cube[i] = transformed[i]
+        
+        # Use the wrapper as the actual prior function
+        prior_transform = pymultinest_prior_wrapper
+        
+        # Create PyMultiNest-compatible wrapper for likelihood function  
+        # PyMultiNest expects LogLikelihood(cube, ndim, nparams) where cube contains parameters
+        def pymultinest_likelihood_wrapper(cube, ndim, nparams):
+            """Wrapper to make likelihood function compatible with PyMultiNest calling convention."""
+            # Extract values from ctypes array to regular Python list
+            params_values = [cube[i] for i in range(ndim)]
+            params = np.array(params_values)
+            return self.like_fn(params)
+        
+        # Use the wrapper as the actual likelihood function
+        likelihood_fn = pymultinest_likelihood_wrapper
         
         # Set up output file basename
         if outputfiles_basename is None:
@@ -2041,52 +2234,114 @@ class SurrogateModel(object):
         # Set clustering parameters
         if n_clustering_params is None:
             n_clustering_params = self.ndim
+        
+        # Multi-run setup for minimum effective sample size
+        all_samples = []
+        all_weights = []
+        all_logz = []
+        all_logz_err = []
+        all_run_times = []
+        accumulated_samples = 0
+        run_number = 1
+        
+        while accumulated_samples < max(min_ess, 1):
+            if min_ess > 0:
+                print(f"\nRun {run_number}: Need {max(0, min_ess - accumulated_samples)} more samples...")
+                print("="*50)
             
-        # Define likelihood function for MultiNest (must return log-likelihood)
-        def multinest_loglike(cube, ndim, nparams):
-            # cube already contains transformed parameters from PyMultiNest
-            theta = np.array(cube[:ndim])
-            return self.like_fn(theta)
+            # Create unique output basename for this run
+            current_outputfiles_basename = f"{outputfiles_basename}_run{run_number:02d}" if min_ess > 0 else outputfiles_basename
+            
+            print(f"Running PyMultiNest with {final_sampler_kwargs['n_live_points']} live points...")
+            print(f"Evidence tolerance: {final_sampler_kwargs['evidence_tolerance']}")
+            print(f"Output files: {current_outputfiles_basename}*")
+            print(f"Prior: {self.prior_transform_comment}")
+            
+            # Start timing this run
+            current_pymultinest_t0 = time.time()
+            
+            # Run MultiNest
+            pymultinest.run(
+                LogLikelihood=likelihood_fn,
+                Prior=prior_transform,
+                n_dims=self.ndim,
+                n_params=self.ndim,
+                n_clustering_params=n_clustering_params,
+                outputfiles_basename=current_outputfiles_basename,
+                resume=resume,
+                **final_sampler_kwargs
+            )
+            
+            # Fix malformed scientific notation in PyMultiNest output files
+            self._fix_pymultinest_output_format(current_outputfiles_basename)
+            
+            # Analyze results for this run
+            current_analyzer = pymultinest.Analyzer(
+                outputfiles_basename=current_outputfiles_basename,
+                n_params=self.ndim
+            )
+            
+            # Get samples and evidence for this run
+            current_samples = current_analyzer.get_equal_weighted_posterior()
+            current_samples_only = current_samples[:, :-1]  # Remove log-likelihood column
+            current_weights = np.ones(len(current_samples_only))  # Equal weights
+            
+            # Get evidence estimates for this run
+            current_stats = current_analyzer.get_stats()
+            current_logz = current_stats['global evidence']
+            current_logz_err = current_stats['global evidence error']
+            
+            # Record this run's results
+            all_samples.append(current_samples_only)
+            all_weights.append(current_weights)
+            all_logz.append(current_logz)
+            all_logz_err.append(current_logz_err)
+            
+            current_nsamples = len(current_samples_only)
+            accumulated_samples += current_nsamples
+            
+            # Record runtime for this run
+            current_run_time = time.time() - current_pymultinest_t0
+            all_run_times.append(current_run_time)
+            
+            if min_ess > 0:
+                print(f"Run {run_number} complete: {current_nsamples} samples, logZ = {current_logz:.3f} ± {current_logz_err:.3f}")
+                print(f"Total accumulated samples: {accumulated_samples}")
+            
+            # If min_ess requirement met, break
+            if accumulated_samples >= min_ess:
+                break
+                
+            run_number += 1
+            
+            # Limit to prevent infinite loops
+            if run_number > 10:
+                print(f"WARNING: Reached maximum of 10 runs, stopping with {accumulated_samples} samples")
+                break
         
-        # Define prior function for MultiNest  
-        def multinest_prior(cube, ndim, nparams):
-            theta = np.array(cube[:ndim])
-            prior_transform(theta)
-            for i in range(ndim):
-                cube[i] = theta[i]
+        # Combine results from all runs
+        if len(all_samples) > 1:
+            self.pymultinest_samples = np.vstack(all_samples)
+            self.pymultinest_weights = np.concatenate(all_weights)
+            # Use weighted average of log evidence (weights by number of samples)
+            sample_counts = np.array([len(s) for s in all_samples])
+            total_samples = np.sum(sample_counts)
+            weights = sample_counts / total_samples
+            self.pymultinest_logz = np.average(all_logz, weights=weights)
+            self.pymultinest_logz_err = np.sqrt(np.average(np.array(all_logz_err)**2, weights=weights))
+            print(f"\nCombined {len(all_samples)} runs into {len(self.pymultinest_samples)} total samples")
+            print(f"Combined log evidence: {self.pymultinest_logz:.3f} ± {self.pymultinest_logz_err:.3f}")
+        else:
+            self.pymultinest_samples = all_samples[0]
+            self.pymultinest_weights = all_weights[0]
+            self.pymultinest_logz = all_logz[0]
+            self.pymultinest_logz_err = all_logz_err[0]
         
-        print(f"Running PyMultiNest with {final_sampler_kwargs['n_live_points']} live points...")
-        print(f"Evidence tolerance: {final_sampler_kwargs['evidence_tolerance']}")
-        print(f"Output files: {outputfiles_basename}*")
-        print(f"Prior: {self.prior_fn_comment}")
+        # Set the final analyzer to the last run for compatibility
+        self.pymultinest_analyzer = current_analyzer
         
-        # Run MultiNest
-        pymultinest.run(
-            LogLikelihood=multinest_loglike,
-            Prior=multinest_prior,
-            n_dims=self.ndim,
-            n_params=self.ndim,
-            n_clustering_params=n_clustering_params,
-            outputfiles_basename=outputfiles_basename,
-            resume=resume,
-            **final_sampler_kwargs
-        )
-        
-        # Analyze results
-        self.pymultinest_analyzer = pymultinest.Analyzer(
-            outputfiles_basename=outputfiles_basename,
-            n_params=self.ndim
-        )
-        
-        # Get samples and evidence
-        samples = self.pymultinest_analyzer.get_equal_weighted_posterior()
-        self.pymultinest_samples = samples[:, :-1]  # Remove log-likelihood column
-        self.pymultinest_weights = np.ones(len(self.pymultinest_samples))  # Equal weights
-        
-        # Get evidence estimates
-        stats = self.pymultinest_analyzer.get_stats()
-        self.pymultinest_logz = stats['global evidence']
-        self.pymultinest_logz_err = stats['global evidence error']
+        # Calculate total runtime
+        self.pymultinest_runtime = sum(all_run_times)
         
         # Store samples based on likelihood function used
         if self.like_fn_name == "true":
@@ -2101,8 +2356,6 @@ class SurrogateModel(object):
         # Record that PyMultiNest has been run
         self.pymultinest_run = True
         
-        # Record runtime
-        self.pymultinest_runtime = time.time() - pymultinest_t0
         print(f"PyMultiNest runtime: {self.pymultinest_runtime:.2f} seconds")
         
         # Save results if caching is enabled
@@ -2112,30 +2365,30 @@ class SurrogateModel(object):
             except:
                 pass
             
-            # Save samples to file
-            if samples_file is not None:
-                fname = f"{self.savedir}/{samples_file}"
+        # Save samples to file
+        if samples_file is not None:
+            fname = f"{self.savedir}/{samples_file}"
+        else:
+            if self.like_fn_name == "true":
+                fname = f"{self.savedir}/pymultinest_samples_final_{self.like_fn_name}.npz"
             else:
-                if self.like_fn_name == "true":
-                    fname = f"{self.savedir}/pymultinest_samples_final_{self.like_fn_name}.npz"
+                if len(self.training_results.get("iteration", [])) == 0:
+                    current_iter = 0
                 else:
-                    if len(self.training_results.get("iteration", [])) == 0:
-                        current_iter = 0
-                    else:
-                        current_iter = self.training_results["iteration"][-1]
-                    fname = f"{self.savedir}/pymultinest_samples_final_{self.like_fn_name}_iter_{current_iter}.npz"
-            
-            print(f"Saved PyMultiNest samples to {fname}")
-            np.savez(fname, 
-                    samples=self.pymultinest_samples,
-                    weights=self.pymultinest_weights,
-                    logz=self.pymultinest_logz,
-                    logz_err=self.pymultinest_logz_err)
+                    current_iter = self.training_results["iteration"][-1]
+                fname = f"{self.savedir}/pymultinest_samples_final_{self.like_fn_name}_iter_{current_iter}.npz"
+        
+        print(f"Saved PyMultiNest samples to {fname}")
+        np.savez(fname, 
+                samples=self.pymultinest_samples,
+                weights=self.pymultinest_weights,
+                logz=self.pymultinest_logz,
+                logz_err=self.pymultinest_logz_err)
 
 
     def run_ultranest(self, like_fn=None, prior_transform=None, sampler_kwargs={}, run_kwargs={},
                       multi_proc=False, prior_transform_comment=None, samples_file=None,
-                      log_dir=None, resume="overwrite"):
+                      log_dir=None, resume="overwrite", min_ess=0):
         """
         Sample the posterior using the UltraNest nested sampling algorithm.
         
@@ -2227,6 +2480,11 @@ class SurrogateModel(object):
             - 'overwrite': Always start fresh, overwriting existing files (default)
             - 'subfolder': Create new timestamped subfolder
             Default is 'overwrite'.
+            
+        :param min_ess: (*int, optional*)
+            Minimum effective sample size. If the number of final samples is less than 
+            min_ess, will run additional sampling rounds and combine samples until the 
+            total number of samples exceeds min_ess. Default is 0 (no minimum required).
             
         Attributes Set
         --------------
@@ -2403,7 +2661,7 @@ class SurrogateModel(object):
             'frac_remain': 0.01,
             'Lepsilon': 0.001,
             'min_ess': 400,
-            'max_num_improvement_loops': 5,
+            'max_num_improvement_loops': 1,
             'min_num_live_points': 400,
             'cluster_num_live_points': 40,
             'insertion_test_zscore_threshold': 4,
@@ -2430,35 +2688,103 @@ class SurrogateModel(object):
         print(f"Execution mode: MPI-compatible (no multiprocessing pools)")
         print(f"Prior: {self.prior_transform_comment}")
         print(f"Termination: dlogz={final_run_kwargs['dlogz']}, min_ess={final_run_kwargs['min_ess']}\n")
+
+        # Multi-run setup for minimum effective sample size
+        all_samples = []
+        all_weights = []
+        all_logz = []
+        all_logz_err = []
+        all_run_times = []
+        accumulated_samples = 0
+        run_number = 1
+        param_names = [f"param_{i}" for i in range(self.ndim)]
         
-        # Create UltraNest sampler
-        self.ultranest_sampler = ReactiveNestedSampler(
-            param_names=[f"param_{i}" for i in range(self.ndim)],
-            loglike=ultranest_likelihood,
-            transform=prior_transform_fn,
-            log_dir=log_dir,
-            resume=resume,
-            **final_sampler_kwargs
-        )
+        while accumulated_samples < min_ess:
+            if min_ess > 0:
+                print(f"\nRun {run_number}: Need {max(0, min_ess - accumulated_samples)} more samples...")
+                print("="*50)
+            
+            # Set timing for this run
+            run_start_time = ultranest_t0 if run_number == 1 else time.time()
+            
+            # Create a new sampler for each run (with updated log_dir if needed)
+            current_log_dir = log_dir if run_number == 1 else f"{log_dir}_run{run_number}" if log_dir else None
+            
+            # Create UltraNest sampler instance
+            self.ultranest_sampler = ReactiveNestedSampler(
+                param_names=param_names,
+                loglike=ultranest_likelihood,
+                transform=prior_transform_fn,
+                log_dir=current_log_dir,
+                resume=resume if run_number == 1 else "overwrite",  # Only resume on first run
+                **final_sampler_kwargs
+            )
+            
+            # Run UltraNest sampling (always in serial/MPI-compatible mode)
+            current_results = self.ultranest_sampler.run(
+                **final_run_kwargs
+            )
+            
+            # Record current run statistics
+            current_runtime = time.time() - run_start_time
+            all_run_times.append(current_runtime)
+            
+            # Extract results for this run
+            current_samples = current_results['samples']
+            
+            # Extract weights from weighted_samples if available, otherwise use equal weights
+            if 'weighted_samples' in current_results:
+                current_weights = current_results['weighted_samples']['weights']
+            else:
+                # For equally weighted samples, create uniform weights
+                current_weights = np.ones(len(current_samples)) / len(current_samples)
+            
+            current_logz = current_results['logz']
+            current_logz_err = current_results['logzerr']
+            
+            # Store results from this run
+            all_samples.append(current_samples)
+            all_weights.append(current_weights)
+            all_logz.append(current_logz)
+            all_logz_err.append(current_logz_err)
+            
+            current_nsamples = len(current_samples)
+            accumulated_samples += current_nsamples
+            
+            if min_ess > 0:
+                print(f"Run {run_number} complete: {current_nsamples} samples, logZ = {current_logz:.3f} ± {current_logz_err:.3f}")
+                print(f"Total accumulated samples: {accumulated_samples}")
+            
+            # If min_ess requirement met, break
+            if accumulated_samples >= min_ess:
+                break
+                
+            run_number += 1
+            
+            # Limit to prevent infinite loops
+            if run_number > 10:
+                print(f"WARNING: Reached maximum of 10 runs, stopping with {accumulated_samples} samples")
+                break
         
-        # Run UltraNest sampling (always in serial/MPI-compatible mode)
-        self.ultranest_results = self.ultranest_sampler.run(
-            **final_run_kwargs
-        )
-        
-        # Extract results (UltraNest format)
-        self.ultranest_samples = self.ultranest_results['samples']
-        
-        # Extract weights from weighted_samples if available, otherwise use equal weights
-        if 'weighted_samples' in self.ultranest_results:
-            self.ultranest_weights = self.ultranest_results['weighted_samples']['weights']
+        # Combine results from all runs
+        if len(all_samples) > 1:
+            self.ultranest_samples = np.vstack(all_samples)
+            self.ultranest_weights = np.concatenate(all_weights)
+            # Use the best (highest) log evidence
+            best_run_idx = np.argmax(all_logz)
+            self.ultranest_logz = all_logz[best_run_idx]
+            self.ultranest_logz_err = all_logz_err[best_run_idx]
+            print(f"\nCombined {len(all_samples)} runs into {len(self.ultranest_samples)} total samples")
+            print(f"Best log evidence: {self.ultranest_logz:.3f} ± {self.ultranest_logz_err:.3f}")
         else:
-            # For equally weighted samples, create uniform weights
-            self.ultranest_weights = np.ones(len(self.ultranest_samples)) / len(self.ultranest_samples)
+            self.ultranest_samples = all_samples[0]
+            self.ultranest_weights = all_weights[0]
+            self.ultranest_logz = all_logz[0]
+            self.ultranest_logz_err = all_logz_err[0]
         
-        # Get evidence estimates
-        self.ultranest_logz = self.ultranest_results['logz']
-        self.ultranest_logz_err = self.ultranest_results['logzerr']
+        # Use final run for primary results
+        self.ultranest_results = current_results
+        self.ultranest_runtime = sum(all_run_times)
         
         # Store samples based on likelihood function used
         if self.like_fn_name == "true":
@@ -2475,8 +2801,6 @@ class SurrogateModel(object):
         # Record that UltraNest has been run
         self.ultranest_run = True
         
-        # Record runtime
-        self.ultranest_runtime = time.time() - ultranest_t0
         print(f"UltraNest runtime: {self.ultranest_runtime:.2f} seconds\n")
         
         # Save results if caching is enabled
@@ -2486,25 +2810,25 @@ class SurrogateModel(object):
             except:
                 pass
             
-            # Save samples to file
-            if samples_file is not None:
-                fname = f"{self.savedir}/{samples_file}"
+        # Save samples to file
+        if samples_file is not None:
+            fname = f"{self.savedir}/{samples_file}"
+        else:
+            if self.like_fn_name == "true":
+                fname = f"{self.savedir}/ultranest_samples_final_true.npz"
             else:
-                if self.like_fn_name == "true":
-                    fname = f"{self.savedir}/ultranest_samples_final_true.npz"
+                if len(self.training_results.get("iteration", [])) == 0:
+                    current_iter = 0
                 else:
-                    if len(self.training_results.get("iteration", [])) == 0:
-                        current_iter = 0
-                    else:
-                        current_iter = self.training_results["iteration"][-1]
-                    fname = f"{self.savedir}/ultranest_samples_final_surrogate_iter_{current_iter}.npz"
-            
-            print(f"Saved UltraNest samples to {fname}")
-            np.savez(fname, 
-                    samples=self.ultranest_samples,
-                    weights=self.ultranest_weights,
-                    logz=self.ultranest_logz,
-                    logz_err=self.ultranest_logz_err)
+                    current_iter = self.training_results["iteration"][-1]
+                fname = f"{self.savedir}/ultranest_samples_final_surrogate_iter_{current_iter}.npz"
+        
+        print(f"Saved UltraNest samples to {fname}")
+        np.savez(fname, 
+                samples=self.ultranest_samples,
+                weights=self.ultranest_weights,
+                logz=self.ultranest_logz,
+                logz_err=self.ultranest_logz_err)
 
 
     def plot(self, plots=None, show=False, cb_rng=[None, None], log_scale=False):
@@ -3347,6 +3671,75 @@ class SurrogateModel(object):
         
         return results
 
+    def _fix_pymultinest_output_format(self, outputfiles_basename):
+        """
+        Fix malformed scientific notation in PyMultiNest output files.
+        
+        PyMultiNest sometimes writes very small numbers in malformed scientific 
+        notation (e.g., '1.23-100' instead of '1.23E-100'), which causes numpy 
+        to fail when loading the files. This method fixes such formatting issues.
+        
+        :param outputfiles_basename: (*str*)
+            Base name of PyMultiNest output files to fix
+        """
+        import re
+        import os
+        
+        # Common PyMultiNest output file extensions that may contain malformed numbers
+        suffixes = [
+            'post_equal_weights.dat',    # Equal weighted posterior samples
+            'phys_live.points',          # Live points
+            'post_separate.dat',         # Separate mode samples
+            'stats.dat',                 # Statistics file
+            'live.points',               # Live points file
+            'ev.dat',                    # Evidence file
+            'summary.txt',               # Summary file
+            '.txt',                      # Generic text output
+            'points.dat',                # Points file
+            'posterior_samples.dat',     # Alternative posterior samples name
+        ]
+        
+        for suffix in suffixes:
+            filepath = f"{outputfiles_basename}{suffix}"
+            
+            if os.path.exists(filepath):
+                try:
+                    # Read the file
+                    with open(filepath, 'r') as f:
+                        content = f.read()
+                    
+                    # Fix malformed scientific notation using regex
+                    # Pattern matches various forms of malformed scientific notation:
+                    # 1. "1.234567890123456789-123" -> "1.234567890123456789E-123"
+                    # 2. "-0.139060048608094152-308" -> "-0.139060048608094152E-308"
+                    # 3. "1.23+45" -> "1.23E+45" (if exponent is large)
+                    
+                    # More comprehensive pattern for malformed scientific notation
+                    pattern = r'(-?\d+\.?\d*)([+-]\d+)(?=\s|$|,|\t)'
+                    
+                    # Function to fix scientific notation
+                    def fix_scientific(match):
+                        number = match.group(1)
+                        exponent = match.group(2)
+                        # Only fix if this looks like malformed scientific notation
+                        # (exponent magnitude suggests it's not just arithmetic)
+                        exp_value = int(exponent)
+                        if abs(exp_value) > 10:  # Likely scientific notation
+                            return f"{number}E{exponent}"
+                        else:
+                            return match.group(0)  # Leave unchanged
+                    
+                    # Apply the fix
+                    fixed_content = re.sub(pattern, fix_scientific, content)
+                    
+                    # Write back only if changes were made
+                    if fixed_content != content:
+                        with open(filepath, 'w') as f:
+                            f.write(fixed_content)
+                            
+                except Exception as e:
+                    if getattr(self, 'verbose', False):
+                        print(f"Warning: Could not fix formatting in {filepath}: {e}")
 
     def _get_pickleable_state(self):
         """
