@@ -210,8 +210,8 @@ class SurrogateModel(object):
         self.y_scaler = y_scaler
 
         # define prior sampler with scaled and unscaled bounds 
-        self._prior_sampler = partial(ut.prior_sampler, bounds=self._bounds, sampler="uniform", random_state=self.random_state)
-        self.prior_sampler = partial(ut.prior_sampler, bounds=self.bounds, sampler="uniform", random_state=self.random_state)
+        self._prior_sampler = partial(ut.prior_sampler, bounds=self._bounds, sampler="uniform", random_state=None)
+        self.prior_sampler = partial(ut.prior_sampler, bounds=self.bounds, sampler="uniform", random_state=None)
 
         # Determine dimensionality 
         self.ndim = len(self._bounds)
@@ -268,7 +268,9 @@ class SurrogateModel(object):
                                  "test_scaled_mse" : [],
                                  "gp_kl_divergence" : [],
                                  "gp_train_time" : [],
-                                 "obj_fn_opt_time" : []}
+                                 "obj_fn_opt_time" : [],
+                                 "acquisition_optimizer_niter" : []
+                                 }
 
     
     def save(self):
@@ -364,7 +366,7 @@ class SurrogateModel(object):
         if nsample is None:
             nsample = 50 * self.ndim
 
-        _theta = self._prior_sampler(nsample=nsample, sampler=sampler, random_state=self.random_state)
+        _theta = self._prior_sampler(nsample=nsample, sampler=sampler, random_state=None)
         theta = self.theta_scaler.inverse_transform(_theta)
         
         y = ut.eval_fn(self.true_log_likelihood, theta, ncore=self.ncore).reshape(-1, 1)
@@ -610,7 +612,7 @@ class SurrogateModel(object):
 
         if failed == True:
             # create array of random initial hyperparameters:
-            p0 = ut.prior_sampler(bounds=self.hp_bounds, nsample=self.gp_nopt, sampler='uniform', random_state=self.random_state)
+            p0 = ut.prior_sampler(bounds=self.hp_bounds, nsample=self.gp_nopt, sampler='uniform', random_state=None)
             if hasattr(self, "gp"):
                 # if gp exists, use current hyperparameters as a starting point 
                 current_hp = self.gp.get_parameter_vector(include_frozen=False)
@@ -992,7 +994,7 @@ class SurrogateModel(object):
         else:
             grad_obj_fn = None
         
-        _thetaN, _ = ut.minimize_objective(obj_fn, 
+        _thetaN, _, opt_result = ut.minimize_objective(obj_fn, 
                                            grad_obj_fn,
                                            bounds=self._bounds,
                                            nopt=nopt,
@@ -1003,6 +1005,7 @@ class SurrogateModel(object):
                                            n_attempts=n_attempts)
 
         opt_timing = time.time() - opt_timing_0
+        self.training_results["acquisition_optimizer_niter"].append(opt_result.nit)
 
         # evaluate function at the optimized theta
         _thetaN = _thetaN.reshape(1, -1)
@@ -1012,7 +1015,8 @@ class SurrogateModel(object):
 
 
     def active_train(self, niter=100, algorithm="bape", gp_opt_freq=20, save_progress=False,
-                     obj_opt_method="l-bfgs-b", nopt=1, n_attempts=5, use_grad_opt=True, optimizer_kwargs={}, show_progress=True): 
+                     obj_opt_method="l-bfgs-b", nopt=1, n_attempts=5, use_grad_opt=True, 
+                     optimizer_kwargs={}, show_progress=True): 
         """
         Perform active learning to iteratively improve the surrogate model.
         
@@ -1421,7 +1425,7 @@ class SurrogateModel(object):
             p0 = self.find_map(prior_fn=self.prior_fn)
         else:
             # start walkers at random points in the prior space
-            p0 = ut.prior_sampler(nsample=self.nwalkers, bounds=self.bounds, sampler="uniform", random_state=self.random_state)
+            p0 = ut.prior_sampler(nsample=self.nwalkers, bounds=self.bounds, sampler="uniform", random_state=None)
 
         # set up multiprocessing pool with MPI safety
         if multi_proc == True:
