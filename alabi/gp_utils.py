@@ -736,7 +736,8 @@ def _evaluate_candidate_worker(args):
 def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
                          k_folds=5, scoring='mse', random_state=42, pool=None, 
                          two_stage=False, stage2_candidates=None, stage2_width=0.5,
-                         weighted_mse_method='exponential', weighted_mse_temperature=1.0):
+                         weighted_mse_method='exponential', weighted_mse_temperature=1.0,
+                         verbose=True):
     """
     Optimize Gaussian Process hyperparameters using k-fold cross-validation.
     
@@ -865,7 +866,7 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
     cv_scores.fill(np.inf)  # Initialize with worst possible score
     
     # Two-stage optimization: explore then exploit
-    if two_stage:
+    if two_stage and verbose:
         print("=== STAGE 1: EXPLORATION (Random Search) ===")
     
     print(f"Evaluating {n_candidates} hyperparameter candidates using {k_folds}-fold CV...")
@@ -901,15 +902,18 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
                 if len(valid_scores) > 0:
                     mean_score = np.mean(valid_scores)
                     std_score = np.std(valid_scores)
-                    print(f"  Candidate {cand_idx+1}/{n_candidates}: {scoring}={mean_score:.4f}±{std_score:.4f} "
-                          f"({len(valid_scores)}/{k_folds} folds successful)")
+                    if verbose:
+                        print(f"  Candidate {cand_idx+1}/{n_candidates}: {scoring}={mean_score:.4f}±{std_score:.4f} "
+                            f"({len(valid_scores)}/{k_folds} folds successful)")
                 else:
-                    print(f"  Candidate {cand_idx+1}/{n_candidates}: All folds failed")
+                    if verbose:
+                        print(f"  Candidate {cand_idx+1}/{n_candidates}: All folds failed")
             else:
                 # Candidate failed completely
-                print(f"  Candidate {cand_idx+1}/{n_candidates}: {status}")
-                if "hyperparams" in status.lower() or "prior" in status.lower():
-                    print(f"    Hyperparams: {hyperparameter_candidates[cand_idx]}")
+                if verbose:
+                    print(f"  Candidate {cand_idx+1}/{n_candidates}: {status}")
+                    if "hyperparams" in status.lower() or "prior" in status.lower():
+                        print(f"    Hyperparams: {hyperparameter_candidates[cand_idx]}")
     
     else:
         # Sequential evaluation using the worker function
@@ -928,15 +932,18 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
                 if len(valid_scores) > 0:
                     mean_score = np.mean(valid_scores)
                     std_score = np.std(valid_scores)
-                    print(f"  Candidate {cand_idx+1}/{n_candidates}: {scoring}={mean_score:.4f}±{std_score:.4f} "
-                          f"({len(valid_scores)}/{k_folds} folds successful)")
+                    if verbose:
+                        print(f"  Candidate {cand_idx+1}/{n_candidates}: {scoring}={mean_score:.4f}±{std_score:.4f} "
+                            f"({len(valid_scores)}/{k_folds} folds successful)")
                 else:
-                    print(f"  Candidate {cand_idx+1}/{n_candidates}: All folds failed")
+                    if verbose:
+                        print(f"  Candidate {cand_idx+1}/{n_candidates}: All folds failed")
             else:
                 # Candidate failed completely
-                print(f"  Candidate {cand_idx+1}/{n_candidates}: {status}")
-                if "hyperparams" in status.lower() or "prior" in status.lower():
-                    print(f"    Hyperparams: {hyperparams}")
+                if verbose:
+                    print(f"  Candidate {cand_idx+1}/{n_candidates}: {status}")
+                    if "hyperparams" in status.lower() or "prior" in status.lower():
+                        print(f"    Hyperparams: {hyperparams}")
     
     # Find best hyperparameters
     # Calculate mean CV score for each candidate (only over successful folds)
@@ -964,8 +971,9 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
         best_score = mean_cv_scores[best_idx]
         best_score_std = std_cv_scores[best_idx]
         
-        print(f"\nStage 1 best hyperparameters (candidate {best_idx+1}): {best_hyperparams}")
-        print(f"Stage 1 best CV {scoring}: {best_score:.4f} ± {best_score_std:.4f}")
+        if verbose:
+            print(f"\nStage 1 best hyperparameters (candidate {best_idx+1}): {best_hyperparams}")
+            print(f"Stage 1 best CV {scoring}: {best_score:.4f} ± {best_score_std:.4f}")
         
         # Store stage 1 results
         stage1_results = {
@@ -980,7 +988,8 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
         
         # === STAGE 2: EXPLOITATION (Grid Search around best) ===
         if two_stage:
-            print(f"\n=== STAGE 2: EXPLOITATION (Grid Search around best) ===")
+            if verbose:
+                print(f"\n=== STAGE 2: EXPLOITATION (Grid Search around best) ===")
             
             # Determine number of stage 2 candidates
             if stage2_candidates is None:
@@ -996,7 +1005,8 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
             cv_scores_s2 = np.zeros((n_candidates_s2, k_folds))
             cv_scores_s2.fill(np.inf)
             
-            print(f"Evaluating {n_candidates_s2} stage 2 candidates using {k_folds}-fold CV...")
+            if verbose:
+                print(f"Evaluating {n_candidates_s2} stage 2 candidates using {k_folds}-fold CV...")
             
             if pool is not None:
                 # Parallel evaluation for stage 2
@@ -1022,12 +1032,15 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
                         if len(valid_scores) > 0:
                             mean_score = np.mean(valid_scores)
                             std_score = np.std(valid_scores)
-                            print(f"  Stage 2 Candidate {cand_idx+1}/{n_candidates_s2}: {scoring}={mean_score:.4f}±{std_score:.4f} "
-                                  f"({len(valid_scores)}/{k_folds} folds successful)")
+                            if verbose:
+                                print(f"  Stage 2 Candidate {cand_idx+1}/{n_candidates_s2}: {scoring}={mean_score:.4f}±{std_score:.4f} "
+                                    f"({len(valid_scores)}/{k_folds} folds successful)")
                         else:
-                            print(f"  Stage 2 Candidate {cand_idx+1}/{n_candidates_s2}: All folds failed")
+                            if verbose:
+                                print(f"  Stage 2 Candidate {cand_idx+1}/{n_candidates_s2}: All folds failed")
                     else:
-                        print(f"  Stage 2 Candidate {cand_idx+1}/{n_candidates_s2}: {status}")
+                        if verbose:
+                            print(f"  Stage 2 Candidate {cand_idx+1}/{n_candidates_s2}: {status}")
             
             else:
                 # Sequential evaluation for stage 2
@@ -1044,12 +1057,15 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
                         if len(valid_scores) > 0:
                             mean_score = np.mean(valid_scores)
                             std_score = np.std(valid_scores)
-                            print(f"  Stage 2 Candidate {cand_idx+1}/{n_candidates_s2}: {scoring}={mean_score:.4f}±{std_score:.4f} "
-                                  f"({len(valid_scores)}/{k_folds} folds successful)")
+                            if verbose:
+                                print(f"  Stage 2 Candidate {cand_idx+1}/{n_candidates_s2}: {scoring}={mean_score:.4f}±{std_score:.4f} "
+                                    f"({len(valid_scores)}/{k_folds} folds successful)")
                         else:
-                            print(f"  Stage 2 Candidate {cand_idx+1}/{n_candidates_s2}: All folds failed")
+                            if verbose:
+                                print(f"  Stage 2 Candidate {cand_idx+1}/{n_candidates_s2}: All folds failed")
                     else:
-                        print(f"  Stage 2 Candidate {cand_idx+1}/{n_candidates_s2}: {status}")
+                        if verbose:
+                            print(f"  Stage 2 Candidate {cand_idx+1}/{n_candidates_s2}: {status}")
             
             # Find best from stage 2
             mean_cv_scores_s2 = []
@@ -1076,8 +1092,9 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
                 best_score_s2 = mean_cv_scores_s2[best_idx_s2]
                 best_score_std_s2 = std_cv_scores_s2[best_idx_s2]
                 
-                print(f"\nStage 2 best hyperparameters (candidate {best_idx_s2+1}): {best_hyperparams_s2}")
-                print(f"Stage 2 best CV {scoring}: {best_score_s2:.4f} ± {best_score_std_s2:.4f}")
+                if verbose:
+                    print(f"\nStage 2 best hyperparameters (candidate {best_idx_s2+1}): {best_hyperparams_s2}")
+                    print(f"Stage 2 best CV {scoring}: {best_score_s2:.4f} ± {best_score_std_s2:.4f}")
                 
                 # Use stage 2 results if better
                 if best_score_s2 < best_score:  # Assuming lower is better for most metrics
@@ -1085,11 +1102,14 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
                     best_score = best_score_s2
                     best_score_std = best_score_std_s2
                     best_idx = best_idx_s2  # Note: this is index within stage 2 candidates
-                    print(f"✓ Stage 2 improved results!")
+                    if verbose:
+                        print(f"✓ Stage 2 improved results!")
                 else:
-                    print(f"✓ Stage 1 results remain best.")
+                    if verbose:
+                        print(f"✓ Stage 1 results remain best.")
             else:
-                print("Stage 2 failed - using Stage 1 results")
+                if verbose:
+                    print("Stage 2 failed - using Stage 1 results")
         
         # Configure final GP with best hyperparameters
         try:

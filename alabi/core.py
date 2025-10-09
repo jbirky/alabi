@@ -679,10 +679,10 @@ class SurrogateModel(object):
         return gp, timing
 
 
-    def opt_gp(self, method="ml", cv_folds=5, cv_scoring='mse', cv_n_candidates=20, 
+    def opt_gp(self, method="ml", cv_folds=5, cv_scoring="mse", cv_n_candidates=20, 
                cv_random_state=None, multi_proc=True, 
                cv_two_stage=False, cv_stage2_candidates=None, cv_stage2_width=0.5,
-               cv_weighted_mse_method='exponential', cv_weighted_mse_temperature=1.0):
+               cv_weighted_mse_method="exponential", cv_weighted_mse_temperature=1.0):
         """
         Optimize GP hyperparameters using marginal likelihood or cross-validation.
         
@@ -739,10 +739,10 @@ class SurrogateModel(object):
         if method.lower() == "cv":
             # Cross-validation hyperparameter optimization
             if self.verbose:
-                print(f"Optimizing GP hyperparameters using {cv_folds}-fold cross-validation...")
+                print(f"\nOptimizing GP hyperparameters using {cv_folds}-fold cross-validation...")
             
             try:                         
-                candidates = ut.prior_sampler(bounds=self.hp_bounds, nsample=cv_n_candidates, sampler='lhs', random_state=cv_random_state)
+                candidates = ut.prior_sampler(bounds=self.hp_bounds, nsample=cv_n_candidates, sampler="lhs", random_state=cv_random_state)
 
                 # Add current hyperparameters as a candidate if GP exists
                 if hasattr(self, "gp"):
@@ -750,6 +750,12 @@ class SurrogateModel(object):
                     if np.isfinite(self.gp_hyper_prior(current_hp)):
                         # Replace first candidate with current hyperparameters
                         candidates[0] = current_hp
+                     
+                # suppress outputs if running parallel chains   
+                if multi_proc:
+                    verbose = False
+                else:
+                    verbose = self.verbose
                 
                 # Optimize using cross-validation
                 op_gp, best_params, cv_results = gp_utils.optimize_gp_kfold_cv(
@@ -764,7 +770,8 @@ class SurrogateModel(object):
                     stage2_candidates=cv_stage2_candidates,
                     stage2_width=cv_stage2_width,
                     weighted_mse_method=cv_weighted_mse_method,
-                    weighted_mse_temperature=cv_weighted_mse_temperature
+                    weighted_mse_temperature=cv_weighted_mse_temperature,
+                    verbose=verbose
                 )
                 
                 # Store CV results for analysis
@@ -790,7 +797,7 @@ class SurrogateModel(object):
         if method.lower() == "ml" or failed:
             # Standard marginal likelihood optimization
             if self.verbose and method.lower() == "ml":
-                print("Optimizing GP hyperparameters using marginal likelihood...")
+                print("\nOptimizing GP hyperparameters using marginal likelihood...")
             
             # create array of random initial hyperparameters:
             # Use more restarts for better exploration but with early stopping
@@ -1290,7 +1297,7 @@ class SurrogateModel(object):
                                            n_attempts=n_attempts)
 
         opt_timing = time.time() - opt_timing_0
-        self.training_results["acquisition_optimizer_niter"].append(opt_result.nit)
+        # self.training_results["acquisition_optimizer_niter"].append(opt_result.nit)
 
         # evaluate function at the optimized theta
         _thetaN = _thetaN.reshape(1, -1)
@@ -1301,7 +1308,7 @@ class SurrogateModel(object):
 
     def active_train(self, niter=100, algorithm="bape", gp_opt_freq=20, save_progress=False,
                      obj_opt_method="l-bfgs-b", nopt=1, n_attempts=5, use_grad_opt=True, 
-                     optimizer_kwargs={}, show_progress=True, hyperopt_method="ml"): 
+                     optimizer_kwargs={}, show_progress=True, multi_proc=True): 
         """
         Perform active learning to iteratively improve the surrogate model.
         
@@ -1468,8 +1475,10 @@ class SurrogateModel(object):
             # Optimize GP?
             if (ii + first_iter) % self.gp_opt_freq == 0:
 
+                reopt_kwargs = self.opt_gp_kwargs
+                reopt_kwargs["multi_proc"] = multi_proc
                 # re-optimize hyperparamters
-                self.gp, _ = self.opt_gp(method=hyperopt_method)
+                self.gp, _ = self.opt_gp(**reopt_kwargs)
                 
                 # record which iteration hyperparameters were optimized
                 self.training_results["gp_hyperparameter_opt_iteration"].append(ii + first_iter)
@@ -3536,10 +3545,11 @@ class SurrogateModel(object):
                                    "gp_train_time" : [],
                                    "obj_fn_opt_time" : [],
                                    "gp_hyperparameter_opt_iteration" : [],
-                                   "gp_hyperparam_opt_time" : []}
+                                   "gp_hyperparam_opt_time" : [],
+                                   "acquisition_optimizer_niter": []}
         
         if self.verbose:
-            print(f"Running {nchains} parallel active learning chains for {niter} iterations each...")
+            print(f"\nRunning {nchains} parallel active learning chains for {niter} iterations each...")
             print(f"Algorithm: {algorithm}, Method: {obj_opt_method}")
         
         # Store original training data
@@ -3555,7 +3565,7 @@ class SurrogateModel(object):
         # Run chains in parallel using multiprocessing
         if nchains > 1 and self.ncore > 1:
             if self.verbose:
-                print(f"Running {nchains} chains in parallel using {min(nchains, self.ncore)} processes...")
+                print(f"\nRunning {nchains} chains in parallel using {min(nchains, self.ncore)} processes...")
             
             try:
                 # Create process-safe copies of the chains first 
@@ -3587,7 +3597,8 @@ class SurrogateModel(object):
                         chain.active_train(niter=niter, algorithm=algorithm, gp_opt_freq=gp_opt_freq,
                                           save_progress=False, obj_opt_method=obj_opt_method, 
                                           nopt=nopt, n_attempts=n_attempts, use_grad_opt=use_grad_opt,
-                                          optimizer_kwargs=optimizer_kwargs, show_progress=False)
+                                          optimizer_kwargs=optimizer_kwargs, show_progress=False,
+                                          multi_proc=False)
                         
                         # Extract only the new samples (excluding initial training data)
                         initial_len = len(initial_theta)
@@ -3641,46 +3652,11 @@ class SurrogateModel(object):
                         chain_results.append({})
                         
             except Exception as e:
-                if self.verbose:
-                    print(f"Parallel execution failed ({e}), falling back to sequential...")
-                # Clear any partial results
-                all_new_theta = []
-                all_new_y = []
-                chain_results = []
-                
-                # Fallback to sequential execution
-                if show_progress:
-                    fallback_progress = tqdm.tqdm(total=nchains, desc="Running chains sequentially (fallback)")
-                
-                for i in range(nchains):
-                    if self.verbose:
-                        print(f"Running chain {i+1}/{nchains}...")
-                    
-                    result = self._run_chain_worker(i, niter=niter, algorithm=algorithm, 
-                                                  gp_opt_freq=gp_opt_freq, obj_opt_method=obj_opt_method,
-                                                  nopt=nopt, n_attempts=n_attempts, 
-                                                  use_grad_opt=use_grad_opt, 
-                                                  optimizer_kwargs=optimizer_kwargs, show_progress=False)
-                    
-                    if result is not None:
-                        new_theta, new_y, training_results = result
-                        all_new_theta.append(new_theta)
-                        all_new_y.append(new_y)
-                        chain_results.append(training_results)
-                    else:
-                        if self.verbose:
-                            print(f"Chain {i} failed")
-                        all_new_theta.append(np.array([]).reshape(0, self.ndim))
-                        all_new_y.append(np.array([]))
-                        chain_results.append({})
-                    
-                    # Update fallback progress bar
-                    if show_progress:
-                        fallback_progress.update(1)
-                
-                # Close fallback progress bar
-                if show_progress:
-                    fallback_progress.close()
+                import traceback
+                import sys
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                tb_line = traceback.extract_tb(exc_traceback)[-1]
+                print(f"Parallel execution failed ({e}) line {tb_line}.")
                     
         else:
             # Fallback to sequential execution
@@ -3722,7 +3698,7 @@ class SurrogateModel(object):
         
         # Combine all new training samples
         if self.verbose:
-            print("Combining training samples from all chains...")
+            print("\nCombining training samples from all chains...")
         
         self._combine_chain_results(all_new_theta, all_new_y, chain_results)
         
@@ -3733,12 +3709,8 @@ class SurrogateModel(object):
         
         # Final GP optimization with all combined data
         if self.verbose:
-            print("Performing final GP optimization with combined dataset...")
-        self.gp, _ = self.opt_gp(method=self.hyperopt_method,
-                                cv_folds=self.cv_folds,
-                                cv_scoring=self.cv_scoring,
-                                cv_n_candidates=self.cv_n_candidates,
-                                cv_random_state=self.cv_random_state)
+            print("\nPerforming final GP optimization with combined dataset...")
+        self.gp, _ = self.opt_gp(**self.opt_gp_kwargs)
         
         if self.cache:
             self.save()
@@ -3893,76 +3865,6 @@ class SurrogateModel(object):
         
         return metrics
 
-
-    def compare_parallel_vs_sequential(self, niter=50, nchains=4, algorithm="bape", 
-                                      obj_opt_method="nelder-mead", **kwargs):
-        """
-        Compare parallel vs sequential active learning performance.
-        
-        :param niter: Number of iterations for comparison
-        :param nchains: Number of chains for parallel version
-        :param algorithm: Active learning algorithm to use
-        :param obj_opt_method: Optimization method
-        :param kwargs: Additional arguments passed to active_train methods
-        
-        :returns: Dictionary with comparison results
-        """
-        import copy
-        import time
-        
-        if self.verbose:
-            print("Comparing parallel vs sequential active learning...")
-        
-        # Create copies for fair comparison
-        model_sequential = copy.deepcopy(self)
-        model_parallel = copy.deepcopy(self)
-        
-        # Run sequential active learning
-        if self.verbose:
-            print(f"Running sequential active learning ({niter} iterations)...")
-        
-        start_time = time.time()
-        model_sequential.active_train(niter=niter, algorithm=algorithm, 
-                                    obj_opt_method=obj_opt_method, **kwargs)
-        sequential_time = time.time() - start_time
-        
-        # Run parallel active learning
-        if self.verbose:
-            print(f"Running parallel active learning ({nchains} chains × {niter//nchains} iterations)...")
-        
-        start_time = time.time()
-        model_parallel.active_train_parallel(niter=niter//nchains, nchains=nchains, 
-                                            algorithm=algorithm, obj_opt_method=obj_opt_method, 
-                                            **kwargs)
-        parallel_time = time.time() - start_time
-        
-        # Calculate comparison metrics
-        results = {
-            'sequential': {
-                'total_samples': model_sequential.ntrain,
-                'new_samples': model_sequential.ntrain - model_sequential.ninit_train,
-                'runtime': sequential_time,
-                'final_gp_error': model_sequential.training_results['training_scaled_mse'][-1] if model_sequential.training_results['training_scaled_mse'] else np.nan
-            },
-            'parallel': {
-                'total_samples': model_parallel.ntrain,
-                'new_samples': model_parallel.ntrain - model_parallel.ninit_train,
-                'runtime': parallel_time,
-                'final_gp_error': model_parallel.training_results['training_scaled_mse'][-1] if model_parallel.training_results['training_scaled_mse'] else np.nan,
-                'diversity_metrics': model_parallel.get_chain_diversity_metrics()
-            },
-            'speedup': sequential_time / parallel_time if parallel_time > 0 else np.inf,
-            'efficiency': (model_parallel.ntrain - model_parallel.ninit_train) / (model_sequential.ntrain - model_sequential.ninit_train) if model_sequential.ntrain > model_sequential.ninit_train else 1.0
-        }
-        
-        if self.verbose:
-            print(f"\nComparison Results:")
-            print(f"Sequential: {results['sequential']['new_samples']} samples in {results['sequential']['runtime']:.2f}s")
-            print(f"Parallel: {results['parallel']['new_samples']} samples in {results['parallel']['runtime']:.2f}s")
-            print(f"Speedup: {results['speedup']:.2f}x")
-            print(f"Sample efficiency: {results['efficiency']:.2f}")
-        
-        return results
 
     def _fix_pymultinest_output_format(self, outputfiles_basename):
         """
