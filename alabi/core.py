@@ -38,6 +38,85 @@ no_scaler = preprocessing.FunctionTransformer(func=no_scale, inverse_func=no_sca
 __all__ = ["SurrogateModel",
            "nlog_scaler", "log_scaler", "minmax_scaler", "no_scaler"]
 
+
+class CachedSurrogateLikelihood:
+    """
+    A picklable cached surrogate likelihood function.
+    
+    This class creates a callable object that caches the GP computation
+    and can be pickled for use with multiprocessing.
+    """
+    
+    def __init__(self, gp_iter, y_cond, theta_scaler, y_scaler, ndim, return_var=False):
+        """
+        Initialize the cached surrogate likelihood.
+        
+        :param gp_iter: Pre-computed GP object
+        :param y_cond: Training target values
+        :param theta_scaler: Parameter scaler object
+        :param y_scaler: Target scaler object  
+        :param ndim: Number of dimensions
+        """
+        self.gp_iter = gp_iter
+        self._y_cond = y_cond
+        self.theta_scaler = theta_scaler
+        self.y_scaler = y_scaler
+        self.ndim = ndim
+        self.return_var = return_var
+    
+    def __call__(self, theta_xs):
+        """
+        Evaluate the cached surrogate likelihood.
+        
+        :param theta_xs: Point(s) to evaluate. Same format as surrogate_log_likelihood.
+        :param return_var: Whether to return variance as well.
+        :returns: Same format as surrogate_log_likelihood.
+        """
+        # Convert input to numpy array and handle dimensionality
+        theta_xs = np.asarray(theta_xs)
+        original_shape_1d = False
+        
+        # Handle 1D input (single point)
+        if theta_xs.ndim == 1:
+            theta_xs = theta_xs.reshape(1, -1)
+            original_shape_1d = True
+        elif theta_xs.ndim != 2:
+            raise ValueError(f"theta_xs must be 1D or 2D array, got {theta_xs.ndim}D")
+        
+        # Apply scaling transformation
+        _theta_xs = self.theta_scaler.transform(theta_xs)
+        
+        # Ensure proper shape for george GP
+        _theta_xs = np.atleast_2d(_theta_xs)
+        if _theta_xs.shape[0] == 1 and _theta_xs.shape[1] != self.ndim:
+            if _theta_xs.shape[1] == 1 and _theta_xs.shape[0] == self.ndim:
+                _theta_xs = _theta_xs.T
+            elif len(_theta_xs.flatten()) == self.ndim:
+                _theta_xs = _theta_xs.reshape(1, -1)
+        
+        # Use the pre-computed GP (this is fast since gp.compute() was already called)
+        if self.return_var == False:
+            _ypred = self.gp_iter.predict(self._y_cond, _theta_xs, return_var=False, return_cov=False)
+            ypred = self.y_scaler.inverse_transform(_ypred.reshape(-1, 1)).flatten()
+            
+            # Return single value if input was 1D, otherwise return array
+            if original_shape_1d:
+                return ypred[0]
+            else:
+                return ypred
+                
+        else:
+            _ypred, _varpred = self.gp_iter.predict(self._y_cond, _theta_xs, return_var=True, return_cov=False)
+            ypred = self.y_scaler.inverse_transform(_ypred.reshape(-1, 1)).flatten()
+            varpred = self.y_scaler.inverse_transform(_varpred.reshape(-1, 1)).flatten()
+
+            # Return single values if input was 1D, otherwise return arrays
+            if original_shape_1d:
+                return ypred[0], varpred[0]
+            else:
+                return ypred, varpred
+            
+
 class SurrogateModel(object):
 
     """
@@ -310,17 +389,22 @@ class SurrogateModel(object):
                 raise e
 
             if hasattr(self, "gp"):
-                cache_utils.write_report_gp(self, file)
+                try:
+                    cache_utils.write_report_gp(self, file)
+                except Exception as e:
+                    print(f"Error writing GP report: {e}")
 
             if self.emcee_run == True:
                 cache_utils.write_report_emcee(self, file)
+                
+            if self.dynesty_run == True:
+                cache_utils.write_report_dynesty(self, file)
+                
         else:
             # Non-rank-0 processes just print a message
             if parallel_utils.is_mpi_active():
                 print(f"Rank {rank}: Skipping save (only rank 0 saves to prevent conflicts)")
 
-        if self.dynesty_run == True:
-            cache_utils.write_report_dynesty(self, file)
             
     def _lnlike_fn(self, _theta):
         """
@@ -586,7 +670,7 @@ class SurrogateModel(object):
                                     white_noise=self.white_noise)
         if gp is None:
             print(f"Warning: fit_gp failed with point {_theta[-1]}. Reoptimizing hyperparameters...")
-            gp, _ = self.opt_gp()
+            gp, _ = self.opt_gp(**self.opt_gp_kwargs)
             
         gp.compute(_theta)
         
@@ -595,10 +679,47 @@ class SurrogateModel(object):
         return gp, timing
 
 
-    def opt_gp(self):
+    def opt_gp(self, method="ml", cv_folds=5, cv_scoring='mse', cv_n_candidates=20, 
+               cv_random_state=None, multi_proc=True, 
+               cv_two_stage=False, cv_stage2_candidates=None, cv_stage2_width=0.5,
+               cv_weighted_mse_method='exponential', cv_weighted_mse_temperature=1.0):
         """
-        Optimize GP hyperparameters by maximizing the log marginal likelihood.
+        Optimize GP hyperparameters using marginal likelihood or cross-validation.
         
+        :param method: (*str, optional, default="ml"*)
+            Optimization method to use:
+            
+            - "ml": Maximum marginal likelihood (default, fast)
+            - "cv": k-fold cross-validation (slower but prevents overfitting)
+            
+        :param cv_folds: (*int, optional, default=5*)
+            Number of folds for cross-validation (only used if method="cv")
+            
+        :param cv_scoring: (*str, optional, default='mse'*)
+            Scoring metric for cross-validation. Options: 'mse', 'mae', 'r2'
+            
+        :param cv_n_candidates: (*int, optional, default=20*)
+            Number of hyperparameter candidates to evaluate for CV
+            
+        :param cv_random_state: (*int, optional, default=42*)
+            Random seed for reproducible CV splits and candidate generation
+            
+        :param multi_proc: (*bool, optional, default=True*)
+            Whether to use multiprocessing for CV evaluation.
+            Only used when method="cv".
+            
+        :param cv_two_stage: (*bool, optional, default=False*)
+            Whether to use two-stage CV optimization (explore-exploit strategy).
+            Only used when method="cv".
+            
+        :param cv_stage2_candidates: (*int, optional, default=None*)
+            Number of candidates for stage 2 grid search. If None, uses
+            cv_n_candidates // 2.
+            
+        :param cv_stage2_width: (*float, optional, default=0.5*)
+            Width factor for stage 2 search around best parameters.
+            Smaller values = tighter search around best from stage 1.
+            
         :returns: (*tuple*) 
             - op_gp: Optimized george.GP object with updated hyperparameters
             - timing: Time taken for optimization in seconds
@@ -609,10 +730,73 @@ class SurrogateModel(object):
         self.set_hyperparam_prior_bounds()
         
         failed = True
+        
+        if multi_proc and self.ncore > 1:
+            pool = mp.Pool(processes=self.ncore)
+        else:
+            pool = None
 
-        if failed == True:
+        if method.lower() == "cv":
+            # Cross-validation hyperparameter optimization
+            if self.verbose:
+                print(f"Optimizing GP hyperparameters using {cv_folds}-fold cross-validation...")
+            
+            try:                         
+                candidates = ut.prior_sampler(bounds=self.hp_bounds, nsample=cv_n_candidates, sampler='lhs', random_state=cv_random_state)
+
+                # Add current hyperparameters as a candidate if GP exists
+                if hasattr(self, "gp"):
+                    current_hp = self.gp.get_parameter_vector()
+                    if np.isfinite(self.gp_hyper_prior(current_hp)):
+                        # Replace first candidate with current hyperparameters
+                        candidates[0] = current_hp
+                
+                # Optimize using cross-validation
+                op_gp, best_params, cv_results = gp_utils.optimize_gp_kfold_cv(
+                    self.gp, self._theta, self._y,
+                    candidates,
+                    self.y_scaler,
+                    k_folds=cv_folds,
+                    scoring=cv_scoring,
+                    random_state=cv_random_state,
+                    pool=pool,
+                    two_stage=cv_two_stage,
+                    stage2_candidates=cv_stage2_candidates,
+                    stage2_width=cv_stage2_width,
+                    weighted_mse_method=cv_weighted_mse_method,
+                    weighted_mse_temperature=cv_weighted_mse_temperature
+                )
+                
+                # Store CV results for analysis
+                if not hasattr(self, 'cv_results'):
+                    self.cv_results = []
+                self.cv_results.append(cv_results)
+                
+                failed = False
+                
+                if self.verbose:
+                    print(f"CV optimization completed. Best {cv_scoring}: {cv_results['best_score']:.4f} ± {cv_results['best_score_std']:.4f}")
+                
+            except Exception as e:
+                import traceback
+                import sys
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                tb_line = traceback.extract_tb(exc_traceback)[-1]
+                print(f"Warning: CV hyperparameter optimization failed: {str(e)}")
+                print(f"Error at line {tb_line.lineno} in {tb_line.filename}: {tb_line.line}")
+                print("Falling back to marginal likelihood optimization...")
+                failed = True
+        
+        if method.lower() == "ml" or failed:
+            # Standard marginal likelihood optimization
+            if self.verbose and method.lower() == "ml":
+                print("Optimizing GP hyperparameters using marginal likelihood...")
+            
             # create array of random initial hyperparameters:
-            p0 = ut.prior_sampler(bounds=self.hp_bounds, nsample=self.gp_nopt, sampler='uniform', random_state=None)
+            # Use more restarts for better exploration but with early stopping
+            n_restarts = max(self.gp_nopt, 5) 
+            p0 = ut.prior_sampler(bounds=self.hp_bounds, nsample=n_restarts, sampler='uniform', random_state=None)
+            
             if hasattr(self, "gp"):
                 # if gp exists, use current hyperparameters as a starting point 
                 current_hp = self.gp.get_parameter_vector(include_frozen=False)
@@ -635,7 +819,8 @@ class SurrogateModel(object):
         self.training_results["gp_hyperparam_opt_time"].append(timing)
 
         if self.verbose:
-            print(f"Optimized {len(self.gp.get_parameter_names(include_frozen=False))} hyperparameters: ({np.round(timing, 3)}s)")
+            opt_method_str = "CV" if method.lower() == "cv" and not failed else "ML"
+            print(f"Optimized {len(self.gp.get_parameter_names(include_frozen=False))} hyperparameters using {opt_method_str}: ({np.round(timing, 3)}s)")
 
         return op_gp, timing
 
@@ -650,7 +835,16 @@ class SurrogateModel(object):
                 overwrite=False,
                 gp_opt_method="newton-cg", 
                 gp_nopt=3,
-                optimizer_kwargs={"max_iter": 50}):
+                optimizer_kwargs={"max_iter": 50},
+                hyperopt_method="ml",
+                cv_folds=5,
+                cv_scoring='mse',
+                cv_n_candidates=20,
+                cv_two_stage=True,
+                cv_stage2_candidates=20,
+                cv_stage2_width=0.3,
+                cv_random_state=42,
+                multi_proc=True):
         """
         Initialize the Gaussian Process surrogate model with specified kernel and hyperparameters.
 
@@ -710,6 +904,24 @@ class SurrogateModel(object):
             'max_iter' (maximum iterations) and convergence tolerances. 
             Default is {"max_iter": 50}.
 
+        :param hyperopt_method: (*str, optional, default='ml'*)
+            Method for optimizing GP hyperparameters:
+            
+            - 'ml': Maximum marginal likelihood (fast, may overfit)
+            - 'cv': k-fold cross-validation (slower, prevents overfitting)
+
+        :param cv_folds: (*int, optional, default=5*)
+            Number of folds for cross-validation (only used if hyperopt_method='cv').
+
+        :param cv_scoring: (*str, optional, default='mse'*)
+            Scoring metric for cross-validation. Options: 'mse', 'mae', 'r2'.
+
+        :param cv_n_candidates: (*int, optional, default=20*)
+            Number of hyperparameter candidates to evaluate for CV.
+
+        :param cv_random_state: (*int, optional, default=42*)
+            Random seed for reproducible CV splits and candidate generation.
+
         :raises AssertionError: 
             If a GP already exists and overwrite=False.
         :raises ValueError: 
@@ -767,6 +979,27 @@ class SurrogateModel(object):
 
         # GP hyperparameter optimization kwargs
         self.optimizer_kwargs = optimizer_kwargs
+
+        # GP hyperparameter optimization method (ml or cv)
+        self.hyperopt_method = hyperopt_method
+        self.cv_folds = cv_folds
+        self.cv_scoring = cv_scoring
+        self.cv_n_candidates = cv_n_candidates
+        self.cv_random_state = cv_random_state
+        self.cv_two_stage = cv_two_stage
+        self.cv_stage2_candidates = cv_stage2_candidates
+        self.cv_stage2_width = cv_stage2_width
+        
+        # Save all kwargs needed for opt_gp function
+        self.opt_gp_kwargs = {"method": self.hyperopt_method,
+                              "cv_folds": self.cv_folds,
+                              "cv_scoring": self.cv_scoring,
+                              "cv_n_candidates": self.cv_n_candidates,
+                              "cv_random_state": self.cv_random_state,
+                              "cv_two_stage": self.cv_two_stage,
+                              "cv_stage2_candidates": self.cv_stage2_candidates,
+                              "cv_stage2_width": self.cv_stage2_width,
+                              "multi_proc": multi_proc}
 
         # set the bounds for scale length parameters
         self.gp_scale_rng = gp_scale_rng
@@ -850,7 +1083,7 @@ class SurrogateModel(object):
         self.gp, _ = self.fit_gp()
 
         # Optimize GP hyperparameters
-        self.gp, _ = self.opt_gp()
+        self.gp, _ = self.opt_gp(**self.opt_gp_kwargs)
         
     
     def eval_gp_at_iteration(self, iter, return_var=False):
@@ -867,9 +1100,9 @@ class SurrogateModel(object):
                 # Use the latest parameters (last in the list)
                 gp_iter.set_parameter_vector(self.training_results["gp_hyperparameters"][-1])
             else:
-                _theta_cond = self._theta[:iter]
-                _y_cond = self._y[:iter]
-                gp_iter.set_parameter_vector(self.training_results["gp_hyperparameters"][iter])
+                _theta_cond = self._theta[:self.ninit_train + iter]
+                _y_cond = self._y[:self.ninit_train + iter]
+                gp_iter.set_parameter_vector(self.training_results["gp_hyperparameters"][:self.ninit_train + iter])
             
         gp_iter.compute(_theta_cond)
 
@@ -976,6 +1209,58 @@ class SurrogateModel(object):
         return prob
 
 
+    def create_cached_surrogate_likelihood(self, iter=-1, return_var=False):
+        """
+        Create a cached surrogate likelihood function that computes the GP once
+        and can be evaluated multiple times without recomputing the GP.
+        
+        This is useful when you need to evaluate the surrogate likelihood at many
+        different points with the same GP configuration, as it avoids the expensive
+        GP computation (gp.compute()) on each call.
+        
+        :param iter: Iteration number of GP to use. If -1, uses most recent GP.
+        :type iter: *int, optional*
+        
+        :returns: A cached likelihood function that can be called with theta_xs
+        :rtype: *callable*
+        
+        Example:
+            >>> cached_lnlike = sm.create_cached_surrogate_likelihood()
+            >>> lnlike_1 = cached_lnlike(theta_1)
+            >>> lnlike_2 = cached_lnlike(theta_2)  # No GP recomputation
+        """
+        
+        # Determine training data and hyperparameters for the specified iteration
+        if hasattr(self, "training_results") and len(self.training_results["iteration"]) > 0:
+            # Handle iter=-1 case to use all data
+            if iter == -1:
+                _theta_cond = self._theta
+                _y_cond = self._y
+                hyperparams = self.training_results["gp_hyperparameters"][-1]
+            else:
+                _theta_cond = self._theta[:self.ninit_train + iter]
+                _y_cond = self._y[:self.ninit_train + iter]
+                hyperparams = self.training_results["gp_hyperparameters"][:self.ntrain + iter]
+        else:
+            _theta_cond = self._theta
+            _y_cond = self._y
+            hyperparams = self.gp.get_parameter_vector()
+        
+        # Create a fresh GP instance with the same kernel
+        gp_iter = gp_utils.configure_gp(_theta_cond, _y_cond, self.kernel, 
+                                        fit_amp=self.fit_amp, 
+                                        fit_mean=self.fit_mean,
+                                        fit_white_noise=self.fit_white_noise,
+                                        white_noise=self.white_noise)
+        
+        # Compute the GP once - this is the expensive operation we want to cache
+        gp_iter.compute(_theta_cond)
+        
+        # Return a picklable cached surrogate likelihood object
+        return CachedSurrogateLikelihood(gp_iter, _y_cond, self.theta_scaler, 
+                                       self.y_scaler, self.ndim, return_var=return_var)
+
+
     def find_next_point(self, nopt=1, n_attempts=5, optimizer_kwargs={}):
         """
         Find next set of ``(theta, y)`` training points by maximizing the
@@ -1016,7 +1301,7 @@ class SurrogateModel(object):
 
     def active_train(self, niter=100, algorithm="bape", gp_opt_freq=20, save_progress=False,
                      obj_opt_method="l-bfgs-b", nopt=1, n_attempts=5, use_grad_opt=True, 
-                     optimizer_kwargs={}, show_progress=True): 
+                     optimizer_kwargs={}, show_progress=True, hyperopt_method="ml"): 
         """
         Perform active learning to iteratively improve the surrogate model.
         
@@ -1184,7 +1469,7 @@ class SurrogateModel(object):
             if (ii + first_iter) % self.gp_opt_freq == 0:
 
                 # re-optimize hyperparamters
-                self.gp, _ = self.opt_gp()
+                self.gp, _ = self.opt_gp(method=hyperopt_method)
                 
                 # record which iteration hyperparameters were optimized
                 self.training_results["gp_hyperparameter_opt_iteration"].append(ii + first_iter)
@@ -3449,7 +3734,11 @@ class SurrogateModel(object):
         # Final GP optimization with all combined data
         if self.verbose:
             print("Performing final GP optimization with combined dataset...")
-        self.gp, _ = self.opt_gp()
+        self.gp, _ = self.opt_gp(method=self.hyperopt_method,
+                                cv_folds=self.cv_folds,
+                                cv_scoring=self.cv_scoring,
+                                cv_n_candidates=self.cv_n_candidates,
+                                cv_random_state=self.cv_random_state)
         
         if self.cache:
             self.save()

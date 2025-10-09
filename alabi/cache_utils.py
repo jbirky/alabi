@@ -77,22 +77,27 @@ def write_report_gp(self, file):
     lines =  f"==================================================================\n"
     lines += f"GP summary \n"
     lines += f"==================================================================\n\n"
-
+    
+    report_vars = {"Kernel": "kernel_name",
+                   "Function bounds": "bounds",
+                   "fit mean": "fit_mean",
+                   "fit amplitude": "fit_amp",
+                   "fit white_noise": "fit_white_noise",
+                   "GP white noise": "white_noise",
+                   "Hyperparameter bounds": "hp_bounds",
+                   "Active learning algorithm": "algorithm",
+                   "Number of total training samples": "ntrain",
+                   "Number of initial training samples": "ninit_train",
+                   "Number of active training samples": "nactive",
+                   "Number of test samples": "ntest",
+    }
+    
     lines += f"Configuration: \n"
     lines += f"-------------- \n"
-    lines += f"Kernel: {self.kernel_name} \n"
-    lines += f"Function bounds: {self.bounds} \n"
-    lines += f"fit mean: {self.fit_mean} \n"
-    lines += f"fit amplitude: {self.fit_amp} \n"
-    lines += f"fit white_noise: {self.fit_white_noise} \n"
-    lines += f"GP white noise: {self.white_noise} \n"
-    lines += f"Hyperparameter bounds: {self.hp_bounds} \n"
-    lines += f"Active learning algorithm : {self.algorithm} \n\n" 
-
-    lines += f"Number of total training samples: {self.ntrain} \n"
-    lines += f"Number of initial training samples: {self.ninit_train} \n"
-    lines += f"Number of active training samples: {self.nactive} \n"
-    lines += f"Number of test samples: {self.ntest} \n\n"
+    for key in report_vars.keys():
+        if hasattr(self, report_vars[key]):
+            lines += f"{key}: {getattr(self, report_vars[key])} \n"
+    lines += "\n"
 
     lines += f"Results: \n"
     lines += f"-------- \n"
@@ -104,7 +109,8 @@ def write_report_gp(self, file):
     if hasattr(self, 'train_runtime'):
         lines += f"Active learning train runtime (s): {np.round(self.train_runtime)} \n\n"
 
-    lines += f"Final test error (MSE): {self.training_results['test_mse'][-1]} \n\n"
+    if hasattr(self, 'training_results'):
+        lines += f"Final test error (MSE): {self.training_results['test_mse'][-1]} \n\n"
 
     summary = open(file+".txt", "w")
     summary.write(lines)

@@ -12,7 +12,7 @@ __all__ = ["kl_divergence_gaussian",
            "compute_kl_single_trial_joblib",
            "compute_kl_full_parallel"]
 
-def kl_divergence_gaussian(mu1, cov1, mu2, cov2):
+def kl_divergence_gaussian(mu1, cov1, mu2, cov2, reg=1e-6):
     """
     Compute the Kullback-Leibler divergence between two Gaussian distributions.
 
@@ -27,7 +27,11 @@ def kl_divergence_gaussian(mu1, cov1, mu2, cov2):
     mu2 = np.asarray(mu2)
     cov1 = np.asarray(cov1)
     cov2 = np.asarray(cov2)
-    
+
+    # Regularize the covariance matrices
+    cov1 += reg * np.eye(cov1.shape[0])
+    cov2 += reg * np.eye(cov2.shape[0])
+
     # Compute the determinant of the covariance matrices
     det1 = np.linalg.det(cov1)
     det2 = np.linalg.det(cov2)
