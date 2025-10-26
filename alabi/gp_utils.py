@@ -616,7 +616,7 @@ def _evaluate_candidate_worker(args):
     Worker function for parallel evaluation of a single hyperparameter candidate.
     
     :param args: tuple containing (cand_idx, hyperparams, gp, theta, y,  
-                                   k_folds, scoring, random_state, weighted_mse_method, weighted_mse_temperature)
+                                   k_folds, scoring, weighted_mse_method, weighted_mse_temperature)
     :returns: tuple (cand_idx, fold_scores, success_flag)
     """
     import copy
@@ -624,7 +624,7 @@ def _evaluate_candidate_worker(args):
     from sklearn.model_selection import KFold
     from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
-    (cand_idx, hyperparams, gp, _theta, _y, y_scaler, k_folds, scoring, random_state, weighted_mse_method, weighted_mse_temperature) = args
+    (cand_idx, hyperparams, gp, _theta, _y, y_scaler, k_folds, scoring, weighted_mse_method, weighted_mse_temperature) = args
 
     try:
         # Check for basic hyperparameter validity
@@ -632,7 +632,7 @@ def _evaluate_candidate_worker(args):
             return (cand_idx, None, "Invalid hyperparameters (NaN/Inf)")
         
         # Set up cross-validation
-        kf = KFold(n_splits=k_folds, shuffle=True, random_state=random_state)
+        kf = KFold(n_splits=k_folds, shuffle=True, random_state=None)
         fold_scores = []
         fold_idx = 0
         
@@ -734,9 +734,10 @@ def _evaluate_candidate_worker(args):
 
 
 def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
-                         k_folds=5, scoring='mse', random_state=42, pool=None, 
-                         two_stage=False, stage2_candidates=None, stage2_width=0.5,
-                         weighted_mse_method='exponential', weighted_mse_temperature=1.0,
+                         k_folds=5, scoring="mse", pool=None, 
+                         stage2_candidates=None, stage2_width=0.5,
+                         stage3_candidates=None, stage3_width=0.2,
+                         weighted_mse_method="exponential", weighted_mse_temperature=1.0,
                          verbose=True):
     """
     Optimize Gaussian Process hyperparameters using k-fold cross-validation.
@@ -775,19 +776,10 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
         - 'r2': R-squared coefficient (higher is better)
         - 'weighted_mse': Weighted MSE giving higher weight to high-probability regions
         
-    :param random_state: (*int, optional, default=42*)
-        Random seed for reproducible cross-validation splits.
-        
     :param pool: (*multiprocessing.Pool, optional, default=None*)
         Multiprocessing pool for parallel evaluation of hyperparameter candidates.
         If None, evaluation runs sequentially. If provided, candidates are 
         evaluated in parallel using the pool's worker processes.
-        
-    :param two_stage: (*bool, optional, default=False*)
-        Whether to use two-stage optimization (explore-exploit strategy):
-        
-        - Stage 1: Random exploration with provided candidates (explore)
-        - Stage 2: Focused grid search around best result (exploit)
         
     :param stage2_candidates: (*int, optional, default=None*)
         Number of candidates for stage 2 grid search. If None, uses 
@@ -796,6 +788,14 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
     :param stage2_width: (*float, optional, default=0.5*)
         Width factor for stage 2 search around best parameters.
         Smaller values = tighter search, larger values = wider search.
+        
+    :param stage3_candidates: (*int, optional, default=None*)
+        Number of candidates for stage 3 ultra-fine search. If None, uses 
+        max(stage2_candidates // 2, 3).
+        
+    :param stage3_width: (*float, optional, default=0.2*)
+        Width factor for stage 3 search around stage 2 best parameters.
+        Should be smaller than stage2_width for finer refinement.
         
     :param weighted_mse_method: (*str, optional, default='exponential'*)
         Weighting method for weighted_mse scoring. Options:
@@ -833,6 +833,15 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
         >>> print(f"CV score: {results['best_score']:.4f} ± {results['best_score_std']:.4f}")
     """
     
+    if stage2_candidates is not None:
+        two_stage = True
+    else:
+        two_stage = False
+    if stage3_candidates is not None:
+        three_stage = True
+    else:
+        three_stage = False
+        
     # Input validation
     _theta = np.asarray(_theta)
     _y = np.asarray(_y)
@@ -859,7 +868,7 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
     n_candidates, n_hyperparams = hyperparameter_candidates.shape
     
     # Set up cross-validation
-    kf = KFold(n_splits=k_folds, shuffle=True, random_state=random_state)
+    kf = KFold(n_splits=k_folds, shuffle=True, random_state=None)
     
     # Storage for results
     cv_scores = np.zeros((n_candidates, k_folds))
@@ -879,7 +888,7 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
         worker_args = []
         for cand_idx, hyperparams in enumerate(hyperparameter_candidates):
             args = (cand_idx, hyperparams, gp, _theta, _y, y_scaler, 
-                   k_folds, scoring, random_state, weighted_mse_method, weighted_mse_temperature)
+                   k_folds, scoring, weighted_mse_method, weighted_mse_temperature)
             worker_args.append(args)
         
         # Evaluate all candidates in parallel with progress bar
@@ -918,7 +927,7 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
     else:
         # Sequential evaluation using the worker function
         for cand_idx, hyperparams in enumerate(hyperparameter_candidates):
-            args = (cand_idx, hyperparams, gp, _theta, _y, y_scaler, k_folds, scoring, random_state, weighted_mse_method, weighted_mse_temperature)
+            args = (cand_idx, hyperparams, gp, _theta, _y, y_scaler, k_folds, scoring, weighted_mse_method, weighted_mse_temperature)
             results = _evaluate_candidate_worker(args)
             cand_idx_result, fold_scores, status = results
             
@@ -997,7 +1006,7 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
             
             # Generate grid around best hyperparameters
             stage2_hyperparam_candidates = _generate_stage2_candidates(
-                best_hyperparams, stage2_candidates, stage2_width, random_state
+                best_hyperparams, stage2_candidates, stage2_width
             )
             
             # Evaluate stage 2 candidates
@@ -1013,7 +1022,7 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
                 worker_args_s2 = []
                 for cand_idx, hyperparams in enumerate(stage2_hyperparam_candidates):
                     args = (cand_idx, hyperparams, gp, _theta, _y, y_scaler,
-                           k_folds, scoring, random_state, weighted_mse_method, weighted_mse_temperature)
+                           k_folds, scoring, weighted_mse_method, weighted_mse_temperature)
                     worker_args_s2.append(args)
                 
                 with tqdm(total=len(worker_args_s2), desc="Stage 2 candidates", unit="candidate") as pbar:
@@ -1045,7 +1054,7 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
             else:
                 # Sequential evaluation for stage 2
                 for cand_idx, hyperparams in enumerate(stage2_hyperparam_candidates):
-                    args = (cand_idx, hyperparams, gp, _theta, _y, y_scaler, k_folds, scoring, random_state, weighted_mse_method, weighted_mse_temperature)
+                    args = (cand_idx, hyperparams, gp, _theta, _y, y_scaler, k_folds, scoring, weighted_mse_method, weighted_mse_temperature)
                     results_s2 = _evaluate_candidate_worker(args)
                     cand_idx_result, fold_scores, status = results_s2
                     
@@ -1111,6 +1120,134 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
                 if verbose:
                     print("Stage 2 failed - using Stage 1 results")
         
+        # === STAGE 3: REFINEMENT (Ultra-fine search around stage 2 best) ===
+        if three_stage and two_stage:
+            if verbose:
+                print(f"\n=== STAGE 3: REFINEMENT (Ultra-fine search around best) ===")
+            
+            # Determine number of stage 3 candidates
+            if stage3_candidates is None:
+                stage3_candidates = max((stage2_candidates if stage2_candidates else n_candidates // 2) // 2, 3)
+            
+            # Generate ultra-fine grid around current best hyperparameters
+            stage3_hyperparam_candidates = _generate_stage3_candidates(
+                best_hyperparams, stage3_candidates, stage3_width
+            )
+            
+            # Evaluate stage 3 candidates
+            n_candidates_s3 = len(stage3_hyperparam_candidates)
+            cv_scores_s3 = np.zeros((n_candidates_s3, k_folds))
+            cv_scores_s3.fill(np.inf)
+            
+            if verbose:
+                print(f"Evaluating {n_candidates_s3} stage 3 candidates using {k_folds}-fold CV...")
+            
+            if pool is not None:
+                # Parallel evaluation for stage 3
+                worker_args_s3 = []
+                for cand_idx, hyperparams in enumerate(stage3_hyperparam_candidates):
+                    args = (cand_idx, hyperparams, gp, _theta, _y, y_scaler,
+                           k_folds, scoring, weighted_mse_method, weighted_mse_temperature)
+                    worker_args_s3.append(args)
+                
+                with tqdm(total=len(worker_args_s3), desc="Stage 3 candidates", unit="candidate") as pbar:
+                    results_s3 = []
+                    for result in pool.imap(_evaluate_candidate_worker, worker_args_s3):
+                        results_s3.append(result)
+                        pbar.update(1)
+                
+                # Process stage 3 results
+                for cand_idx, fold_scores, status in results_s3:
+                    if status == "success" and fold_scores is not None:
+                        for fold_idx, score in enumerate(fold_scores):
+                            cv_scores_s3[cand_idx, fold_idx] = score
+                        
+                        valid_scores = [s for s in fold_scores if np.isfinite(s)]
+                        if len(valid_scores) > 0:
+                            mean_score = np.mean(valid_scores)
+                            std_score = np.std(valid_scores)
+                            if verbose:
+                                print(f"  Stage 3 Candidate {cand_idx+1}/{n_candidates_s3}: {scoring}={mean_score:.4f}±{std_score:.4f} "
+                                    f"({len(valid_scores)}/{k_folds} folds successful)")
+                        else:
+                            if verbose:
+                                print(f"  Stage 3 Candidate {cand_idx+1}/{n_candidates_s3}: All folds failed")
+                    else:
+                        if verbose:
+                            print(f"  Stage 3 Candidate {cand_idx+1}/{n_candidates_s3}: {status}")
+            
+            else:
+                # Sequential evaluation for stage 3
+                for cand_idx, hyperparams in enumerate(stage3_hyperparam_candidates):
+                    args = (cand_idx, hyperparams, gp, _theta, _y, y_scaler, k_folds, scoring, weighted_mse_method, weighted_mse_temperature)
+                    results_s3 = _evaluate_candidate_worker(args)
+                    cand_idx_result, fold_scores, status = results_s3
+                    
+                    if status == "success" and fold_scores is not None:
+                        for fold_idx, score in enumerate(fold_scores):
+                            cv_scores_s3[cand_idx, fold_idx] = score
+                        
+                        valid_scores = [s for s in fold_scores if np.isfinite(s)]
+                        if len(valid_scores) > 0:
+                            mean_score = np.mean(valid_scores)
+                            std_score = np.std(valid_scores)
+                            if verbose:
+                                print(f"  Stage 3 Candidate {cand_idx+1}/{n_candidates_s3}: {scoring}={mean_score:.4f}±{std_score:.4f} "
+                                    f"({len(valid_scores)}/{k_folds} folds successful)")
+                        else:
+                            if verbose:
+                                print(f"  Stage 3 Candidate {cand_idx+1}/{n_candidates_s3}: All folds failed")
+                    else:
+                        if verbose:
+                            print(f"  Stage 3 Candidate {cand_idx+1}/{n_candidates_s3}: {status}")
+            
+            # Find best from stage 3
+            mean_cv_scores_s3 = []
+            std_cv_scores_s3 = []
+            
+            for cand_idx in range(n_candidates_s3):
+                fold_scores = cv_scores_s3[cand_idx, :]
+                valid_scores = fold_scores[np.isfinite(fold_scores)]
+                
+                if len(valid_scores) > 0:
+                    mean_cv_scores_s3.append(np.mean(valid_scores))
+                    std_cv_scores_s3.append(np.std(valid_scores))
+                else:
+                    mean_cv_scores_s3.append(np.inf)
+                    std_cv_scores_s3.append(np.inf)
+            
+            mean_cv_scores_s3 = np.array(mean_cv_scores_s3)
+            std_cv_scores_s3 = np.array(std_cv_scores_s3)
+            
+            # Compare stage 3 best with previous best
+            if not np.all(np.isinf(mean_cv_scores_s3)):
+                best_idx_s3 = np.argmin(mean_cv_scores_s3)
+                best_hyperparams_s3 = stage3_hyperparam_candidates[best_idx_s3]
+                best_score_s3 = mean_cv_scores_s3[best_idx_s3]
+                best_score_std_s3 = std_cv_scores_s3[best_idx_s3]
+                
+                if verbose:
+                    print(f"\nStage 3 best hyperparameters (candidate {best_idx_s3+1}): {best_hyperparams_s3}")
+                    print(f"Stage 3 best CV {scoring}: {best_score_s3:.4f} ± {best_score_std_s3:.4f}")
+                
+                # Use stage 3 results if better
+                if best_score_s3 < best_score:  # Assuming lower is better for most metrics
+                    best_hyperparams = best_hyperparams_s3
+                    best_score = best_score_s3
+                    best_score_std = best_score_std_s3
+                    best_idx = best_idx_s3  # Note: this is index within stage 3 candidates
+                    if verbose:
+                        print(f"✓ Stage 3 improved results!")
+                else:
+                    if verbose:
+                        print(f"✓ Previous results remain best.")
+            else:
+                if verbose:
+                    print("Stage 3 failed - using previous results")
+        elif three_stage and not two_stage:
+            if verbose:
+                print("Warning: three_stage=True requires two_stage=True. Ignoring three_stage option.")
+        
         # Configure final GP with best hyperparameters
         try:
             gp.set_parameter_vector(best_hyperparams)
@@ -1120,44 +1257,52 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
         
         # Compile detailed results
         cv_results = {
-            'best_score': best_score,
-            'best_score_std': best_score_std,
-            'best_hyperparams': best_hyperparams,
-            'best_candidate_idx': best_idx,
-            'all_scores': mean_cv_scores,
-            'all_scores_std': std_cv_scores,
-            'cv_scores_matrix': cv_scores,
-            'scoring_method': scoring,
-            'n_folds': k_folds,
-            'n_candidates': n_candidates,
-            'two_stage': two_stage
+            "best_score": best_score,
+            "best_score_std": best_score_std,
+            "best_hyperparams": best_hyperparams,
+            "best_candidate_idx": best_idx,
+            "all_scores": mean_cv_scores,
+            "all_scores_std": std_cv_scores,
+            "cv_scores_matrix": cv_scores,
+            "scoring_method": scoring,
+            "n_folds": k_folds,
+            "n_candidates": n_candidates,
+            "two_stage": two_stage,
+            "three_stage": three_stage
         }
         
-        # Add stage-specific results if two-stage was used
+        # Add stage-specific results if multi-stage was used
         if two_stage:
-            cv_results['stage1_results'] = stage1_results
-            if 'mean_cv_scores_s2' in locals():
-                cv_results['stage2_results'] = {
-                    'all_scores': mean_cv_scores_s2,
-                    'all_scores_std': std_cv_scores_s2,
-                    'cv_scores_matrix': cv_scores_s2,
-                    'candidates': stage2_hyperparam_candidates
+            cv_results["stage1_results"] = stage1_results
+            if "mean_cv_scores_s2" in locals():
+                cv_results["stage2_results"] = {
+                    "all_scores": mean_cv_scores_s2,
+                    "all_scores_std": std_cv_scores_s2,
+                    "cv_scores_matrix": cv_scores_s2,
+                    "candidates": stage2_hyperparam_candidates
+                }
+            
+            # Add stage 3 results if three-stage was used
+            if three_stage and "mean_cv_scores_s3" in locals():
+                cv_results["stage3_results"] = {
+                    "all_scores": mean_cv_scores_s3,
+                    "all_scores_std": std_cv_scores_s3,
+                    "cv_scores_matrix": cv_scores_s3,
+                    "candidates": stage3_hyperparam_candidates
                 }
         
         return gp, best_hyperparams, cv_results
 
 
-def _generate_stage2_candidates(best_params, n_candidates, width_factor, random_state):
+def _generate_stage2_candidates(best_params, n_candidates, width_factor):
     """
     Generate stage 2 candidates around best parameters from stage 1.
     
     :param best_params: Best hyperparameters from stage 1
     :param n_candidates: Number of candidates to generate
     :param width_factor: Width of search around best parameters
-    :param random_state: Random seed
     :returns: Array of stage 2 hyperparameter candidates
     """
-    np.random.seed(random_state + 1000)  # Different seed for stage 2
     
     best_params = np.asarray(best_params)
     n_params = len(best_params)
@@ -1171,6 +1316,36 @@ def _generate_stage2_candidates(best_params, n_candidates, width_factor, random_
     # Generate remaining candidates
     for i in range(n_candidates - 1):
         # Add random perturbations to each parameter
+        perturbations = np.random.normal(0, width_factor, n_params)
+        candidate = best_params + perturbations
+        candidates.append(candidate)
+    
+    return np.array(candidates)
+
+
+def _generate_stage3_candidates(best_params, n_candidates, width_factor):
+    """
+    Generate stage 3 candidates around best parameters from stage 2.
+    Uses tighter search with smaller perturbations for ultra-fine optimization.
+    
+    :param best_params: Best hyperparameters from stage 2
+    :param n_candidates: Number of candidates to generate
+    :param width_factor: Width of search around best parameters (should be smaller than stage2)
+    :returns: Array of stage 3 hyperparameter candidates
+    """
+    
+    best_params = np.asarray(best_params)
+    n_params = len(best_params)
+    
+    # Generate candidates using tighter normal distribution around best parameters
+    candidates = []
+    
+    # Always include the best parameters as first candidate
+    candidates.append(best_params.copy())
+    
+    # Generate remaining candidates with smaller perturbations for fine-tuning
+    for i in range(n_candidates - 1):
+        # Use smaller perturbations for ultra-fine search
         perturbations = np.random.normal(0, width_factor, n_params)
         candidate = best_params + perturbations
         candidates.append(candidate)
