@@ -49,6 +49,7 @@ def load_model_cache(savedir):
             sm = load_pickle(savedir)
         except Exception as e:
             print(f"Rank {rank}: Failed to load model cache: {e}")
+            raise  # Re-raise the exception to properly handle the error
 
     else:
         sm = load_pickle(savedir)

@@ -30,7 +30,6 @@ from .gp_utils import grad_gp_mean_prediction, grad_gp_var_prediction
 
 __all__ = ["agp_utility", 
            "bape_utility", 
-           "grad_bape_utility",
            "jones_utility",
            "assign_utility",
            "minimize_objective", 
@@ -40,7 +39,12 @@ __all__ = ["agp_utility",
            "lnprior_uniform",
            "prior_transform_uniform",
            "lnprior_normal",
-           "prior_transform_normal",]
+           "prior_transform_normal",
+           "boundary_distance",
+           "boundary_penalty",
+           "shrink_bounds",
+           "boundary_penalty_hard",
+           ]
 
 
 #===========================================================
@@ -563,7 +567,7 @@ def logsubexp(x1, x2):
 #===========================================================
 
 
-def agp_utility(theta, y, gp, bounds):
+def agp_utility(theta, predict_gp, bounds):
     """
     Compute the AGP (Adaptive Gaussian Process) utility function based on posterior entropy.
     
@@ -635,10 +639,10 @@ def agp_utility(theta, y, gp, bounds):
     if not np.isfinite(lnprior_uniform(theta, bounds)):
         return np.inf
 
-    if not gp.computed:
-        gp.compute(theta)
-        
-    mu, var = gp.predict(y, theta.reshape(1,-1), return_var=True)
+    # if not gp.computed:
+    #     gp.compute(theta)
+
+    mu, var = predict_gp(theta.reshape(1,-1))
 
     try:
         util = -(mu + 0.5*np.log(2.0*np.pi*np.e*var))
@@ -649,32 +653,7 @@ def agp_utility(theta, y, gp, bounds):
     return float(util)
 
 
-def grad_agp_utility(theta, y, gp, bounds):
-    
-    # Ensure theta is properly shaped
-    theta = np.asarray(theta).flatten()
-    
-    if not np.isfinite(lnprior_uniform(theta, bounds)):
-        return np.full(len(theta), np.inf)  # Return array of infs with correct shape
-    
-    d_mu = grad_gp_mean_prediction(theta, gp)
-    d_var = grad_gp_var_prediction(theta, gp)
-    
-    # Ensure d_mu and d_var are arrays with correct shape
-    d_mu = np.asarray(d_mu).flatten()
-    d_var = np.asarray(d_var).flatten()
-    
-    # Check dimension consistency
-    if len(d_mu) != len(theta) or len(d_var) != len(theta):
-        raise ValueError(f"Dimension mismatch: theta has {len(theta)} dims, "
-                        f"d_mu has {len(d_mu)} dims, d_var has {len(d_var)} dims")
-
-    d_agp = -(d_mu + 0.5 * d_var)
-
-    return d_agp.flatten()  # Ensure output is 1D array
-
-
-def bape_utility(theta, y, gp, bounds):
+def bape_utility(theta, predict_gp, bounds):
     """
     Compute the BAPE (Bayesian Active Posterior Estimation) utility function.
     
@@ -754,14 +733,11 @@ def bape_utility(theta, y, gp, bounds):
     if not np.isfinite(lnprior_uniform(theta, bounds)):
         return np.inf
 
-    if gp.computed:
-        mu, var = gp.predict(y, theta.reshape(1,-1), return_var=True)
-    else:
-        raise RuntimeError("ERROR: Need to compute GP before using it!")
+    mu, var = predict_gp(theta.reshape(1,-1))
 
     try:
-        util = -((2.0 * mu + var) + logsubexp(var, 0.0))
-        # util = -(np.exp(2*mu + var) * (np.exp(var) - 1))
+        # util = -((2.0 * mu + var) + logsubexp(var, 0.0))
+        util = -(np.exp(2*mu + var) * (np.exp(var) - 1))
     except ValueError:
         print("Invalid util value.  Negative variance or inf mu?")
         raise ValueError("util: %e. mu: %e. var: %e" % (util, mu, var))
@@ -769,50 +745,7 @@ def bape_utility(theta, y, gp, bounds):
     return float(util)
 
 
-def grad_bape_utility(theta, y, gp, bounds):
-    
-    # Ensure theta is properly shaped
-    theta = np.asarray(theta).flatten()
-    
-    if not np.isfinite(lnprior_uniform(theta, bounds)):
-        return np.full(len(theta), np.inf)  # Return array of infs with correct shape
-    
-    if gp.computed:
-        mu, var = gp.predict(y, theta.reshape(1,-1), return_var=True)
-    else:
-        raise RuntimeError("ERROR: Need to compute GP before using it!")
-
-    d_mu = grad_gp_mean_prediction(theta, gp)
-    d_var = grad_gp_var_prediction(theta, gp)
-    
-    # Check dimension consistency
-    if len(d_mu) != len(theta) or len(d_var) != len(theta):
-        raise ValueError(f"Dimension mismatch: theta has {len(theta)} dims, "
-                        f"d_mu has {len(d_mu)} dims, d_var has {len(d_var)} dims")
-
-    # Gradient of BAPE utility in log form:
-    # bape_util = -((2.0 * mu + var) + logsubexp(var, 0.0))
-    #           = -(2*mu + var + log(exp(var) - 1))
-    # 
-    # ∇bape_util/∇μ = -2
-    # ∇bape_util/∇σ² = -(1 + exp(σ²)/(exp(σ²) - 1))
-    #
-    # Using chain rule:
-    # ∇bape_util/∇θ = (∇bape_util/∇μ)(∇μ/∇θ) + (∇bape_util/∇σ²)(∇σ²/∇θ)
-    
-    exp_var = np.exp(var)
-    
-    # Partial derivatives of the log-form BAPE utility
-    d_bape_d_mu = -2.0
-    d_bape_d_var = -(1.0 + exp_var / (exp_var - 1.0))
-    
-    # Apply chain rule
-    d_bape = d_bape_d_mu * d_mu + d_bape_d_var * d_var
-    
-    return d_bape
-
-
-def jones_utility(theta, y, gp, bounds, zeta=0.01):
+def jones_utility(theta, predict_gp, bounds, y_best, zeta=0.01):
     """
     Compute the Expected Improvement (EI) acquisition function.
     
@@ -908,20 +841,14 @@ def jones_utility(theta, y, gp, bounds, zeta=0.01):
         return np.inf
 
     # Only works if the GP object has been computed, otherwise you messed up
-    if gp.computed:
-        mu, var = gp.predict(y, theta.reshape(1,-1), return_var=True)
-    else:
-        raise RuntimeError("ERROR: Need to compute GP before using it!")
+    mu, var = predict_gp(theta.reshape(1,-1))
 
     try:
         std = np.sqrt(var)
 
-        # Find best value
-        yBest = np.max(y)
-
         # Intermediate quantity
         if std > 0:
-            z = (mu - yBest - zeta) / std
+            z = (mu - y_best - zeta) / std
         else:
             return 0.0
 
@@ -929,197 +856,10 @@ def jones_utility(theta, y, gp, bounds, zeta=0.01):
         cdf = norm.cdf(z)
         pdf = norm.pdf(z)
 
-        util = -((mu - yBest - zeta) * cdf + std * pdf)
+        util = -((mu - y_best - zeta) * cdf + std * pdf)
     except ValueError:
         print("Invalid util value.  Negative variance or inf mu?")
         raise ValueError("util: %e. mu: %e. var: %e" % (util, mu, var))
-
-    return float(util)
-
-
-def knowledge_gradient_utility(theta, y, gp, bounds, n_fantasies=10, noise_level=1e-6):
-    """
-    Compute the Knowledge Gradient (KG) acquisition function.
-    
-    The Knowledge Gradient acquisition function measures the expected value of information
-    gained by sampling at a particular point. It estimates how much the optimal decision
-    (maximum of the GP mean) would improve if we were to observe the function value
-    at the candidate point theta.
-    
-    :param theta: Parameter values at which to evaluate the utility function.
-    :type theta: *array-like of shape (ndim,)*
-    :param y: Observed function values at training points, used to condition the GP.
-    :type y: *array-like of shape (nsamples,)*
-    :param gp: Trained Gaussian Process model. Must have been computed (gp.computed=True).
-    :type gp: *george.GP*
-    :param bounds: Parameter bounds as [(min, max), ...] for each dimension. Used to check
-        if theta is within the prior support and to generate fantasy points.
-    :type bounds: *array-like of shape (ndim, 2)*
-    :param n_fantasies: Number of fantasy observations to sample for the Monte Carlo
-        approximation of the Knowledge Gradient. Higher values give more accurate
-        estimates but increase computational cost. Default is 10.
-    :type n_fantasies: *int, optional*
-    :param noise_level: Small amount of noise added to fantasy observations to improve
-        numerical stability. Default is 1e-6.
-    :type noise_level: *float, optional*
-    
-    :returns: Negative Knowledge Gradient value. The negative is used so that minimizing
-        this function is equivalent to maximizing the Knowledge Gradient.
-    :rtype: *float*
-    
-    .. note::
-        
-        The Knowledge Gradient is defined as:
-        
-        .. math::
-            
-            KG(\\theta) = \\mathbb{E}_{f(\\theta)} \\left[ \\max_{\\theta'} \\mu^{n+1}(\\theta') - \\max_{\\theta'} \\mu^n(\\theta') \\right]
-        
-        where μⁿ is the GP mean after n observations and μⁿ⁺¹ is the GP mean after
-        adding the observation at θ. This represents the expected improvement in the
-        maximum achievable value.
-        
-        The KG acquisition function:
-        
-        - Directly optimizes for information value
-        - Naturally balances exploration and exploitation
-        - Considers the global impact of each observation
-        - Is particularly effective for expensive function evaluations
-        
-        **Algorithm**:
-        
-        1. Sample fantasy observations f* from the GP predictive distribution at θ
-        2. For each fantasy, update the GP and find the new maximum of the mean
-        3. Compute the improvement over the current maximum
-        4. Average over all fantasy observations
-        
-    :raises ValueError: If the utility computation results in invalid values.
-    :raises RuntimeError: If the GP has not been computed before calling this function.
-    
-    **Examples**
-    
-    Evaluate Knowledge Gradient at a test point:
-    
-    .. code-block:: python
-        
-        >>> theta_test = np.array([0.5, 1.2])
-        >>> kg_value = knowledge_gradient_utility(theta_test, y_train, gp, bounds)
-    
-    Find next point using Knowledge Gradient:
-    
-    .. code-block:: python
-        
-        >>> from scipy.optimize import minimize
-        >>> result = minimize(lambda x: knowledge_gradient_utility(x, y_train, gp, bounds), x0)
-        >>> next_point = result.x
-    
-    Use more fantasy points for higher accuracy:
-    
-    .. code-block:: python
-        
-        >>> kg_accurate = knowledge_gradient_utility(theta_test, y_train, gp, bounds, n_fantasies=50)
-    
-    **References**
-    
-    Frazier et al. (2009): "The knowledge-gradient policy for correlated normal beliefs",
-    INFORMS Journal on Computing, 21(4), 599-613.
-    
-    Scott et al. (2011): "The correlated knowledge gradient for simulation optimization 
-    of continuous parameters using Gaussian process regression", SIAM Journal on 
-    Optimization, 21(3), 996-1026.
-    """
-
-    if not np.isfinite(lnprior_uniform(theta, bounds)):
-        return np.inf
-
-    # Only works if the GP object has been computed
-    if not gp.computed:
-        raise RuntimeError("ERROR: Need to compute GP before using it!")
-
-    try:
-        # Get current GP prediction at the candidate point
-        mu_candidate, var_candidate = gp.predict(y, theta.reshape(1, -1), return_var=True)
-        std_candidate = np.sqrt(var_candidate)
-        
-        # Find current maximum of the GP mean over the parameter space
-        # We'll evaluate at a grid of points for computational efficiency
-        ndim = len(theta)
-        n_grid_points = max(50, 10 * ndim)  # Adaptive grid size based on dimensionality
-        
-        # Generate grid points for evaluating current maximum
-        grid_points = []
-        for i in range(ndim):
-            grid_points.append(np.linspace(bounds[i][0], bounds[i][1], int(np.ceil(n_grid_points**(1/ndim)))))
-        
-        # Create meshgrid and flatten
-        mesh = np.meshgrid(*grid_points, indexing='ij')
-        grid_theta = np.column_stack([m.flatten() for m in mesh])
-        
-        # Evaluate current GP mean at grid points
-        mu_current_grid, _ = gp.predict(y, grid_theta, return_var=False)
-        current_max = np.max(mu_current_grid)
-        
-        # Sample fantasy observations
-        fantasy_improvements = []
-        
-        for _ in range(n_fantasies):
-            # Sample fantasy observation from GP predictive distribution
-            fantasy_y = np.random.normal(mu_candidate, std_candidate + noise_level)
-            
-            # Create augmented training data with fantasy observation
-            y_augmented = np.append(y, fantasy_y)
-            
-            # We need to predict what the GP mean would be at grid points with the new data
-            # For efficiency, we'll use the GP posterior update formula
-            # This is an approximation - in practice, you might want to retrain the GP
-            
-            # Get predictions at grid points with augmented data
-            theta_train = gp.get_parameter_vector()  # Current training inputs (this is a simplification)
-            
-            # For computational efficiency, approximate the posterior update
-            # by evaluating the GP at grid points with fantasy data included
-            try:
-                # Create temporary extended input array (approximation)
-                # In a full implementation, you'd retrain the GP with augmented data
-                # Here we use an approximation based on GP posterior updates
-                
-                # Compute kernel between candidate point and grid points
-                if hasattr(gp.kernel, '__call__'):
-                    # Simplified posterior update - this is an approximation
-                    # Full implementation would require retraining GP or proper posterior update
-                    k_star = gp.kernel.get_value(grid_theta - theta.reshape(1, -1))
-                    
-                    # Approximate the mean update (simplified)
-                    posterior_var_inv = 1.0 / (var_candidate + noise_level**2)
-                    innovation = fantasy_y - mu_candidate
-                    
-                    # Update grid predictions (approximation)
-                    mu_updated_grid = mu_current_grid + k_star.flatten() * posterior_var_inv * innovation
-                else:
-                    # Fallback: use current grid if kernel access is not available
-                    mu_updated_grid = mu_current_grid
-                    
-            except:
-                # Fallback: assume no change in mean (conservative estimate)
-                mu_updated_grid = mu_current_grid
-            
-            # Find new maximum
-            new_max = np.max(mu_updated_grid)
-            
-            # Compute improvement
-            improvement = new_max - current_max
-            fantasy_improvements.append(improvement)
-        
-        # Compute Knowledge Gradient as average improvement
-        kg_value = np.mean(fantasy_improvements)
-        
-        # Return negative for minimization
-        util = -kg_value
-        
-    except Exception as e:
-        print(f"Error in Knowledge Gradient computation: {e}")
-        # Return a large positive value to discourage sampling at this point
-        return np.inf
 
     return float(util)
 
@@ -1129,41 +869,174 @@ def assign_utility(algorithm):
     # Assign utility function
     if algorithm == "bape":
         utility = bape_utility
-        grad_utility = grad_bape_utility
     elif algorithm == "agp":
         utility = agp_utility
-        grad_utility = None
     elif algorithm == "alternate":
         # If alternate, AGP on even, BAPE on odd
         utility = agp_utility
-        grad_utility = None
     elif algorithm == "jones":
         utility = jones_utility
-        grad_utility = None
-    elif algorithm == "kg" or algorithm == "knowledge_gradient":
-        utility = knowledge_gradient_utility
-        grad_utility = None
     else:
         errMsg = "Unknown algorithm. Valid options: bape, agp, jones, kg (knowledge_gradient), or alternate."
         raise ValueError(errMsg)
 
-    return utility, grad_utility
+    return utility
 
 
-def minimize_objective_single(idx, obj_fn, grad_obj_fn, bounds, set_bounds, starting_points, method, options, n_attempts):
+def boundary_distance(x, bounds):
+    """
+    Calculate minimum distance from a point to parameter boundaries.
+    
+    :param x: Parameter vector
+    :type x: *array-like*
+    :param bounds: Parameter bounds as [(min, max), ...]
+    :type bounds: *list or array-like*
+    
+    :returns: Minimum distance to any boundary
+    :rtype: *float*
+    """
+    bounds = np.array(bounds)
+    distances = []
+    
+    for i, (param_val, (param_min, param_max)) in enumerate(zip(x, bounds)):
+        dist_from_min = param_val - param_min
+        dist_from_max = param_max - param_val
+        distances.append(min(dist_from_min, dist_from_max))
+    
+    return min(distances)
+
+
+def boundary_penalty(x, bounds, boundary_margin, penalty_weight=1.0):
+    """
+    Calculate exponential penalty near boundaries.
+    
+    :param x: Parameter vector
+    :type x: *array-like*
+    :param bounds: Parameter bounds as [(min, max), ...]
+    :type bounds: *list or array-like*
+    :param boundary_margin: Fraction of parameter range to apply penalty
+    :type boundary_margin: *float*
+    :param penalty_weight: Strength of boundary penalty
+    :type penalty_weight: *float*
+    
+    :returns: Boundary penalty value (0 if far from boundaries)
+    :rtype: *float*
+    """
+    if boundary_margin <= 0:
+        return 0.0
+        
+    dist = boundary_distance(x, bounds)
+    bounds = np.array(bounds)
+    range_size = np.mean(bounds[:, 1] - bounds[:, 0])
+    normalized_dist = dist / range_size
+    
+    if normalized_dist < boundary_margin:
+        return penalty_weight * np.exp(-5 * normalized_dist / boundary_margin)
+    return 0.0
+
+
+def shrink_bounds(bounds, shrink_percent):
+    """
+    Create shrunken bounds by reducing the parameter space by a percentage.
+    
+    This function creates hard boundaries by shrinking the original bounds uniformly
+    from all sides. The shrunk bounds can be used directly as optimization constraints
+    to prevent sampling near the original boundaries.
+    
+    :param bounds: Original parameter bounds as [(min, max), ...] for each dimension
+    :type bounds: *list or array-like*
+    :param shrink_percent: Percentage to shrink bounds from each edge (0-100).
+        For example, 10 means shrink by 10% from each side, leaving 80% of original space.
+    :type shrink_percent: *float*
+    
+    :returns: Shrunken bounds with same format as input
+    :rtype: *list*
+    
+    :example:
+        >>> bounds = [(-2, 2), (-1, 1)]  # Original bounds
+        >>> shrunk = shrink_bounds(bounds, 10)  # Shrink by 10%
+        >>> print(shrunk)
+        [(-1.6, 1.6), (-0.8, 0.8)]  # 80% of original space
+    """
+    if shrink_percent <= 0:
+        return bounds
+    
+    if shrink_percent >= 50:
+        raise ValueError("shrink_percent must be < 50% to maintain valid parameter space")
+    
+    shrunk_bounds = []
+    shrink_fraction = shrink_percent / 100.0
+    
+    for bound_min, bound_max in bounds:
+        # Calculate the range and how much to shrink from each side
+        param_range = bound_max - bound_min
+        shrink_amount = param_range * shrink_fraction
+        
+        # Shrink equally from both sides
+        new_min = bound_min + shrink_amount
+        new_max = bound_max - shrink_amount
+        
+        shrunk_bounds.append((new_min, new_max))
+    
+    return shrunk_bounds
+
+
+def boundary_penalty_hard(x, bounds, shrink_percent, penalty_weight=1e6):
+    """
+    Hard boundary penalty using shrunken bounds.
+    
+    This function creates a hard boundary by applying a large penalty to points
+    outside the shrunken parameter space. Unlike the soft exponential penalty,
+    this creates a sharp boundary at the shrunk bounds edge.
+    
+    :param x: Parameter vector to evaluate
+    :type x: *array-like*
+    :param bounds: Original parameter bounds as [(min, max), ...]
+    :type bounds: *list or array-like*
+    :param shrink_percent: Percentage to shrink bounds from each edge (0-100)
+    :type shrink_percent: *float*
+    :param penalty_weight: Large penalty value for points outside shrunken bounds
+    :type penalty_weight: *float*
+    
+    :returns: Penalty value (0 if within shrunken bounds, penalty_weight if outside)
+    :rtype: *float*
+    
+    :example:
+        >>> bounds = [(-2, 2), (-1, 1)]
+        >>> penalty = boundary_penalty_hard([1.8, 0], bounds, 10)  # x=1.8 outside shrunk bound 1.6
+        >>> print(penalty)
+        1000000.0  # Large penalty
+        
+        >>> penalty = boundary_penalty_hard([1.0, 0], bounds, 10)  # x=1.0 inside shrunk bound 1.6  
+        >>> print(penalty)
+        0.0  # No penalty
+    """
+    if shrink_percent <= 0:
+        return 0.0
+    
+    # Get shrunken bounds
+    shrunken_bounds = shrink_bounds(bounds, shrink_percent)
+    
+    # Check if point is within shrunken bounds
+    for i, (param_val, (shrunk_min, shrunk_max)) in enumerate(zip(x, shrunken_bounds)):
+        if param_val < shrunk_min or param_val > shrunk_max:
+            return penalty_weight
+    
+    return 0.0
+
+
+def minimize_objective_single(idx, obj_fn, bounds, set_bounds, starting_points, method, options, n_attempts, grad_obj_fn=None):
     """
     Single optimization run - used for parallelization.
     
     This is a helper function that performs one optimization attempt with a specific
-    starting point. It is designed to be called in parallel by the main
-    minimize_objective function to enable multi-core optimization.
+    starting point. It is called serially by the main minimize_objective function
+    to handle multiple optimization restarts.
     
     :param idx: Index of the optimization run.
     :type idx: *int*
     :param obj_fn: Objective function to minimize.
     :type obj_fn: *callable*
-    :param grad_obj_fn: Gradient of objective function.
-    :type grad_obj_fn: *callable*
     :param bounds: Parameter bounds.
     :type bounds: *list*
     :param set_bounds: Bounds for optimization method.
@@ -1176,12 +1049,32 @@ def minimize_objective_single(idx, obj_fn, grad_obj_fn, bounds, set_bounds, star
     :type options: *dict*
     :param n_attempts: Maximum number of attempts.
     :type n_attempts: *int*
+    :param grad_obj_fn: Gradient function (optional).
+    :type grad_obj_fn: *callable or None*
     
-    :returns: (x_opt, f_opt) - optimal point and function value.
-    :rtype: *tuple*
+    :returns: Optimization result object.
+    :rtype: *scipy.optimize.OptimizeResult*
     """
+    # Optional: Add simple function caching for expensive acquisitions
+    _obj_cache = {}
+    _grad_cache = {}
+    
+    def cached_obj_fn(x):
+        x_key = tuple(x.flatten())
+        if x_key not in _obj_cache:
+            _obj_cache[x_key] = obj_fn(x)
+        return _obj_cache[x_key]
+    
+    def cached_grad_fn(x):
+        if grad_obj_fn is None:
+            return None
+        x_key = tuple(x.flatten())
+        if x_key not in _grad_cache:
+            _grad_cache[x_key] = grad_obj_fn(x)
+        return _grad_cache[x_key]
+    
     # Use pre-generated starting point to avoid clustering
-    t0 = starting_points[idx].flatten()
+    t0 = starting_points[idx]
     
     # Keep minimizing until a valid solution is found
     test_iter = 0
@@ -1203,13 +1096,16 @@ def minimize_objective_single(idx, obj_fn, grad_obj_fn, bounds, set_bounds, star
         
         test_iter += 1
 
+        # Use cached functions for potential speedup
+        active_grad_fn = cached_grad_fn if grad_obj_fn is not None else None
+        
         # Minimize the function
-        tmp = minimize(fun=obj_fn, 
-                           x0=np.array(t0).flatten(), 
-                           jac=grad_obj_fn, 
-                           bounds=set_bounds, 
-                           method=method, 
-                           options=options)
+        tmp = minimize(fun=cached_obj_fn, 
+                       x0=np.array(t0).flatten(), 
+                       jac=active_grad_fn, 
+                       bounds=set_bounds, 
+                       method=method, 
+                       options=options)
 
         x_opt = tmp.x 
         f_opt = tmp.fun
@@ -1224,8 +1120,9 @@ def minimize_objective_single(idx, obj_fn, grad_obj_fn, bounds, set_bounds, star
             print("Warning: Utility function optimization infinite fail", x_opt, f_opt)
 
 
-def minimize_objective(obj_fn, grad_obj_fn, bounds=None, nopt=1, method="l-bfgs-b",
-                       ps=None, options=None, ncore=1, n_attempts=5):
+def minimize_objective(obj_fn, bounds=None, nopt=1, method="l-bfgs-b",
+                       ps=None, options=None, n_attempts=5, boundary_margin=0, shrink_percent=0, 
+                       ncore=1, grad_obj_fn=None, early_stop_threshold=None):
     """
     Find the global minimum of an acquisition function using multiple restarts.
     
@@ -1268,13 +1165,29 @@ def minimize_objective(obj_fn, grad_obj_fn, bounds=None, nopt=1, method="l-bfgs-
         
         Default is {"max_iter": 50}.
     :type options: *dict or None, optional*
-    :param ncore: Number of CPU cores to use for parallel optimization. If ncore > 1,
-        runs multiple optimization restarts in parallel using multiprocessing.
-        Default is 1 (serial execution).
-    :type ncore: *int, optional*
     :param n_attempts: Maximum number of retry attempts if an optimization fails (returns
         infinite or out-of-bounds results). Default is 5.
     :type n_attempts: *int, optional*
+    :param boundary_margin: Soft boundary margin as fraction of parameter range. If > 0,
+        adds exponential penalty near parameter boundaries to discourage sampling at edges.
+        For example, 0.1 means penalty is applied within 10% of boundary. Default is 0 (disabled).
+    :type boundary_margin: *float, optional*
+    :param shrink_percent: Hard boundary shrinking percentage (0-50). If > 0, creates
+        hard boundaries by shrinking the parameter space uniformly from all edges.
+        For example, 10 shrinks bounds by 10% from each side, leaving 80% of original space.
+        This creates a sharp cutoff rather than soft penalty. Default is 0 (disabled).
+    :type shrink_percent: *float, optional*
+    :param ncore: Number of CPU cores to use for parallel optimization restarts. If ncore > 1
+        and nopt > 1, runs multiple optimization restarts in parallel using multiprocessing.
+        Default is 1 (serial execution).
+    :type ncore: *int, optional*
+    :param grad_obj_fn: Gradient of the objective function. If provided, can significantly
+        speed up optimization for methods like l-bfgs-b. Default is None (use finite differences).
+    :type grad_obj_fn: *callable or None, optional*
+    :param early_stop_threshold: If provided, stop optimization early when a solution
+        better than this threshold is found. Can significantly speed up optimization
+        when a "good enough" solution is acceptable. Default is None (no early stopping).
+    :type early_stop_threshold: *float or None, optional*
     
     :returns: 
         - **theta_best** (*ndarray of shape (ndim,)*) -- Parameter values that minimize the objective function.
@@ -1291,7 +1204,7 @@ def minimize_objective(obj_fn, grad_obj_fn, bounds=None, nopt=1, method="l-bfgs-
         1. **Multi-modality**: Acquisition functions often have many local minima
         2. **Numerical stability**: Some points may yield infinite or invalid values
         3. **Boundary constraints**: Solutions must respect parameter bounds
-        4. **Computational efficiency**: Parallel restarts when multiple cores available
+        4. **Robustness**: Multiple restarts help avoid getting stuck in local minima
         
         The function automatically retries failed optimizations with new initial points
         and filters out invalid solutions (infinite values, out-of-bounds points).
@@ -1310,7 +1223,7 @@ def minimize_objective(obj_fn, grad_obj_fn, bounds=None, nopt=1, method="l-bfgs-
         ...     nopt=5
         ... )
     
-    Parallel optimization with multiple restarts:
+    Multiple restarts for robust optimization:
     
     .. code-block:: python
         
@@ -1319,7 +1232,6 @@ def minimize_objective(obj_fn, grad_obj_fn, bounds=None, nopt=1, method="l-bfgs-
         ...     grad_obj_fn=None,  # Use finite differences
         ...     bounds=bounds,
         ...     nopt=10,
-        ...     ncore=4,
         ...     method="nelder-mead"
         ... )
     
@@ -1339,25 +1251,48 @@ def minimize_objective(obj_fn, grad_obj_fn, bounds=None, nopt=1, method="l-bfgs-
     
     warnings.filterwarnings("ignore", category=RuntimeWarning)
 
-    # Initialize options
+    # Initialize options with speed optimizations
     if options is None:
-        options = {"max_iter": 50}
+        if method.lower() == "l-bfgs-b":
+            # More aggressive settings for L-BFGS-B
+            options = {"maxiter": 100, "ftol": 1e-6, "gtol": 1e-5}
+        elif method.lower() == "nelder-mead":
+            # Faster convergence for Nelder-Mead
+            options = {"maxiter": 200, "xatol": 1e-6, "fatol": 1e-6}
+        else:
+            options = {"maxiter": 50}
     else:
         # Make a copy to avoid modifying the original
         options = options.copy()
+        
+        # Normalize option names for different optimization methods
+        # Handle common user-friendly names vs scipy's internal parameter names
+        if "max_iter" in options:
+            options["maxiter"] = options.pop("max_iter")
+        if "max_eval" in options:
+            options["maxfev"] = options.pop("max_eval")
+        if "max_fun" in options:
+            options["maxfun"] = options.pop("max_fun")
     
-    # Add method-specific options
+    # Add method-specific optimizations for speed
     if str(method).lower() == "nelder-mead":
         options["adaptive"] = True
+    elif str(method).lower() == "l-bfgs-b":
+        # Ensure we use limited memory for large problems
+        if "maxcor" not in options:
+            options["maxcor"] = 10
 
     # Generate all starting points at once to ensure good space-filling distribution
     # This prevents clustering that can occur when generating points individually
     if ps is None:
-        # Use Sobol sequence for better space-filling
+        # Use Sobol sequence for better space-filling and faster generation
         starting_points = prior_sampler(bounds, nsample=nopt, sampler='sobol')
     else:
         # Use provided sampler to generate all points at once
         starting_points = ps(nsample=nopt)
+    
+    # Pre-flatten starting points to avoid repeated operations
+    starting_points = np.array([pt.flatten() for pt in starting_points])
 
     bound_methods = ["nelder-mead", "l-bfgs-b", "tnc", "slsqp", "powell", "trust-constr"]
     if str(method).lower() not in bound_methods:
@@ -1366,47 +1301,58 @@ def minimize_objective(obj_fn, grad_obj_fn, bounds=None, nopt=1, method="l-bfgs-
         set_bounds = bounds
 
     # Serial execution 
-    if ncore <= 1:
+    if ncore <= 1 or nopt <= 1:
         min_res = []
         objective = []
         all_results = []
         
         for ii in range(nopt):
-            result = minimize_objective_single(ii, obj_fn, grad_obj_fn, bounds, set_bounds, starting_points, method, options, n_attempts)
+            result = minimize_objective_single(ii, obj_fn, bounds, set_bounds, starting_points, method, options, n_attempts, grad_obj_fn)
             all_results.append(result)
             if result.x is not None:
                 min_res.append(result.x)
                 objective.append(result.fun)
-
-    # Parallel execution
+                
+                # Early stopping if we found a very good solution
+                if early_stop_threshold is not None and result.fun < early_stop_threshold:
+                    if len(objective) > 0:  # Have at least one valid result
+                        break
     else:
+        # Parallel execution using multiprocessing
+        import multiprocessing as mp
+        from functools import partial
+        
         # Create partial function for multiprocessing
         minimize_function = partial(minimize_objective_single, 
                                     obj_fn=obj_fn, 
-                                    grad_obj_fn=grad_obj_fn, 
                                     bounds=bounds, 
                                     set_bounds=set_bounds, 
                                     starting_points=starting_points, 
                                     method=method, 
                                     options=options, 
-                                    n_attempts=n_attempts)
+                                    n_attempts=n_attempts,
+                                    grad_obj_fn=grad_obj_fn)
 
-        # Use MPI-safe multiprocessing
-        if parallel_utils is not None:
-            pool = parallel_utils.safe_multiprocessing_pool(min(ncore, nopt))
-            if pool is not None:
-                try:
-                    all_results = pool.map(minimize_function, range(nopt))
-                finally:
-                    pool.close()
-                    pool.join()
+        # Use MPI-safe multiprocessing if available
+        try:
+            from . import parallel_utils
+            if parallel_utils.is_mpi_active():
+                # Use single process in MPI context to avoid conflicts
+                pool = None
             else:
-                # Fallback to serial execution if MPI is active
-                all_results = [minimize_function(i) for i in range(nopt)]
-        else:
-            # Original implementation as fallback
-            with mp.Pool(min(ncore, nopt)) as pool:
+                pool = mp.Pool(processes=min(ncore, nopt))
+        except ImportError:
+            pool = mp.Pool(processes=min(ncore, nopt))
+        
+        if pool is not None:
+            try:
                 all_results = pool.map(minimize_function, range(nopt))
+            finally:
+                pool.close()
+                pool.join()
+        else:
+            # Fallback to serial execution
+            all_results = [minimize_function(i) for i in range(nopt)]
         
         # Extract results
         min_res = []

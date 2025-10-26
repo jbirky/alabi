@@ -47,7 +47,7 @@ class CachedSurrogateLikelihood:
     and can be pickled for use with multiprocessing.
     """
     
-    def __init__(self, gp_iter, y_cond, theta_scaler, y_scaler, ndim, return_var=False):
+    def __init__(self, gp_iter, _y_cond, theta_scaler, y_scaler, ndim, return_var=False):
         """
         Initialize the cached surrogate likelihood.
         
@@ -58,7 +58,7 @@ class CachedSurrogateLikelihood:
         :param ndim: Number of dimensions
         """
         self.gp_iter = gp_iter
-        self._y_cond = y_cond
+        self._y_cond = _y_cond
         self.theta_scaler = theta_scaler
         self.y_scaler = y_scaler
         self.ndim = ndim
@@ -108,7 +108,26 @@ class CachedSurrogateLikelihood:
         else:
             _ypred, _varpred = self.gp_iter.predict(self._y_cond, _theta_xs, return_var=True, return_cov=False)
             ypred = self.y_scaler.inverse_transform(_ypred.reshape(-1, 1)).flatten()
-            varpred = self.y_scaler.inverse_transform(_varpred.reshape(-1, 1)).flatten()
+            
+            # Variance transformation: variance scales as scale_factor² for linear transforms
+            # For FunctionTransformer (like nlog_scaler), we need to handle this carefully
+            if hasattr(self.y_scaler, 'scale_') and self.y_scaler.scale_ is not None:
+                # For StandardScaler or similar: var_unscaled = scale_factor² × var_scaled  
+                var_scale_factor = self.y_scaler.scale_[0] ** 2
+                varpred = _varpred * var_scale_factor
+            else:
+                # For FunctionTransformer or other scalers, compute numerical derivative
+                # This is more accurate than using inverse_transform on variance
+                try:
+                    # Use a small epsilon to estimate the derivative
+                    eps = 1e-6
+                    test_vals = np.array([[0.0], [eps]])
+                    transformed = self.y_scaler.inverse_transform(test_vals)
+                    scale_factor = (transformed[1] - transformed[0]) / eps
+                    varpred = _varpred * (scale_factor ** 2)
+                except:
+                    # Fallback: use absolute value of incorrect transform to ensure positivity
+                    varpred = np.abs(self.y_scaler.inverse_transform(_varpred.reshape(-1, 1)).flatten())
 
             # Return single values if input was 1D, otherwise return arrays
             if original_shape_1d:
@@ -287,6 +306,11 @@ class SurrogateModel(object):
 
         # Output scaling function. Fit when initial training samples are created 
         self.y_scaler = y_scaler
+        # check whether the scaler reverses the sign of lnlike_fn (needed to determine sign of acquisition function)
+        if self.y_scaler == nlog_scaler:
+            self.y_inverted = True 
+        else:
+            self.y_inverted = False
 
         # define prior sampler with scaled and unscaled bounds 
         self._prior_sampler = partial(ut.prior_sampler, bounds=self._bounds, sampler="uniform", random_state=None)
@@ -670,6 +694,7 @@ class SurrogateModel(object):
                                     white_noise=self.white_noise)
         if gp is None:
             print(f"Warning: fit_gp failed with point {_theta[-1]}. Reoptimizing hyperparameters...")
+            # Use the current opt_gp_kwargs settings which should have correct multi_proc value
             gp, _ = self.opt_gp(**self.opt_gp_kwargs)
             
         gp.compute(_theta)
@@ -679,9 +704,9 @@ class SurrogateModel(object):
         return gp, timing
 
 
-    def opt_gp(self, method="ml", cv_folds=5, cv_scoring="mse", cv_n_candidates=20, 
-               cv_random_state=None, multi_proc=True, 
+    def opt_gp(self, method="ml", cv_folds=5, cv_scoring="mse", cv_n_candidates=20, multi_proc=True, 
                cv_two_stage=False, cv_stage2_candidates=None, cv_stage2_width=0.5,
+               cv_three_stage=False, cv_stage3_candidates=None, cv_stage3_width=0.2,
                cv_weighted_mse_method="exponential", cv_weighted_mse_temperature=1.0):
         """
         Optimize GP hyperparameters using marginal likelihood or cross-validation.
@@ -701,9 +726,6 @@ class SurrogateModel(object):
         :param cv_n_candidates: (*int, optional, default=20*)
             Number of hyperparameter candidates to evaluate for CV
             
-        :param cv_random_state: (*int, optional, default=42*)
-            Random seed for reproducible CV splits and candidate generation
-            
         :param multi_proc: (*bool, optional, default=True*)
             Whether to use multiprocessing for CV evaluation.
             Only used when method="cv".
@@ -719,6 +741,18 @@ class SurrogateModel(object):
         :param cv_stage2_width: (*float, optional, default=0.5*)
             Width factor for stage 2 search around best parameters.
             Smaller values = tighter search around best from stage 1.
+            
+        :param cv_three_stage: (*bool, optional, default=False*)
+            Whether to use three-stage CV optimization (explore-exploit-refine).
+            Requires cv_two_stage=True. Only used when method="cv".
+            
+        :param cv_stage3_candidates: (*int, optional, default=None*)
+            Number of candidates for stage 3 ultra-fine search. If None, uses
+            max(cv_stage2_candidates // 2, 3). Only used when cv_three_stage=True.
+            
+        :param cv_stage3_width: (*float, optional, default=0.2*)
+            Width factor for stage 3 search around stage 2 best parameters.
+            Should be smaller than cv_stage2_width for finer refinement.
             
         :returns: (*tuple*) 
             - op_gp: Optimized george.GP object with updated hyperparameters
@@ -742,7 +776,7 @@ class SurrogateModel(object):
                 print(f"\nOptimizing GP hyperparameters using {cv_folds}-fold cross-validation...")
             
             try:                         
-                candidates = ut.prior_sampler(bounds=self.hp_bounds, nsample=cv_n_candidates, sampler="lhs", random_state=cv_random_state)
+                candidates = ut.prior_sampler(bounds=self.hp_bounds, nsample=cv_n_candidates, sampler="lhs", random_state=None)
 
                 # Add current hyperparameters as a candidate if GP exists
                 if hasattr(self, "gp"):
@@ -764,11 +798,11 @@ class SurrogateModel(object):
                     self.y_scaler,
                     k_folds=cv_folds,
                     scoring=cv_scoring,
-                    random_state=cv_random_state,
                     pool=pool,
-                    two_stage=cv_two_stage,
                     stage2_candidates=cv_stage2_candidates,
                     stage2_width=cv_stage2_width,
+                    stage3_candidates=cv_stage3_candidates,
+                    stage3_width=cv_stage3_width,
                     weighted_mse_method=cv_weighted_mse_method,
                     weighted_mse_temperature=cv_weighted_mse_temperature,
                     verbose=verbose
@@ -820,6 +854,60 @@ class SurrogateModel(object):
                 failed = True 
             else:
                 failed = False
+                
+        if method.lower() == "mlcv":
+            
+            if self.verbose and method.lower() == "ml":
+                print("\nOptimizing GP hyperparameters using marginal likelihood...")
+            
+            # create array of random initial hyperparameters:
+            # Use more restarts for better exploration but with early stopping
+            n_restarts = max(self.gp_nopt, 5) 
+            p0 = ut.prior_sampler(bounds=self.hp_bounds, nsample=n_restarts, sampler='uniform', random_state=None)
+            
+            if hasattr(self, "gp"):
+                # if gp exists, use current hyperparameters as a starting point 
+                current_hp = self.gp.get_parameter_vector(include_frozen=False)
+                if np.isfinite(self.gp_hyper_prior(current_hp)):
+                    p0[0] = current_hp
+
+            op_gp = gp_utils.optimize_gp(self.gp, self._theta, self._y,
+                                        self.gp_hyper_prior, p0,
+                                        method=self.gp_opt_method,
+                                        bounds=self.hp_bounds,
+                                        optimizer_kwargs=self.optimizer_kwargs)
+            
+            # use ml optimized hyperparameters as starting point for cv
+            candidates = ut.prior_sampler(bounds=self.hp_bounds, nsample=cv_n_candidates, sampler="lhs", random_state=None)
+            candidates[0] = current_hp
+                    
+            # suppress outputs if running parallel chains   
+            if multi_proc:
+                verbose = False
+            else:
+                verbose = self.verbose
+            
+            # Optimize using cross-validation
+            op_gp, best_params, cv_results = gp_utils.optimize_gp_kfold_cv(
+                self.gp, self._theta, self._y,
+                candidates,
+                self.y_scaler,
+                k_folds=cv_folds,
+                scoring=cv_scoring,
+                pool=pool,
+                stage2_candidates=cv_stage2_candidates,
+                stage2_width=cv_stage2_width,
+                stage3_candidates=cv_stage3_candidates,
+                stage3_width=cv_stage3_width,
+                weighted_mse_method=cv_weighted_mse_method,
+                weighted_mse_temperature=cv_weighted_mse_temperature,
+                verbose=verbose
+            )
+            
+            # Store CV results for analysis
+            if not hasattr(self, 'cv_results'):
+                self.cv_results = []
+            self.cv_results.append(cv_results)
 
         tf = time.time()
         timing = tf - t0
@@ -828,6 +916,11 @@ class SurrogateModel(object):
         if self.verbose:
             opt_method_str = "CV" if method.lower() == "cv" and not failed else "ML"
             print(f"Optimized {len(self.gp.get_parameter_names(include_frozen=False))} hyperparameters using {opt_method_str}: ({np.round(timing, 3)}s)")
+
+        # Ensure pool cleanup
+        if pool is not None:
+            pool.close()
+            pool.join()
 
         return op_gp, timing
 
@@ -845,12 +938,13 @@ class SurrogateModel(object):
                 optimizer_kwargs={"max_iter": 50},
                 hyperopt_method="ml",
                 cv_folds=5,
-                cv_scoring='mse',
+                cv_scoring="mse",
                 cv_n_candidates=20,
-                cv_two_stage=True,
                 cv_stage2_candidates=20,
                 cv_stage2_width=0.3,
-                cv_random_state=42,
+                cv_stage3_candidates=None,
+                cv_stage3_width=0.2,
+                cv_weighted_mse_temperature=1.0,
                 multi_proc=True):
         """
         Initialize the Gaussian Process surrogate model with specified kernel and hyperparameters.
@@ -926,8 +1020,21 @@ class SurrogateModel(object):
         :param cv_n_candidates: (*int, optional, default=20*)
             Number of hyperparameter candidates to evaluate for CV.
 
-        :param cv_random_state: (*int, optional, default=42*)
-            Random seed for reproducible CV splits and candidate generation.
+        :param cv_stage2_candidates: (*int, optional, default=20*)
+            Number of candidates for stage 2 grid search. Only used when cv_two_stage=True.
+
+        :param cv_stage2_width: (*float, optional, default=0.3*)
+            Width factor for stage 2 search around best parameters from stage 1.
+            Smaller values = tighter search. Only used when cv_two_stage=True.
+
+        :param cv_stage3_candidates: (*int, optional, default=None*)
+            Number of candidates for stage 3 ultra-fine search. If None, uses 
+            max(cv_stage2_candidates // 2, 3). Only used when cv_three_stage=True.
+
+        :param cv_stage3_width: (*float, optional, default=0.2*)
+            Width factor for stage 3 search around best parameters from stage 2.
+            Should be smaller than cv_stage2_width for finer refinement.
+            Only used when cv_three_stage=True.
 
         :raises AssertionError: 
             If a GP already exists and overwrite=False.
@@ -992,20 +1099,22 @@ class SurrogateModel(object):
         self.cv_folds = cv_folds
         self.cv_scoring = cv_scoring
         self.cv_n_candidates = cv_n_candidates
-        self.cv_random_state = cv_random_state
-        self.cv_two_stage = cv_two_stage
         self.cv_stage2_candidates = cv_stage2_candidates
         self.cv_stage2_width = cv_stage2_width
+        self.cv_stage3_candidates = cv_stage3_candidates
+        self.cv_stage3_width = cv_stage3_width
+        self.cv_weighted_mse_temperature = cv_weighted_mse_temperature
         
         # Save all kwargs needed for opt_gp function
         self.opt_gp_kwargs = {"method": self.hyperopt_method,
                               "cv_folds": self.cv_folds,
                               "cv_scoring": self.cv_scoring,
                               "cv_n_candidates": self.cv_n_candidates,
-                              "cv_random_state": self.cv_random_state,
-                              "cv_two_stage": self.cv_two_stage,
                               "cv_stage2_candidates": self.cv_stage2_candidates,
                               "cv_stage2_width": self.cv_stage2_width,
+                              "cv_stage3_candidates": self.cv_stage3_candidates,
+                              "cv_stage3_width": self.cv_stage3_width,
+                              "cv_weighted_mse_temperature": self.cv_weighted_mse_temperature,
                               "multi_proc": multi_proc}
 
         # set the bounds for scale length parameters
@@ -1083,14 +1192,21 @@ class SurrogateModel(object):
         
         if not valid_scales:
             raise RuntimeError(f"Failed to initialize GP after {max_attempts} attempts. "
-                             f"Check your data, kernel choice, and scale bounds. "
-                             f"Current settings: kernel={kernel}, gp_scale_rng={gp_scale_rng}")
+                               f"Check your data, kernel choice, and scale bounds. "
+                               f"Current settings: kernel={kernel}, gp_scale_rng={gp_scale_rng}")
 
         # Fit GP with training sample and kernel
         self.gp, _ = self.fit_gp()
 
         # Optimize GP hyperparameters
         self.gp, _ = self.opt_gp(**self.opt_gp_kwargs)
+        
+        # Store GP initialization parameters for multiprocessing
+        self._gp_kernel = kernel
+        self._gp_fit_amp = fit_amp
+        self._gp_fit_mean = fit_mean  
+        self._gp_fit_white_noise = fit_white_noise
+        self._gp_white_noise = white_noise
         
     
     def eval_gp_at_iteration(self, iter, return_var=False):
@@ -1268,36 +1384,62 @@ class SurrogateModel(object):
                                        self.y_scaler, self.ndim, return_var=return_var)
 
 
-    def find_next_point(self, nopt=1, n_attempts=5, optimizer_kwargs={}):
+    def find_next_point(self, nopt=1, n_attempts=5, optimizer_kwargs={}, boundary_margin=0., shrink_percent=0):
         """
         Find next set of ``(theta, y)`` training points by maximizing the
         active learning utility function.
 
         :param nopt: (*int, optional*) 
             Number of times to restart the objective function optimization. 
-            Defaults to 1. Increase to avoid converging to local maxima.
+            Defaults to 1. Increase to avoid converging to local minima.
+        :param n_attempts: (*int, optional*)
+            Maximum number of retry attempts if optimization fails. Default is 5.
+        :param optimizer_kwargs: (*dict, optional*)
+            Additional keyword arguments passed to scipy optimizer. Default is {}.
+        :param boundary_margin: (*float, optional*)
+            Soft boundary margin as fraction of parameter range. If > 0, adds 
+            exponential penalty near boundaries. Default is 0 (disabled).
+        :param shrink_percent: (*float, optional*)
+            Hard boundary shrinking percentage (0-50). If > 0, creates hard
+            boundaries by shrinking parameter space from all edges. Default is 0 (disabled).
         """
 
         opt_timing_0 = time.time()
 
-        obj_fn = partial(self.utility, y=self._y, gp=self.gp, bounds=self._bounds)
-        if self.grad_utility is not None:
-            grad_obj_fn = partial(self.grad_utility, y=self._y, gp=self.gp, bounds=self._bounds) 
-        else:
-            grad_obj_fn = None
+        predict_gp = lambda _theta_xs: self.gp.predict(self._y, _theta_xs, return_var=True)
         
+        # Create objective function with appropriate parameters for different algorithms
+        if self.algorithm == "jones":
+            # Jones (Expected Improvement) requires y_best parameter
+            y_best = np.max(self._y)  # Current best observed value
+            obj_fn = partial(self.utility, predict_gp=predict_gp, bounds=self._bounds, y_best=y_best)
+        else:
+            # Other algorithms (BAPE, AGP, etc.) don't need y_best
+            obj_fn = partial(self.utility, predict_gp=predict_gp, bounds=self._bounds)
+        
+        # Get gradient function if available
+        grad_obj_fn = None
+        if hasattr(self, 'grad_utility') and self.grad_utility is not None:
+            if self.algorithm == "jones":
+                grad_obj_fn = partial(self.grad_utility, predict_gp=predict_gp, bounds=self._bounds, y_best=y_best)
+            else:
+                grad_obj_fn = partial(self.grad_utility, predict_gp=predict_gp, bounds=self._bounds)
+        
+        # Always use serial execution for acquisition function optimization
         _thetaN, _, opt_result = ut.minimize_objective(obj_fn, 
-                                           grad_obj_fn,
                                            bounds=self._bounds,
                                            nopt=nopt,
                                            ps=self._prior_sampler,
                                            method=self.obj_opt_method,
-                                           ncore=self.ncore,
                                            options=optimizer_kwargs,
-                                           n_attempts=n_attempts)
+                                           n_attempts=n_attempts,
+                                           boundary_margin=boundary_margin,
+                                           shrink_percent=shrink_percent,
+                                           ncore=1,  # Keep serial for acquisition optimization
+                                           grad_obj_fn=grad_obj_fn)
 
         opt_timing = time.time() - opt_timing_0
-        # self.training_results["acquisition_optimizer_niter"].append(opt_result.nit)
+        self.training_results["acquisition_optimizer_niter"].append(opt_result.nit)
 
         # evaluate function at the optimized theta
         _thetaN = _thetaN.reshape(1, -1)
@@ -1307,8 +1449,8 @@ class SurrogateModel(object):
 
 
     def active_train(self, niter=100, algorithm="bape", gp_opt_freq=20, save_progress=False,
-                     obj_opt_method="l-bfgs-b", nopt=1, n_attempts=5, use_grad_opt=True, 
-                     optimizer_kwargs={}, show_progress=True, multi_proc=True): 
+                     obj_opt_method="l-bfgs-b", nopt=1, n_attempts=10, optimizer_kwargs={}, 
+                     show_progress=True, allow_opt_multiproc=True, boundary_margin=0., shrink_percent=0): 
         """
         Perform active learning to iteratively improve the surrogate model.
         
@@ -1352,9 +1494,19 @@ class SurrogateModel(object):
         :param optimizer_kwargs: (*dict, optional, default={}*)
             Additional keyword arguments passed to the optimizer.
             
+        :param boundary_margin: Soft boundary margin as fraction of parameter range. If > 0,
+            adds exponential penalty near parameter boundaries to discourage sampling at edges.
+            For example, 0.1 means penalty is applied within 10% of boundary.
+        :type boundary_margin: *float, optional*
+        :param shrink_percent: Hard boundary shrinking percentage (0-50). If > 0, creates
+            hard boundaries by shrinking the parameter space uniformly from all edges.
+            For example, 10 shrinks bounds by 10% from each side, leaving 80% of original space.
+            This creates a sharp cutoff rather than soft penalty. Default is 0 (disabled).
+        :type shrink_percent: *float, optional*
+            
         :param show_progress: (*bool, optional, default=True*)
             Whether to display progress bar during training.
-
+            
         .. note::
         
             Active learning algorithms have different purposes:
@@ -1385,11 +1537,7 @@ class SurrogateModel(object):
 
         # Set algorithm
         self.algorithm = str(algorithm).lower()
-        self.utility, self.grad_utility = ut.assign_utility(self.algorithm)
-        if self.grad_utility is None:
-            obj_opt_method = "nelder-mead"
-        if use_grad_opt == False:
-            self.grad_utility = None
+        self.utility = ut.assign_utility(self.algorithm)
 
         # GP hyperparameter optimization frequency
         self.gp_opt_freq = gp_opt_freq
@@ -1413,8 +1561,12 @@ class SurrogateModel(object):
         
         for ii in iterator:
 
-            # Find next training point!
-            thetaN, yN, opt_timing = self.find_next_point(nopt=nopt, n_attempts=n_attempts, optimizer_kwargs=optimizer_kwargs)
+            # Find next training point! (always single-threaded)
+            thetaN, yN, opt_timing = self.find_next_point(nopt=nopt, 
+                                                          n_attempts=n_attempts, 
+                                                          optimizer_kwargs=optimizer_kwargs,
+                                                          boundary_margin=boundary_margin,
+                                                          shrink_percent=shrink_percent)
 
             # add theta and y to training samples
             theta_prop = np.append(self._theta, thetaN, axis=0)
@@ -1476,7 +1628,7 @@ class SurrogateModel(object):
             if (ii + first_iter) % self.gp_opt_freq == 0:
 
                 reopt_kwargs = self.opt_gp_kwargs
-                reopt_kwargs["multi_proc"] = multi_proc
+                reopt_kwargs["multi_proc"] = allow_opt_multiproc
                 # re-optimize hyperparamters
                 self.gp, _ = self.opt_gp(**reopt_kwargs)
                 
@@ -1493,6 +1645,246 @@ class SurrogateModel(object):
 
         if self.cache:
             self.save()
+            
+            
+    def active_train_parallel(self, niter=100, nchains=4, algorithm="bape", gp_opt_freq=20, 
+                                   obj_opt_method="nelder-mead", nopt=1, 
+                                   n_attempts=5, use_grad_opt=True, optimizer_kwargs={}, 
+                                   show_progress=True, boundary_margin=0., shrink_percent=0):
+        """
+        Run multiple active learning chains in parallel using multiprocessing instead of threading.
+        
+        This is an alternative to active_train_parallel() that uses multiprocessing.Pool
+        for parallelization. This approach can be more robust for CPU-intensive tasks and
+        avoids Python's Global Interpreter Lock (GIL) limitations, but requires that all
+        data be pickleable.
+        
+        :param niter: (*int, optional*) 
+            Number of iterations per chain. Default 100.
+            
+        :param nchains: (*int, optional*) 
+            Number of parallel chains to run. Default 4.
+            
+        :param algorithm: (*str, optional*) 
+            Active learning algorithm. Default "bape".
+            
+        :param gp_opt_freq: (*int, optional*)
+            Frequency of GP hyperparameter optimization. Default 20.
+            
+        :param obj_opt_method: (*str, optional*)
+            Optimization method for acquisition function. Default "nelder-mead".
+            
+        :param nopt: (*int, optional*)
+            Number of restarts for acquisition optimization. Default 1.
+            
+        :param n_attempts: (*int, optional*)
+            Number of attempts for optimization. Default 5.
+            
+        :param use_grad_opt: (*bool, optional*)
+            Whether to use gradient-based optimization. Default True.
+            
+        :param optimizer_kwargs: (*dict, optional*)
+            Additional optimizer kwargs. Default {}.
+            
+        :param show_progress: (*bool, optional*) 
+            Whether to display progress bar during parallel chain execution. Default is True.
+            
+        :param boundary_margin: (*float, optional*)
+            Exponential soft boundary penalty strength. When > 0, applies exponential penalty
+            to acquisition function values near parameter boundaries. Default 0 (no penalty).
+            
+        :param shrink_percent: (*int or float, optional*)
+            Percentage to shrink parameter bounds for hard boundary prevention. When > 0,
+            creates hard boundaries by shrinking the parameter space. For example, 20 means
+            shrink each dimension by 20% from both sides. Valid range: 0-50. Default 0
+            (no shrinking, use original bounds).
+            
+        Notes
+        -----
+        This function uses multiprocessing.Pool instead of threading, which can provide
+        better performance for CPU-intensive tasks and avoids GIL limitations. However:
+        
+        - All model data must be pickleable (which it should be for SurrogateModel)
+        - Each process runs in separate memory space (higher memory usage)
+        - Process startup overhead is higher than threading
+        - Better isolation between chains (one chain failure won't affect others)
+        - Can achieve true parallelism on multi-core systems
+        
+        The function automatically respects the ncore limit and won't create more processes
+        than specified in self.ncore.
+        """
+        
+        
+        # Set algorithm attribute to avoid save issues
+        self.algorithm = str(algorithm).lower()
+        
+        # Initialize training results if not present
+        if not hasattr(self, 'training_results') or not self.training_results:
+            self.training_results = {"iteration" : [], 
+                                   "gp_hyperparameters" : [],  
+                                   "training_mse" : [],
+                                   "test_mse" : [],
+                                   "training_scaled_mse" : [],
+                                   "test_scaled_mse" : [],
+                                   "gp_kl_divergence" : [],
+                                   "gp_train_time" : [],
+                                   "obj_fn_opt_time" : [],
+                                   "gp_hyperparameter_opt_iteration" : [],
+                                   "gp_hyperparam_opt_time" : [],
+                                   "acquisition_optimizer_niter": []}
+        
+        if self.verbose:
+            print(f"\nRunning {nchains} parallel active learning chains for {niter} iterations each...")
+            print(f"Algorithm: {algorithm}, Method: {obj_opt_method}")
+            print(f"Using multiprocessing with max {min(nchains, self.ncore)} processes")
+        
+        # Store original training data
+        original_ntrain = self.ntrain
+        
+        # Track results from all chains
+        all_new_theta = []
+        all_new_y = []
+        chain_results = []
+        
+        # Determine number of processes to use (respect ncore limit)
+        max_processes = min(nchains, self.ncore)
+        use_multiprocessing = (nchains > 1) and (self.ncore > 1)
+        
+        if use_multiprocessing:
+            if self.verbose:
+                print(f"Running with {max_processes} processes (limited by ncore={self.ncore})")
+        
+        try:
+            if use_multiprocessing:
+                # Prepare arguments for each chain
+                chain_args = []
+                for i in range(nchains):
+                    # Create a pickleable state dictionary for each chain
+                    chain_state = self._get_pickleable_state()
+                    chain_state['chain_id'] = i
+                    chain_state['savedir'] = f"{self.savedir}/chain_{i}"
+                    
+                    args = (
+                        chain_state,
+                        niter,
+                        algorithm,
+                        gp_opt_freq,
+                        obj_opt_method,
+                        nopt,
+                        n_attempts,
+                        use_grad_opt,
+                        optimizer_kwargs,
+                        boundary_margin,
+                        shrink_percent,
+                    )
+                    chain_args.append(args)
+                
+                # Run chains using multiprocessing pool
+                if self.verbose:
+                    print("Starting multiprocessing pool...")
+                
+                with mp.Pool(processes=max_processes) as pool:
+                    if show_progress:
+                        # Use imap for progress tracking
+                        import tqdm
+                        results = []
+                        with tqdm.tqdm(total=nchains, desc="Running parallel chains (MP)") as pbar:
+                            for result in pool.imap(_run_chain_worker_mp, chain_args):
+                                results.append(result)
+                                pbar.update(1)
+                    else:
+                        # Use map for simpler execution
+                        results = pool.map(_run_chain_worker_mp, chain_args)
+                
+                # Process results
+                for i, result in enumerate(results):
+                    if result is not None and len(result) == 3:
+                        new_theta, new_y, training_results = result
+                        all_new_theta.append(new_theta)
+                        all_new_y.append(new_y)
+                        chain_results.append(training_results)
+                    else:
+                        if self.verbose:
+                            print(f"Chain {i} failed or returned invalid result")
+                        all_new_theta.append(np.array([]).reshape(0, self.ndim))
+                        all_new_y.append(np.array([]))
+                        chain_results.append({})
+            
+            else:
+                # Fallback to sequential execution
+                if self.verbose:
+                    print("Running chains sequentially...")
+                
+                if show_progress:
+                    import tqdm
+                    sequential_progress = tqdm.tqdm(total=nchains, desc="Running chains sequentially")
+                
+                for i in range(nchains):
+                    if self.verbose:
+                        print(f"Running chain {i+1}/{nchains}...")
+                    
+                    result = self._run_chain_worker(i, niter=niter, algorithm=algorithm, 
+                                                  gp_opt_freq=gp_opt_freq, obj_opt_method=obj_opt_method,
+                                                  nopt=nopt, n_attempts=n_attempts, 
+                                                  use_grad_opt=use_grad_opt, 
+                                                  optimizer_kwargs=optimizer_kwargs, show_progress=False,
+                                                  allow_opt_multiproc=False, boundary_margin=boundary_margin,
+                                                  shrink_percent=shrink_percent)
+                    
+                    if result is not None:
+                        new_theta, new_y, training_results = result
+                        all_new_theta.append(new_theta)
+                        all_new_y.append(new_y)
+                        chain_results.append(training_results)
+                    else:
+                        if self.verbose:
+                            print(f"Chain {i} failed")
+                        all_new_theta.append(np.array([]).reshape(0, self.ndim))
+                        all_new_y.append(np.array([]))
+                        chain_results.append({})
+                    
+                    # Update sequential progress bar
+                    if show_progress:
+                        sequential_progress.update(1)
+                
+                # Close sequential progress bar
+                if show_progress:
+                    sequential_progress.close()
+                    
+        except Exception as e:
+            import traceback
+            import sys
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            tb_line = traceback.extract_tb(exc_traceback)[-1]
+            print(f"Multiprocessing execution failed ({e}) line {tb_line}.")
+            # Clean up any resources before falling back
+            self._force_cleanup_multiprocessing()
+            # Restore threading environment even if we fail
+            self._restore_threading_environment()
+            raise e
+        
+        # Combine all new training samples
+        if self.verbose:
+            print("\nCombining training samples from all chains...")
+        
+        self._combine_chain_results(all_new_theta, all_new_y, chain_results)
+        
+        if self.verbose:
+            total_new_samples = sum(len(theta) for theta in all_new_theta)
+            print(f"Successfully combined {total_new_samples} new training samples from {nchains} chains")
+            print(f"Total training samples: {self.ntrain} (was {original_ntrain})")
+        
+        # Final GP optimization with all combined data
+        if self.verbose:
+            print("\nPerforming final GP optimization with combined dataset...")
+        self.gp, _ = self.opt_gp(**self.opt_gp_kwargs)
+        
+        if self.cache:
+            self.save()
+        
+        # Force cleanup and restore environment
+        self._force_cleanup_multiprocessing()
+        self._restore_threading_environment()
 
 
     def lnprob(self, theta):
@@ -2061,9 +2453,11 @@ class SurrogateModel(object):
                 dynesty_ncore = self.ncore
             else:
                 sampler_kwargs["pool"] = None
+                sampler_kwargs["queue_size"] = 1
                 dynesty_ncore = 1
         else:
             sampler_kwargs["pool"] = None
+            sampler_kwargs["queue_size"] = 1
             dynesty_ncore = 1
 
         # initialize our nested sampler
@@ -3446,7 +3840,8 @@ class SurrogateModel(object):
 
     def _run_chain_worker(self, chain_id, niter=5, algorithm="bape", gp_opt_freq=1,
                           obj_opt_method="lbfgsb", nopt=10, n_attempts=5,
-                          use_grad_opt=True, optimizer_kwargs=None, show_progress=True):
+                          use_grad_opt=True, optimizer_kwargs=None, show_progress=True,
+                          allow_opt_multiproc=False, boundary_margin=0., shrink_percent=0):
         """
         Worker function to run a single active learning chain.
         This function is designed to be pickled for multiprocessing.
@@ -3466,11 +3861,13 @@ class SurrogateModel(object):
             initial_theta = chain._theta.copy()
             initial_y = chain._y.copy()
             
-            # Run active learning on this chain
+            # Run active learning on this chain (explicitly disable multiprocessing)
             chain.active_train(niter=niter, algorithm=algorithm, gp_opt_freq=gp_opt_freq,
                               save_progress=False, obj_opt_method=obj_opt_method, 
                               nopt=nopt, n_attempts=n_attempts, use_grad_opt=use_grad_opt,
-                              optimizer_kwargs=optimizer_kwargs, show_progress=show_progress)
+                              optimizer_kwargs=optimizer_kwargs, show_progress=show_progress, 
+                              allow_opt_multiproc=allow_opt_multiproc, boundary_margin=boundary_margin,
+                              shrink_percent=shrink_percent)
             
             # Extract only the new samples (excluding initial training data)
             initial_len = len(initial_theta)
@@ -3482,238 +3879,135 @@ class SurrogateModel(object):
         except Exception as e:
             print(f"Chain {chain_id} failed with error: {e}")
             return None
-
-
-    def active_train_parallel(self, niter=100, nchains=4, algorithm="bape", gp_opt_freq=20, 
-                             save_progress=False, obj_opt_method="nelder-mead", nopt=1, 
-                             n_attempts=5, use_grad_opt=True, optimizer_kwargs={}, 
-                             combine_frequency=None, show_progress=True):
+    
+    
+    def _restore_threading_environment(self):
         """
-        Run multiple active learning chains in parallel and combine their training samples.
-        
-        :param niter: (*int, optional*) 
-            Number of iterations per chain. Default 100.
-            
-        :param nchains: (*int, optional*) 
-            Number of parallel chains to run. Default 4.
-            
-        :param algorithm: (*str, optional*) 
-            Active learning algorithm. Default "bape".
-            
-        :param gp_opt_freq: (*int, optional*)
-            Frequency of GP hyperparameter optimization. Default 20.
-            
-        :param save_progress: (*bool, optional*)
-            Whether to save progress during training. Default False.
-            
-        :param obj_opt_method: (*str, optional*)
-            Optimization method for acquisition function. Default "nelder-mead".
-            
-        :param nopt: (*int, optional*)
-            Number of restarts for acquisition optimization. Default 1.
-            
-        :param n_attempts: (*int, optional*)
-            Number of attempts for optimization. Default 5.
-            
-        :param use_grad_opt: (*bool, optional*)
-            Whether to use gradient-based optimization. Default True.
-            
-        :param optimizer_kwargs: (*dict, optional*)
-            Additional optimizer kwargs. Default {}.
-            
-        :param combine_frequency: (*int, optional*)
-            How often to combine chains (in iterations). If None, only combines at the end.
-            
-        :param show_progress: (*bool, optional*) 
-            Whether to display progress bar during parallel chain execution. When True, shows
-            a progress bar tracking chain completion. Individual active_train progress bars
-            are disabled to avoid clutter. Default is True.
+        Restore original threading environment variables to allow parallel operations
+        to work normally after active_train_parallel completes.
         """
+        import os
         
-        # Set algorithm attribute to avoid save issues
-        self.algorithm = str(algorithm).lower()
-        
-        # Initialize training results if not present
-        if not hasattr(self, 'training_results') or not self.training_results:
-            self.training_results = {"iteration" : [], 
-                                   "gp_hyperparameters" : [],  
-                                   "training_mse" : [],
-                                   "test_mse" : [],
-                                   "training_scaled_mse" : [],
-                                   "test_scaled_mse" : [],
-                                   "gp_kl_divergence" : [],
-                                   "gp_train_time" : [],
-                                   "obj_fn_opt_time" : [],
-                                   "gp_hyperparameter_opt_iteration" : [],
-                                   "gp_hyperparam_opt_time" : [],
-                                   "acquisition_optimizer_niter": []}
-        
-        if self.verbose:
-            print(f"\nRunning {nchains} parallel active learning chains for {niter} iterations each...")
-            print(f"Algorithm: {algorithm}, Method: {obj_opt_method}")
-        
-        # Store original training data
-        original_theta = self._theta.copy()
-        original_y = self._y.copy()
-        original_ntrain = self.ntrain
-        
-        # Track results from all chains
-        all_new_theta = []
-        all_new_y = []
-        chain_results = []
-        
-        # Run chains in parallel using multiprocessing
-        if nchains > 1 and self.ncore > 1:
+        if hasattr(self, '_original_threading_env'):
             if self.verbose:
-                print(f"\nRunning {nchains} chains in parallel using {min(nchains, self.ncore)} processes...")
+                print("Restoring original threading environment variables for future parallel operations")
             
-            try:
-                # Create process-safe copies of the chains first 
-                chain_copies = []
-                for i in range(nchains):
-                    chain_copy = self._create_chain_copy(chain_id=i)
-                    chain_copies.append(chain_copy)
-                
-                # Use threading for now instead of multiprocessing to avoid pickling issues
-                import threading
-                import queue
-                
-                results_queue = queue.Queue()
-                threads = []
-                completed_chains = 0
-                
-                # Progress tracking for parallel execution
-                if show_progress:
-                    progress_bar = tqdm.tqdm(total=nchains, desc="Running parallel chains")
-                
-                def run_chain_thread(chain, chain_id, results_q):
-                    nonlocal completed_chains
-                    try:
-                        # Store initial state
-                        initial_theta = chain._theta.copy()
-                        initial_y = chain._y.copy()
-                        
-                        # Run active learning on this chain (disable individual progress bars for parallel runs)
-                        chain.active_train(niter=niter, algorithm=algorithm, gp_opt_freq=gp_opt_freq,
-                                          save_progress=False, obj_opt_method=obj_opt_method, 
-                                          nopt=nopt, n_attempts=n_attempts, use_grad_opt=use_grad_opt,
-                                          optimizer_kwargs=optimizer_kwargs, show_progress=False,
-                                          multi_proc=False)
-                        
-                        # Extract only the new samples (excluding initial training data)
-                        initial_len = len(initial_theta)
-                        new_theta = chain._theta[initial_len:]
-                        new_y = chain._y[initial_len:]
-                        
-                        results_q.put((chain_id, new_theta, new_y, chain.training_results))
-                        
-                        # Update progress bar
-                        if show_progress:
-                            completed_chains += 1
-                            progress_bar.update(1)
-                        
-                    except Exception as e:
-                        print(f"Chain {chain_id} failed with error: {e}")
-                        results_q.put((chain_id, None))
-                        
-                        # Update progress bar even for failed chains
-                        if show_progress:
-                            completed_chains += 1
-                            progress_bar.update(1)
-                
-                # Start all threads
-                for i, chain in enumerate(chain_copies):
-                    thread = threading.Thread(target=run_chain_thread, args=(chain, i, results_queue))
-                    thread.start()
-                    threads.append(thread)
-                
-                # Wait for all threads to complete
-                for thread in threads:
-                    thread.join()
-                
-                # Close progress bar
-                if show_progress:
-                    progress_bar.close()
-                
-                # Collect results from all threads
-                for _ in range(nchains):
-                    result = results_queue.get()
-                    if len(result) == 4:
-                        chain_id, new_theta, new_y, training_results = result
-                        all_new_theta.append(new_theta)
-                        all_new_y.append(new_y)
-                        chain_results.append(training_results)
-                    else:
-                        chain_id = result[0]
-                        if self.verbose:
-                            print(f"Chain {chain_id} failed")
-                        all_new_theta.append(np.array([]).reshape(0, self.ndim))
-                        all_new_y.append(np.array([]))
-                        chain_results.append({})
-                        
-            except Exception as e:
-                import traceback
-                import sys
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                tb_line = traceback.extract_tb(exc_traceback)[-1]
-                print(f"Parallel execution failed ({e}) line {tb_line}.")
-                    
-        else:
-            # Fallback to sequential execution
-            if self.verbose:
-                print("Running chains sequentially...")
-            
-            if show_progress:
-                sequential_progress = tqdm.tqdm(total=nchains, desc="Running chains sequentially")
-            
-            for i in range(nchains):
-                if self.verbose:
-                    print(f"Running chain {i+1}/{nchains}...")
-                
-                result = self._run_chain_worker(i, niter=niter, algorithm=algorithm, 
-                                              gp_opt_freq=gp_opt_freq, obj_opt_method=obj_opt_method,
-                                              nopt=nopt, n_attempts=n_attempts, 
-                                              use_grad_opt=use_grad_opt, 
-                                              optimizer_kwargs=optimizer_kwargs, show_progress=False)
-                
-                if result is not None:
-                    new_theta, new_y, training_results = result
-                    all_new_theta.append(new_theta)
-                    all_new_y.append(new_y)
-                    chain_results.append(training_results)
+            for var, original_value in self._original_threading_env.items():
+                if original_value is None:
+                    # Variable wasn't set originally, remove it
+                    if var in os.environ:
+                        del os.environ[var]
                 else:
-                    if self.verbose:
-                        print(f"Chain {i} failed")
-                    all_new_theta.append(np.array([]).reshape(0, self.ndim))
-                    all_new_y.append(np.array([]))
-                    chain_results.append({})
-                
-                # Update sequential progress bar
-                if show_progress:
-                    sequential_progress.update(1)
+                    # Restore original value
+                    os.environ[var] = original_value
             
-            # Close sequential progress bar
-            if show_progress:
-                sequential_progress.close()
+            # Clean up the stored values
+            delattr(self, '_original_threading_env')
+    
+    
+    def _force_cleanup_multiprocessing(self):
+        """
+        Force cleanup of any open multiprocessing pools or MPI resources
+        to prevent resource leaks and ensure clean shutdown. Also disables
+        multithreading in underlying numerical libraries.
+        """
+        import multiprocessing as mp
+        import threading
+        import gc
+        import os
         
-        # Combine all new training samples
-        if self.verbose:
-            print("\nCombining training samples from all chains...")
+        # Note: Environment variables are now managed by active_train_parallel 
+        # and _restore_threading_environment methods to ensure proper restoration
         
-        self._combine_chain_results(all_new_theta, all_new_y, chain_results)
-        
-        if self.verbose:
-            total_new_samples = sum(len(theta) for theta in all_new_theta)
-            print(f"Successfully combined {total_new_samples} new training samples from {nchains} chains")
-            print(f"Total training samples: {self.ntrain} (was {original_ntrain})")
-        
-        # Final GP optimization with all combined data
-        if self.verbose:
-            print("\nPerforming final GP optimization with combined dataset...")
-        self.gp, _ = self.opt_gp(**self.opt_gp_kwargs)
-        
-        if self.cache:
-            self.save()
+        try:
+            # Force close any active multiprocessing pools
+            # Check for any Pool objects in current process
+            for obj in gc.get_objects():
+                if hasattr(obj, '__class__') and 'Pool' in str(obj.__class__):
+                    try:
+                        if hasattr(obj, 'close'):
+                            obj.close()
+                        if hasattr(obj, 'join'):
+                            obj.join()
+                        if hasattr(obj, 'terminate'):
+                            obj.terminate()
+                    except:
+                        pass  # Ignore errors if pool already closed
+            
+            # Clean up any zombie processes
+            try:
+                mp.active_children()  # This cleans up finished child processes
+            except:
+                pass
+            
+            # Force garbage collection to clean up any remaining references
+            gc.collect()
+            
+            # Try to disable threading in specific numerical libraries
+            try:
+                # NumPy threading control
+                try:
+                    import numpy as np
+                    if hasattr(np, 'seterrobj'):
+                        # Some NumPy builds expose threading controls
+                        pass
+                except:
+                    pass
+                
+                # SciPy/BLAS threading control  
+                try:
+                    from scipy import linalg
+                    if hasattr(linalg, 'lapack'):
+                        # Try to set BLAS threading to 1 if available
+                        pass
+                except:
+                    pass
+                
+                # scikit-learn threading control
+                try:
+                    import sklearn
+                    if hasattr(sklearn, 'set_config'):
+                        # Disable sklearn parallel backend
+                        sklearn.set_config(assume_finite=True)
+                except:
+                    pass
+                    
+                # OpenMP threading control if available
+                try:
+                    import ctypes
+                    import ctypes.util
+                    
+                    # Try to find and control OpenMP library
+                    openmp_lib = ctypes.util.find_library('gomp')  # GNU OpenMP
+                    if openmp_lib:
+                        lib = ctypes.CDLL(openmp_lib)
+                        if hasattr(lib, 'omp_set_num_threads'):
+                            lib.omp_set_num_threads(1)
+                except:
+                    pass
+                    
+            except Exception as e:
+                if hasattr(self, 'verbose') and self.verbose:
+                    print(f"Warning: Could not disable all numerical library threading: {e}")
+            
+            # Try to clean up MPI resources if available
+            try:
+                # Check if MPI is available and initialized
+                try:
+                    from mpi4py import MPI
+                    if MPI.Is_initialized() and not MPI.Is_finalized():
+                        # Don't finalize MPI here as it might be used by other parts
+                        # Just ensure any pending operations are completed
+                        MPI.COMM_WORLD.Barrier()
+                except ImportError:
+                    pass  # MPI not available
+            except:
+                pass  # Ignore MPI cleanup errors
+                
+        except Exception as e:
+            # If cleanup fails, just log a warning but don't crash
+            if hasattr(self, 'verbose') and self.verbose:
+                print(f"Warning: Multiprocessing cleanup encountered an issue: {e}")
     
     
     def _create_chain_copy(self, chain_id):
@@ -3741,35 +4035,47 @@ class SurrogateModel(object):
                                  "gp_hyperparameter_opt_iteration" : [],
                                  "gp_hyperparam_opt_time" : []}
         
-        return chain
-    
-    
-    def _run_single_chain(self, args):
-        """Run a single active learning chain."""
-        (chain_id, chain, niter, algorithm, gp_opt_freq, obj_opt_method, 
-         nopt, n_attempts, use_grad_opt, optimizer_kwargs, combine_frequency) = args
+        # Ensure chain copies use single-threaded operations
+        chain.ncore = 1  # Force single-core for all operations in chain copies
+        if hasattr(chain, 'opt_gp_kwargs'):
+            chain.opt_gp_kwargs = chain.opt_gp_kwargs.copy()
+            chain.opt_gp_kwargs["multi_proc"] = False
+            
+        # # Additional aggressive threading control for this chain
+        # threading_env_vars = {
+        #     "OMP_NUM_THREADS": "1",
+        #     "OPENBLAS_NUM_THREADS": "1", 
+        #     "MKL_NUM_THREADS": "1",
+        #     "NUMEXPR_NUM_THREADS": "1",
+        #     "VECLIB_MAXIMUM_THREADS": "1",
+        #     "NUMBA_NUM_THREADS": "1",
+        #     "BLIS_NUM_THREADS": "1",
+        #     "GOTO_NUM_THREADS": "1"
+        # }
         
+        # for var, value in threading_env_vars.items():
+        #     os.environ[var] = value
+            
+        # Try to control threading at the library level
         try:
-            # Store initial state
-            initial_theta = chain._theta.copy()
-            initial_y = chain._y.copy()
+            # Set NumPy to single-threaded if possible
+            import numpy as np
+            if hasattr(np, 'random') and hasattr(np.random, 'seed'):
+                # Some NumPy operations respect thread limits better after reseeding
+                np.random.seed(chain_id + 42)  # Different seed per chain
+        except:
+            pass
             
-            # Run active learning on this chain
-            chain.active_train(niter=niter, algorithm=algorithm, gp_opt_freq=gp_opt_freq,
-                              save_progress=False, obj_opt_method=obj_opt_method, 
-                              nopt=nopt, n_attempts=n_attempts, use_grad_opt=use_grad_opt,
-                              optimizer_kwargs=optimizer_kwargs)
-            
-            # Extract only the new samples (excluding initial training data)
-            initial_len = len(initial_theta)
-            new_theta = chain._theta[initial_len:]
-            new_y = chain._y[initial_len:]
-            
-            return chain_id, new_theta, new_y, chain.training_results
-            
-        except Exception as e:
-            print(f"Chain {chain_id} failed with error: {e}")
-            return chain_id, np.array([]).reshape(0, self.ndim), np.array([]), {}
+        try:
+            # Control scikit-learn backend
+            import sklearn
+            if hasattr(sklearn, 'get_config'):
+                current_config = sklearn.get_config()
+                sklearn.set_config(assume_finite=True, working_memory=128)
+        except:
+            pass
+        
+        return chain
     
     
     def _combine_chain_results(self, all_new_theta, all_new_y, chain_results):
@@ -3780,16 +4086,70 @@ class SurrogateModel(object):
             combined_new_theta = np.vstack([theta for theta in all_new_theta if len(theta) > 0])
             combined_new_y = np.hstack([y for y in all_new_y if len(y) > 0])
             
-            # Add to main model
-            self._theta = np.vstack([self._theta, combined_new_theta])
-            self._y = np.hstack([self._y, combined_new_y])
+            # CRITICAL: Remove near-duplicate points to prevent numerical instability
+            # Check for points that are very close to each other (within 1e-6)
+            tolerance = 1e-6
+            keep_indices = []
+            for i, point in enumerate(combined_new_theta):
+                is_duplicate = False
+                # Check against previously kept points
+                for j in keep_indices:
+                    if np.allclose(point, combined_new_theta[j], atol=tolerance):
+                        is_duplicate = True
+                        break
+                # Also check against existing training data
+                if not is_duplicate:
+                    for existing_point in self._theta:
+                        if np.allclose(point, existing_point, atol=tolerance):
+                            is_duplicate = True
+                            break
+                
+                if not is_duplicate:
+                    keep_indices.append(i)
             
-            # Update counters
-            self.ntrain = len(self._theta)
-            self.nactive = self.ntrain - self.ninit_train
+            if len(keep_indices) < len(combined_new_theta):
+                print(f"Warning: Removed {len(combined_new_theta) - len(keep_indices)} near-duplicate points from parallel chains")
+                combined_new_theta = combined_new_theta[keep_indices]
+                combined_new_y = combined_new_y[keep_indices]
             
-            # Refit GP with all combined data
-            self.gp, _ = self.fit_gp(_theta=self._theta, _y=self._y)
+            # Add to main model (only if we have points left)
+            if len(combined_new_theta) > 0:
+                self._theta = np.vstack([self._theta, combined_new_theta])
+                self._y = np.hstack([self._y, combined_new_y])
+            
+                # Update counters
+                self.ntrain = len(self._theta)
+                self.nactive = self.ntrain - self.ninit_train
+                
+                # Refit GP with all combined data while preserving hyperparameters  
+                # Store current hyperparameters before refitting
+                if hasattr(self, 'gp') and self.gp is not None:
+                    try:
+                        current_hyperparams = self.gp.get_parameter_vector()
+                        # Refit GP with combined data
+                        self.gp, _ = self.fit_gp(_theta=self._theta, _y=self._y)
+                        # Restore the hyperparameters and recompute
+                        self.gp.set_parameter_vector(current_hyperparams)
+                        self.gp.compute(self._theta)
+                        
+                        # Check for numerical stability by computing a test prediction
+                        try:
+                            test_pred = self.gp.predict(self._y, self._theta[:5], return_var=False, return_cov=False)
+                            if np.any(np.isnan(test_pred)) or np.any(np.isinf(test_pred)):
+                                raise ValueError("GP predictions contain NaN or Inf")
+                        except:
+                            print("Warning: GP numerically unstable after hyperparameter restoration, re-optimizing...")
+                            # If unstable, re-optimize hyperparameters
+                            self.gp, _ = self.opt_gp(**self.opt_gp_kwargs)
+                    except Exception as e:
+                        print(f"Warning: Hyperparameter preservation failed ({e}), falling back to standard fitting")
+                        # If hyperparameter preservation fails, fall back to standard fitting  
+                        self.gp, _ = self.fit_gp(_theta=self._theta, _y=self._y)
+                else:
+                    # No existing GP, use standard fitting
+                    self.gp, _ = self.fit_gp(_theta=self._theta, _y=self._y)
+            else:
+                print("Warning: No new points added after duplicate removal")
         
         # Combine training results from all chains
         if chain_results:
@@ -3941,7 +4301,7 @@ class SurrogateModel(object):
         Get a pickleable representation of the model state for multiprocessing.
         
         :returns: *dict*
-            Dictionary containing all necessary state information
+            Dictionary containing all necessary state information including GP hyperparameters
         """
         import copy
         
@@ -3958,4 +4318,144 @@ class SurrogateModel(object):
             'ncore': self.ncore
         }
         
+        # Include GP hyperparameters if GP exists and is trained
+        if hasattr(self, 'gp') and self.gp is not None:
+            try:
+                state['gp_hyperparameters'] = self.gp.get_parameter_vector()
+                # Also include GP initialization settings for consistency
+                state['gp_kernel'] = getattr(self, '_gp_kernel', 'ExpSquaredKernel')
+                state['gp_fit_amp'] = getattr(self, '_gp_fit_amp', True)
+                state['gp_fit_mean'] = getattr(self, '_gp_fit_mean', True)
+                state['gp_fit_white_noise'] = getattr(self, '_gp_fit_white_noise', True)
+                state['gp_white_noise'] = getattr(self, '_gp_white_noise', -12)
+            except:
+                # If we can't get hyperparameters, workers will initialize fresh GP
+                state['gp_hyperparameters'] = None
+        else:
+            state['gp_hyperparameters'] = None
+        
         return state
+
+
+def _run_chain_worker_mp(args):
+    """
+    Multiprocessing worker function to run a single active learning chain.
+    
+    This function is designed to work with multiprocessing.Pool and must be
+    defined at module level to be pickleable.
+    
+    :param args: (*tuple*)
+        Tuple containing (chain_state, niter, algorithm, gp_opt_freq, 
+        obj_opt_method, nopt, n_attempts, use_grad_opt, optimizer_kwargs)
+        
+    :returns: *tuple or None*
+        (new_theta, new_y, training_results) if successful, None if failed
+    """
+    import os
+    import numpy as np
+    import copy
+    
+    try:
+        # Unpack arguments
+        (chain_state, niter, algorithm, gp_opt_freq, obj_opt_method,
+         nopt, n_attempts, use_grad_opt, optimizer_kwargs, boundary_margin, shrink_percent) = args
+        
+        chain_id = chain_state['chain_id']
+        
+        # Reconstruct the model from the pickled state
+        from alabi import SurrogateModel
+        
+        # Create a new model instance with the saved state
+        surrogate = SurrogateModel(
+            lnlike_fn=chain_state['function'],
+            bounds=chain_state['bounds'],
+            ncore=1,  # Force single-core for this process
+            verbose=False  # Disable verbose to avoid cluttering output
+        )
+        
+        # Restore the training data
+        surrogate._theta = chain_state['theta'].copy()
+        surrogate._y = chain_state['y'].copy() 
+        surrogate.ndim = chain_state['ndim']
+        surrogate.ninit_train = chain_state['ninit_train']
+        surrogate.ntrain = chain_state['ntrain']
+        
+        # Set up the save directory for this chain
+        surrogate.savedir = chain_state['savedir']
+        if not os.path.exists(surrogate.savedir):
+            os.makedirs(surrogate.savedir)
+        
+        # CRITICAL: Set unique random seed for this chain to prevent identical point generation
+        import time
+        # Use chain_id and current time to ensure unique randomization per chain
+        chain_random_seed = int((time.time() * 1000000) % (2**31)) + chain_id * 1000
+        np.random.seed(chain_random_seed)
+        
+        # Initialize GP for this chain using preserved hyperparameters
+        use_preserved_hyperparams = (chain_state['gp_hyperparameters'] is not None)
+        
+        if use_preserved_hyperparams:
+            # Initialize GP with same settings as parent process
+            surrogate.init_gp(
+                kernel=chain_state.get('gp_kernel', 'ExpSquaredKernel'),
+                fit_amp=chain_state.get('gp_fit_amp', True),
+                fit_mean=chain_state.get('gp_fit_mean', True),
+                fit_white_noise=chain_state.get('gp_fit_white_noise', True),
+                white_noise=chain_state.get('gp_white_noise', -12)
+            )
+            # Set the optimized hyperparameters from parent process
+            surrogate.gp.set_parameter_vector(chain_state['gp_hyperparameters'])
+            # CRITICAL: Compute the GP with the restored hyperparameters
+            surrogate.gp.compute(surrogate._theta)
+            
+            # Add small random perturbation to hyperparameters to prevent identical chains
+            # This helps avoid numerical issues while preserving the optimization quality
+            current_hyperparams = surrogate.gp.get_parameter_vector()
+            # Add 1% random noise to hyperparameters
+            perturbation = np.random.normal(0, 0.01 * np.abs(current_hyperparams))
+            perturbed_hyperparams = current_hyperparams + perturbation
+            surrogate.gp.set_parameter_vector(perturbed_hyperparams)
+            surrogate.gp.compute(surrogate._theta)
+            
+            # IMPROVED: Allow limited GP re-optimization for accuracy
+            # Increase gp_opt_freq to reduce re-optimization but don't disable it completely
+            # This balances preserved hyperparameters with GP accuracy as data grows
+            effective_gp_opt_freq = max(gp_opt_freq * 3, 50)  # At least 3x original freq, min 50
+        else:
+            # Fallback to fresh initialization if hyperparameters not available
+            surrogate.init_gp()
+            effective_gp_opt_freq = gp_opt_freq
+        
+        # Store initial state for comparison
+        initial_theta = surrogate._theta.copy()
+        initial_y = surrogate._y.copy()
+        
+        # Run active learning on this chain (force single-core execution)        
+        surrogate.active_train(
+            niter=niter, 
+            algorithm=algorithm, 
+            gp_opt_freq=effective_gp_opt_freq,
+            save_progress=False,  # Don't save intermediate progress in parallel chains
+            obj_opt_method=obj_opt_method, 
+            nopt=nopt, 
+            n_attempts=n_attempts, 
+            use_grad_opt=use_grad_opt,
+            optimizer_kwargs=optimizer_kwargs, 
+            show_progress=False,  # Don't show progress bars in parallel
+            allow_opt_multiproc=False,  # Critical: disable nested multiprocessing
+            boundary_margin=boundary_margin,
+            shrink_percent=shrink_percent,
+        )
+        
+        # Extract only the new samples (excluding initial training data)
+        initial_len = len(initial_theta)
+        new_theta = surrogate._theta[initial_len:]
+        new_y = surrogate._y[initial_len:]
+        
+        return new_theta, new_y, surrogate.training_results
+        
+    except Exception as e:
+        print(f"Multiprocessing chain {chain_state.get('chain_id', '?')} failed with error: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
