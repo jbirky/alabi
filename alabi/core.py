@@ -3,8 +3,6 @@
 -------------------------------------
 """
 
-__all__ = ["SurrogateModel"]
-
 from alabi import utility as ut
 from alabi import visualization as vis
 from alabi import gp_utils
@@ -24,6 +22,8 @@ import warnings
 import tqdm
 import pickle
 
+
+__all__ = ["SurrogateModel", "nlog_scaler", "log_scaler", "minmax_scaler", "no_scaler"]
 
 # Define scaling functions 
 def nlog(x): return np.log10(-x)
