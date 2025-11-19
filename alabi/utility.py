@@ -731,8 +731,8 @@ def bape_utility(theta, predict_gp, bounds):
     mu, var = predict_gp(theta.reshape(1,-1))
 
     try:
-        # util = -((2.0 * mu + var) + logsubexp(var, 0.0))
-        util = -(np.exp(2*mu + var) * (np.exp(var) - 1))
+        util = -((2.0 * mu + var) + logsubexp(var, 0.0))
+        # util = -(np.exp(2*mu + var) * (np.exp(var) - 1))
     except ValueError:
         print("Invalid util value.  Negative variance or inf mu?")
         raise ValueError("util: %e. mu: %e. var: %e" % (util, mu, var))
@@ -919,7 +919,7 @@ def minimize_objective_single(idx, obj_fn, bounds, starting_point, method, optio
 
     x_opt = tmp.x 
     f_opt = tmp.fun
-
+    
     # If solution is finite and allowed by the prior, save
     if np.all(np.isfinite(x_opt)) and np.all(np.isfinite(f_opt)):
         if np.isfinite(lnprior_uniform(x_opt, bounds)):

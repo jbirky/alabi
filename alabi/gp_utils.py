@@ -24,7 +24,7 @@ __all__ = ["configure_gp",
            "optimize_gp"]
 
 
-def regularization_term(hparams, lengthscale_indices, mu_0=1.0, sigma_0=2.0):
+def regularization_term(hparams, lengthscale_indices, amp_0=1.0, mu_0=1.0, sigma_0=2.0):
     """
     Compute the regularization term (negative log prior) from Hvafner 2024 Equation 4.
     
@@ -63,10 +63,10 @@ def regularization_term(hparams, lengthscale_indices, mu_0=1.0, sigma_0=2.0):
     )
     
     # Sum over all dimensions
-    return np.sum(neg_log_prior)
+    return amp_0 * np.sum(neg_log_prior)
 
 
-def regularization_gradient(hparams, lengthscale_indices, mu_0=1.0, sigma_0=2.0):
+def regularization_gradient(hparams, lengthscale_indices, amp_0=1.0, mu_0=1.0, sigma_0=2.0):
     """
     Compute the gradient of the regularization term with respect to lengthscales.
     
@@ -101,7 +101,7 @@ def regularization_gradient(hparams, lengthscale_indices, mu_0=1.0, sigma_0=2.0)
 
     gradient_vector[lengthscale_indices] = (1.0 + (log_lengthscales - mu) / sigma_0**2) / lengthscales
     
-    return gradient_vector
+    return amp_0 * gradient_vector
 
 
 def _nll(p, gp, y, prior_fn=None):
@@ -179,7 +179,7 @@ def _grad_nll(p, gp, y, prior_fn=None):
     if prior_fn is not None:
         log_prior = prior_fn(p)
         if not np.isfinite(log_prior):
-            return np.full_like(p, np.inf)
+            return np.full_like(p, 0)
 
     # Negative gradient of log likelihood
     grad_nll = -gp.grad_log_likelihood(y, quiet=True)
@@ -250,38 +250,16 @@ def configure_gp(theta, y, kernel,
                    white_noise=white_noise, fit_white_noise=fit_white_noise)
 
     if hyperparameters is not None:
+        if np.any(~np.isfinite(hyperparameters)):
+            print("hyperparameters:", hyperparameters)
+            raise ValueError("All hyperparameter values must be finite!")
         gp.set_parameter_vector(hyperparameters)
 
     try:
         gp.compute(theta)
-    except np.linalg.LinAlgError as e:
-        print(f"LinAlgError during GP computation: {e}")
-        print(f"This usually indicates numerical issues. Trying fixes:")
-        
-        # Check for duplicate points
-        unique_theta, unique_indices = np.unique(theta, axis=0, return_index=True)
-        if len(unique_theta) < len(theta):
-            print(f"  Found {len(theta) - len(unique_theta)} duplicate points, removing them")
-            theta = unique_theta
-            y = y[unique_indices]
-            try:
-                gp = george.GP(kernel=kernel, fit_mean=fit_mean, mean=np.median(y),
-                                white_noise=white_noise, fit_white_noise=fit_white_noise)
-                if hyperparameters is not None:
-                    gp.set_parameter_vector(hyperparameters)
-                gp.compute(theta)
-                print(f"  ✓ Success after removing duplicates")
-            except np.linalg.LinAlgError:
-                print(f"  Still failed after removing duplicates")
-                return None
-        else:
-            print(f"  All fixes failed. This might indicate:")
-            print(f"    - Inappropriate kernel parameters")
-            print(f"    - Poorly scaled data")
-            print(f"    - Pathological likelihood surface")
-            return None
     except Exception as e:
-        print(f"Other error during GP computation: {e}")
+        print(f"configure_gp error: {e}")
+        breakpoint()
         return None
 
     return gp
@@ -289,7 +267,7 @@ def configure_gp(theta, y, kernel,
 
 def optimize_gp(gp, _theta, _y, gp_hyper_prior, p0, bounds=None,
                 method="l-bfgs-b", optimizer_kwargs=None, max_iter=50,
-                regularize=True, mu_0=1.0, sigma_0=2.0, lengthscale_indices=None):
+                regularize=True, amp_0=1.0, mu_0=1.0, sigma_0=2.0, lengthscale_indices=None):
     """
     Optimize Gaussian Process hyperparameters by maximizing marginal likelihood.
     
@@ -395,7 +373,7 @@ def optimize_gp(gp, _theta, _y, gp_hyper_prior, p0, bounds=None,
     
     # configure objective function 
     if regularize:
-        obj_fn = lambda p: _nll(p, gp, _y, gp_hyper_prior) + regularization_term(p, lengthscale_indices, mu_0=mu_0, sigma_0=sigma_0)
+        obj_fn = lambda p: _nll(p, gp, _y, gp_hyper_prior) + regularization_term(p, lengthscale_indices, amp_0=amp_0, mu_0=mu_0, sigma_0=sigma_0)
     else:
         obj_fn = lambda p: _nll(p, gp, _y, gp_hyper_prior)
 
@@ -403,7 +381,7 @@ def optimize_gp(gp, _theta, _y, gp_hyper_prior, p0, bounds=None,
     if method in ["newton-cg", "l-bfgs-b"]:
         if regularize:
             # Use custom gradient function that includes regularization
-            jac = lambda p: _grad_nll(p, gp, _y, gp_hyper_prior) + regularization_gradient(p, lengthscale_indices, mu_0=mu_0, sigma_0=sigma_0)
+            jac = lambda p: _grad_nll(p, gp, _y, gp_hyper_prior) + regularization_gradient(p, lengthscale_indices, amp_0=amp_0, mu_0=mu_0, sigma_0=sigma_0)
         else:
             jac = lambda p: _grad_nll(p, gp, _y, gp_hyper_prior)
     else:

@@ -663,7 +663,7 @@ class SurrogateModel(object):
         self.gp_hyper_prior = partial(ut.lnprior_uniform, bounds=self.hp_bounds)
 
     
-    def fit_gp(self, _theta=None, _y=None):
+    def fit_gp(self, _theta=None, _y=None, hyperparameters=None):
         """
         Fit Gaussian Process to training data with current hyperparameters.
         
@@ -691,7 +691,8 @@ class SurrogateModel(object):
                                     fit_amp=self.fit_amp, 
                                     fit_mean=self.fit_mean,
                                     fit_white_noise=self.fit_white_noise,
-                                    white_noise=self.white_noise)
+                                    white_noise=self.white_noise,
+                                    hyperparameters=hyperparameters)
         if gp is None:
             print(f"Warning: fit_gp failed with point {_theta[-1]}. Reoptimizing hyperparameters...")
             # Use the current opt_gp_kwargs settings which should have correct multi_proc value
@@ -704,10 +705,9 @@ class SurrogateModel(object):
         return gp, timing
 
 
-    def opt_gp(self, method="ml", regularize=True, mu_0=1.0, sigma_0=2.0,
+    def opt_gp(self, method="ml", regularize=True, amp_0=1.0, mu_0=1.0, sigma_0=2.0,
                cv_folds=5, cv_scoring="mse", cv_n_candidates=20, multi_proc=True, 
-               cv_two_stage=False, cv_stage2_candidates=None, cv_stage2_width=0.5,
-               cv_three_stage=False, cv_stage3_candidates=None, cv_stage3_width=0.2,
+               cv_stage2_candidates=None, cv_stage2_width=0.5, cv_stage3_candidates=None, cv_stage3_width=0.2,
                cv_weighted_mse_method="exponential", cv_weighted_mse_temperature=1.0):
         """
         Optimize GP hyperparameters using marginal likelihood or cross-validation.
@@ -850,7 +850,7 @@ class SurrogateModel(object):
                                         method=self.gp_opt_method,
                                         bounds=self.hp_bounds,
                                         optimizer_kwargs=self.optimizer_kwargs,
-                                        regularize=regularize, mu_0=mu_0, sigma_0=sigma_0)
+                                        regularize=regularize, amp_0=amp_0, mu_0=mu_0, sigma_0=sigma_0)
             if op_gp is None:
                 print("Warning: opt_gp hyperparameter optimization failed. Reoptimizing hyperparameters...")
                 failed = True 
@@ -940,6 +940,7 @@ class SurrogateModel(object):
                 optimizer_kwargs={"max_iter": 50},
                 hyperopt_method="ml",
                 regularize=True,
+                amp_0=1.0,
                 mu_0=1.0,
                 sigma_0=2.0,
                 cv_folds=5,
@@ -1113,6 +1114,7 @@ class SurrogateModel(object):
         # Save all kwargs needed for opt_gp function
         self.opt_gp_kwargs = {"method": self.hyperopt_method,
                               "regularize": regularize,
+                              "amp_0": amp_0,
                               "mu_0": mu_0,
                               "sigma_0": sigma_0,
                               "cv_folds": self.cv_folds,
@@ -1382,7 +1384,8 @@ class SurrogateModel(object):
                                         fit_amp=self.fit_amp, 
                                         fit_mean=self.fit_mean,
                                         fit_white_noise=self.fit_white_noise,
-                                        white_noise=self.white_noise)
+                                        white_noise=self.white_noise,
+                                        hyperparameters=hyperparams)
         
         # Compute the GP once - this is the expensive operation we want to cache
         gp_iter.compute(_theta_cond)
@@ -1405,7 +1408,7 @@ class SurrogateModel(object):
         """
 
         opt_timing_0 = time.time()
-
+            
         predict_gp = lambda _theta_xs: self.gp.predict(self._y, _theta_xs, return_var=True)
         
         # Create objective function with appropriate parameters for different algorithms
@@ -1424,28 +1427,33 @@ class SurrogateModel(object):
                 grad_obj_fn = partial(self.grad_utility, predict_gp=predict_gp, bounds=self._bounds, y_best=y_best)
             else:
                 grad_obj_fn = partial(self.grad_utility, predict_gp=predict_gp, bounds=self._bounds)
-        
+    
         # Always use serial execution for acquisition function optimization
-        _thetaN, _ = ut.minimize_objective(obj_fn, 
-                                           bounds=self._bounds,
-                                           nopt=nopt,
-                                           ps=self._prior_sampler,
-                                           method=self.obj_opt_method,
-                                           options=optimizer_kwargs,
-                                           grad_obj_fn=grad_obj_fn)
+        _thetaN, _yN = ut.minimize_objective(obj_fn, 
+                                        bounds=self._bounds,
+                                        nopt=nopt,
+                                        ps=self._prior_sampler,
+                                        method=self.obj_opt_method,
+                                        options=optimizer_kwargs,
+                                        grad_obj_fn=grad_obj_fn)
+
+        if ~np.all(np.isfinite(_thetaN)) and ~np.isfinite(_yN):
+            print("_thetaN:", _thetaN)
+            print("_yN:", _yN)
+            raise RuntimeError("Acquisition function optimization failed to find a valid point. "
+                               "Check the acquisition function and optimizer settings.")
 
         opt_timing = time.time() - opt_timing_0
         # self.training_results["acquisition_optimizer_niter"].append(opt_result.nit)
 
         # evaluate function at the optimized theta
         _thetaN = _thetaN.reshape(1, -1)
-        _yN = self._lnlike_fn(_thetaN)
 
         return _thetaN, _yN, opt_timing
 
 
     def active_train(self, niter=100, algorithm="bape", gp_opt_freq=20, save_progress=False,
-                     obj_opt_method="l-bfgs-b", nopt=1, optimizer_kwargs={}, 
+                     obj_opt_method="l-bfgs-b", nopt=5, optimizer_kwargs={}, 
                      show_progress=True, allow_opt_multiproc=True): 
         """
         Perform active learning to iteratively improve the surrogate model.
@@ -1552,7 +1560,7 @@ class SurrogateModel(object):
             y_prop = np.append(self._y, yN)
 
             # Fit GP with new training point
-            self.gp, fit_gp_timing = self.fit_gp(_theta=theta_prop, _y=y_prop)
+            self.gp, fit_gp_timing = self.fit_gp(_theta=theta_prop, _y=y_prop, hyperparameters=self.gp.get_parameter_vector())
 
             # If proposed (theta, y) did not cause fitting issues, save to surrogate model obj
             self._theta = theta_prop
@@ -4085,12 +4093,8 @@ class SurrogateModel(object):
                 # Store current hyperparameters before refitting
                 if hasattr(self, 'gp') and self.gp is not None:
                     try:
-                        current_hyperparams = self.gp.get_parameter_vector()
-                        # Refit GP with combined data
-                        self.gp, _ = self.fit_gp(_theta=self._theta, _y=self._y)
-                        # Restore the hyperparameters and recompute
-                        self.gp.set_parameter_vector(current_hyperparams)
-                        self.gp.compute(self._theta)
+                        # Refit GP with combined data using current hyperparameters
+                        self.gp, _ = self.fit_gp(_theta=self._theta, _y=self._y, hyperparameters=self.gp.get_parameter_vector())
                         
                         # Check for numerical stability by computing a test prediction
                         try:
