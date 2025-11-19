@@ -35,7 +35,7 @@ log_scaler = preprocessing.FunctionTransformer(func=log_scale, inverse_func=log_
 minmax_scaler = preprocessing.MinMaxScaler()
 no_scaler = preprocessing.FunctionTransformer(func=no_scale, inverse_func=no_scale)
 
-__all__ = ["SurrogateModel",
+__all__ = ["SurrogateModel", "CachedSurrogateLikelihood",
            "nlog_scaler", "log_scaler", "minmax_scaler", "no_scaler"]
 
 
@@ -704,7 +704,8 @@ class SurrogateModel(object):
         return gp, timing
 
 
-    def opt_gp(self, method="ml", cv_folds=5, cv_scoring="mse", cv_n_candidates=20, multi_proc=True, 
+    def opt_gp(self, method="ml", regularize=True, mu_0=1.0, sigma_0=2.0,
+               cv_folds=5, cv_scoring="mse", cv_n_candidates=20, multi_proc=True, 
                cv_two_stage=False, cv_stage2_candidates=None, cv_stage2_width=0.5,
                cv_three_stage=False, cv_stage3_candidates=None, cv_stage3_width=0.2,
                cv_weighted_mse_method="exponential", cv_weighted_mse_temperature=1.0):
@@ -848,7 +849,8 @@ class SurrogateModel(object):
                                         self.gp_hyper_prior, p0,
                                         method=self.gp_opt_method,
                                         bounds=self.hp_bounds,
-                                        optimizer_kwargs=self.optimizer_kwargs)
+                                        optimizer_kwargs=self.optimizer_kwargs,
+                                        regularize=regularize, mu_0=mu_0, sigma_0=sigma_0)
             if op_gp is None:
                 print("Warning: opt_gp hyperparameter optimization failed. Reoptimizing hyperparameters...")
                 failed = True 
@@ -937,6 +939,9 @@ class SurrogateModel(object):
                 gp_nopt=3,
                 optimizer_kwargs={"max_iter": 50},
                 hyperopt_method="ml",
+                regularize=True,
+                mu_0=1.0,
+                sigma_0=2.0,
                 cv_folds=5,
                 cv_scoring="mse",
                 cv_n_candidates=20,
@@ -1107,6 +1112,9 @@ class SurrogateModel(object):
         
         # Save all kwargs needed for opt_gp function
         self.opt_gp_kwargs = {"method": self.hyperopt_method,
+                              "regularize": regularize,
+                              "mu_0": mu_0,
+                              "sigma_0": sigma_0,
                               "cv_folds": self.cv_folds,
                               "cv_scoring": self.cv_scoring,
                               "cv_n_candidates": self.cv_n_candidates,
@@ -1384,7 +1392,7 @@ class SurrogateModel(object):
                                        self.y_scaler, self.ndim, return_var=return_var)
 
 
-    def find_next_point(self, nopt=1, n_attempts=5, optimizer_kwargs={}, boundary_margin=0., shrink_percent=0):
+    def find_next_point(self, nopt=3, optimizer_kwargs={}):
         """
         Find next set of ``(theta, y)`` training points by maximizing the
         active learning utility function.
@@ -1392,16 +1400,8 @@ class SurrogateModel(object):
         :param nopt: (*int, optional*) 
             Number of times to restart the objective function optimization. 
             Defaults to 1. Increase to avoid converging to local minima.
-        :param n_attempts: (*int, optional*)
-            Maximum number of retry attempts if optimization fails. Default is 5.
         :param optimizer_kwargs: (*dict, optional*)
             Additional keyword arguments passed to scipy optimizer. Default is {}.
-        :param boundary_margin: (*float, optional*)
-            Soft boundary margin as fraction of parameter range. If > 0, adds 
-            exponential penalty near boundaries. Default is 0 (disabled).
-        :param shrink_percent: (*float, optional*)
-            Hard boundary shrinking percentage (0-50). If > 0, creates hard
-            boundaries by shrinking parameter space from all edges. Default is 0 (disabled).
         """
 
         opt_timing_0 = time.time()
@@ -1426,20 +1426,16 @@ class SurrogateModel(object):
                 grad_obj_fn = partial(self.grad_utility, predict_gp=predict_gp, bounds=self._bounds)
         
         # Always use serial execution for acquisition function optimization
-        _thetaN, _, opt_result = ut.minimize_objective(obj_fn, 
+        _thetaN, _ = ut.minimize_objective(obj_fn, 
                                            bounds=self._bounds,
                                            nopt=nopt,
                                            ps=self._prior_sampler,
                                            method=self.obj_opt_method,
                                            options=optimizer_kwargs,
-                                           n_attempts=n_attempts,
-                                           boundary_margin=boundary_margin,
-                                           shrink_percent=shrink_percent,
-                                           ncore=1,  # Keep serial for acquisition optimization
                                            grad_obj_fn=grad_obj_fn)
 
         opt_timing = time.time() - opt_timing_0
-        self.training_results["acquisition_optimizer_niter"].append(opt_result.nit)
+        # self.training_results["acquisition_optimizer_niter"].append(opt_result.nit)
 
         # evaluate function at the optimized theta
         _thetaN = _thetaN.reshape(1, -1)
@@ -1449,8 +1445,8 @@ class SurrogateModel(object):
 
 
     def active_train(self, niter=100, algorithm="bape", gp_opt_freq=20, save_progress=False,
-                     obj_opt_method="l-bfgs-b", nopt=1, n_attempts=10, optimizer_kwargs={}, 
-                     show_progress=True, allow_opt_multiproc=True, boundary_margin=0., shrink_percent=0): 
+                     obj_opt_method="l-bfgs-b", nopt=1, optimizer_kwargs={}, 
+                     show_progress=True, allow_opt_multiproc=True): 
         """
         Perform active learning to iteratively improve the surrogate model.
         
@@ -1484,25 +1480,12 @@ class SurrogateModel(object):
             Number of optimization restarts for acquisition function. Higher values
             help avoid local minima but increase computation time.
             
-        :param n_attempts: (*int, optional, default=5*)
-            Number of attempts for each optimization restart.
-            
         :param use_grad_opt: (*bool, optional, default=True*)
             Whether to use gradient information if available. Set False for
             gradient-free optimization.
             
         :param optimizer_kwargs: (*dict, optional, default={}*)
             Additional keyword arguments passed to the optimizer.
-            
-        :param boundary_margin: Soft boundary margin as fraction of parameter range. If > 0,
-            adds exponential penalty near parameter boundaries to discourage sampling at edges.
-            For example, 0.1 means penalty is applied within 10% of boundary.
-        :type boundary_margin: *float, optional*
-        :param shrink_percent: Hard boundary shrinking percentage (0-50). If > 0, creates
-            hard boundaries by shrinking the parameter space uniformly from all edges.
-            For example, 10 shrinks bounds by 10% from each side, leaving 80% of original space.
-            This creates a sharp cutoff rather than soft penalty. Default is 0 (disabled).
-        :type shrink_percent: *float, optional*
             
         :param show_progress: (*bool, optional, default=True*)
             Whether to display progress bar during training.
@@ -1562,11 +1545,7 @@ class SurrogateModel(object):
         for ii in iterator:
 
             # Find next training point! (always single-threaded)
-            thetaN, yN, opt_timing = self.find_next_point(nopt=nopt, 
-                                                          n_attempts=n_attempts, 
-                                                          optimizer_kwargs=optimizer_kwargs,
-                                                          boundary_margin=boundary_margin,
-                                                          shrink_percent=shrink_percent)
+            thetaN, yN, opt_timing = self.find_next_point(nopt=nopt, optimizer_kwargs=optimizer_kwargs)
 
             # add theta and y to training samples
             theta_prop = np.append(self._theta, thetaN, axis=0)
@@ -1649,8 +1628,8 @@ class SurrogateModel(object):
             
     def active_train_parallel(self, niter=100, nchains=4, algorithm="bape", gp_opt_freq=20, 
                                    obj_opt_method="nelder-mead", nopt=1, 
-                                   n_attempts=5, use_grad_opt=True, optimizer_kwargs={}, 
-                                   show_progress=True, boundary_margin=0., shrink_percent=0):
+                                   use_grad_opt=True, optimizer_kwargs={}, 
+                                   show_progress=True):
         """
         Run multiple active learning chains in parallel using multiprocessing instead of threading.
         
@@ -1677,9 +1656,6 @@ class SurrogateModel(object):
         :param nopt: (*int, optional*)
             Number of restarts for acquisition optimization. Default 1.
             
-        :param n_attempts: (*int, optional*)
-            Number of attempts for optimization. Default 5.
-            
         :param use_grad_opt: (*bool, optional*)
             Whether to use gradient-based optimization. Default True.
             
@@ -1688,16 +1664,6 @@ class SurrogateModel(object):
             
         :param show_progress: (*bool, optional*) 
             Whether to display progress bar during parallel chain execution. Default is True.
-            
-        :param boundary_margin: (*float, optional*)
-            Exponential soft boundary penalty strength. When > 0, applies exponential penalty
-            to acquisition function values near parameter boundaries. Default 0 (no penalty).
-            
-        :param shrink_percent: (*int or float, optional*)
-            Percentage to shrink parameter bounds for hard boundary prevention. When > 0,
-            creates hard boundaries by shrinking the parameter space. For example, 20 means
-            shrink each dimension by 20% from both sides. Valid range: 0-50. Default 0
-            (no shrinking, use original bounds).
             
         Notes
         -----
@@ -1771,11 +1737,8 @@ class SurrogateModel(object):
                         gp_opt_freq,
                         obj_opt_method,
                         nopt,
-                        n_attempts,
                         use_grad_opt,
                         optimizer_kwargs,
-                        boundary_margin,
-                        shrink_percent,
                     )
                     chain_args.append(args)
                 
@@ -1825,11 +1788,9 @@ class SurrogateModel(object):
                     
                     result = self._run_chain_worker(i, niter=niter, algorithm=algorithm, 
                                                   gp_opt_freq=gp_opt_freq, obj_opt_method=obj_opt_method,
-                                                  nopt=nopt, n_attempts=n_attempts, 
-                                                  use_grad_opt=use_grad_opt, 
+                                                  nopt=nopt, use_grad_opt=use_grad_opt, 
                                                   optimizer_kwargs=optimizer_kwargs, show_progress=False,
-                                                  allow_opt_multiproc=False, boundary_margin=boundary_margin,
-                                                  shrink_percent=shrink_percent)
+                                                  allow_opt_multiproc=False)
                     
                     if result is not None:
                         new_theta, new_y, training_results = result
@@ -1923,7 +1884,7 @@ class SurrogateModel(object):
 
 
     def run_emcee(self, like_fn=None, prior_fn=None, nwalkers=None, nsteps=int(5e4), sampler_kwargs={}, run_kwargs={},
-                  opt_init=False, multi_proc=True, prior_fn_comment=None, burn=None, thin=None, samples_file=None, min_ess=0):
+                  opt_init=False, multi_proc=True, prior_fn_comment=None, burn=None, thin=None, samples_file=None, min_ess=int(1e4)):
         """
         Sample the posterior using the emcee affine-invariant MCMC algorithm.
         
@@ -2240,7 +2201,7 @@ class SurrogateModel(object):
             
 
     def run_dynesty(self, like_fn=None, prior_transform=None, mode="dynamic", sampler_kwargs={}, run_kwargs={},
-                    multi_proc=False, save_iter=None, prior_transform_comment=None, samples_file=None, min_ess=0):
+                    multi_proc=False, save_iter=None, prior_transform_comment=None, samples_file=None, min_ess=int(1e4)):
         """
         Sample the posterior using the dynesty nested sampling algorithm.
         
@@ -2629,7 +2590,7 @@ class SurrogateModel(object):
 
     def run_pymultinest(self, like_fn=None, prior_transform=None, sampler_kwargs={}, multi_proc=True, 
                         prior_transform_comment=None, samples_file=None, prefix=None, resume=False, 
-                        n_clustering_params=None, outputfiles_basename=None, min_ess=0):
+                        n_clustering_params=None, outputfiles_basename=None, min_ess=int(1e4)):
         """
         Sample the posterior using the PyMultiNest nested sampling algorithm.
         
@@ -3080,7 +3041,7 @@ class SurrogateModel(object):
 
     def run_ultranest(self, like_fn=None, prior_transform=None, sampler_kwargs={}, run_kwargs={},
                       multi_proc=False, prior_transform_comment=None, samples_file=None,
-                      log_dir=None, resume="overwrite", min_ess=0):
+                      log_dir=None, resume="overwrite", min_ess=int(1e4)):
         """
         Sample the posterior using the UltraNest nested sampling algorithm.
         
@@ -3839,9 +3800,9 @@ class SurrogateModel(object):
     
 
     def _run_chain_worker(self, chain_id, niter=5, algorithm="bape", gp_opt_freq=1,
-                          obj_opt_method="lbfgsb", nopt=10, n_attempts=5,
+                          obj_opt_method="lbfgsb", nopt=10, 
                           use_grad_opt=True, optimizer_kwargs=None, show_progress=True,
-                          allow_opt_multiproc=False, boundary_margin=0., shrink_percent=0):
+                          allow_opt_multiproc=False):
         """
         Worker function to run a single active learning chain.
         This function is designed to be pickled for multiprocessing.
@@ -3864,10 +3825,9 @@ class SurrogateModel(object):
             # Run active learning on this chain (explicitly disable multiprocessing)
             chain.active_train(niter=niter, algorithm=algorithm, gp_opt_freq=gp_opt_freq,
                               save_progress=False, obj_opt_method=obj_opt_method, 
-                              nopt=nopt, n_attempts=n_attempts, use_grad_opt=use_grad_opt,
+                              nopt=nopt, use_grad_opt=use_grad_opt,
                               optimizer_kwargs=optimizer_kwargs, show_progress=show_progress, 
-                              allow_opt_multiproc=allow_opt_multiproc, boundary_margin=boundary_margin,
-                              shrink_percent=shrink_percent)
+                              allow_opt_multiproc=allow_opt_multiproc)
             
             # Extract only the new samples (excluding initial training data)
             initial_len = len(initial_theta)
@@ -4346,7 +4306,7 @@ def _run_chain_worker_mp(args):
     
     :param args: (*tuple*)
         Tuple containing (chain_state, niter, algorithm, gp_opt_freq, 
-        obj_opt_method, nopt, n_attempts, use_grad_opt, optimizer_kwargs)
+        obj_opt_method, nopt, use_grad_opt, optimizer_kwargs)
         
     :returns: *tuple or None*
         (new_theta, new_y, training_results) if successful, None if failed
@@ -4358,7 +4318,7 @@ def _run_chain_worker_mp(args):
     try:
         # Unpack arguments
         (chain_state, niter, algorithm, gp_opt_freq, obj_opt_method,
-         nopt, n_attempts, use_grad_opt, optimizer_kwargs, boundary_margin, shrink_percent) = args
+         nopt, use_grad_opt, optimizer_kwargs) = args
         
         chain_id = chain_state['chain_id']
         
@@ -4438,13 +4398,10 @@ def _run_chain_worker_mp(args):
             save_progress=False,  # Don't save intermediate progress in parallel chains
             obj_opt_method=obj_opt_method, 
             nopt=nopt, 
-            n_attempts=n_attempts, 
             use_grad_opt=use_grad_opt,
             optimizer_kwargs=optimizer_kwargs, 
             show_progress=False,  # Don't show progress bars in parallel
             allow_opt_multiproc=False,  # Critical: disable nested multiprocessing
-            boundary_margin=boundary_margin,
-            shrink_percent=shrink_percent,
         )
         
         # Extract only the new samples (excluding initial training data)

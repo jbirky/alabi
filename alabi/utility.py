@@ -26,7 +26,6 @@ except ImportError:
     # Fallback if parallel_utils is not available
     parallel_utils = None
 import tqdm
-from .gp_utils import grad_gp_mean_prediction, grad_gp_var_prediction
 
 __all__ = ["agp_utility", 
            "bape_utility", 
@@ -40,10 +39,6 @@ __all__ = ["agp_utility",
            "prior_transform_uniform",
            "lnprior_normal",
            "prior_transform_normal",
-           "boundary_distance",
-           "boundary_penalty",
-           "shrink_bounds",
-           "boundary_penalty_hard",
            ]
 
 
@@ -883,149 +878,7 @@ def assign_utility(algorithm):
     return utility
 
 
-def boundary_distance(x, bounds):
-    """
-    Calculate minimum distance from a point to parameter boundaries.
-    
-    :param x: Parameter vector
-    :type x: *array-like*
-    :param bounds: Parameter bounds as [(min, max), ...]
-    :type bounds: *list or array-like*
-    
-    :returns: Minimum distance to any boundary
-    :rtype: *float*
-    """
-    bounds = np.array(bounds)
-    distances = []
-    
-    for i, (param_val, (param_min, param_max)) in enumerate(zip(x, bounds)):
-        dist_from_min = param_val - param_min
-        dist_from_max = param_max - param_val
-        distances.append(min(dist_from_min, dist_from_max))
-    
-    return min(distances)
-
-
-def boundary_penalty(x, bounds, boundary_margin, penalty_weight=1.0):
-    """
-    Calculate exponential penalty near boundaries.
-    
-    :param x: Parameter vector
-    :type x: *array-like*
-    :param bounds: Parameter bounds as [(min, max), ...]
-    :type bounds: *list or array-like*
-    :param boundary_margin: Fraction of parameter range to apply penalty
-    :type boundary_margin: *float*
-    :param penalty_weight: Strength of boundary penalty
-    :type penalty_weight: *float*
-    
-    :returns: Boundary penalty value (0 if far from boundaries)
-    :rtype: *float*
-    """
-    if boundary_margin <= 0:
-        return 0.0
-        
-    dist = boundary_distance(x, bounds)
-    bounds = np.array(bounds)
-    range_size = np.mean(bounds[:, 1] - bounds[:, 0])
-    normalized_dist = dist / range_size
-    
-    if normalized_dist < boundary_margin:
-        return penalty_weight * np.exp(-5 * normalized_dist / boundary_margin)
-    return 0.0
-
-
-def shrink_bounds(bounds, shrink_percent):
-    """
-    Create shrunken bounds by reducing the parameter space by a percentage.
-    
-    This function creates hard boundaries by shrinking the original bounds uniformly
-    from all sides. The shrunk bounds can be used directly as optimization constraints
-    to prevent sampling near the original boundaries.
-    
-    :param bounds: Original parameter bounds as [(min, max), ...] for each dimension
-    :type bounds: *list or array-like*
-    :param shrink_percent: Percentage to shrink bounds from each edge (0-100).
-        For example, 10 means shrink by 10% from each side, leaving 80% of original space.
-    :type shrink_percent: *float*
-    
-    :returns: Shrunken bounds with same format as input
-    :rtype: *list*
-    
-    :example:
-        >>> bounds = [(-2, 2), (-1, 1)]  # Original bounds
-        >>> shrunk = shrink_bounds(bounds, 10)  # Shrink by 10%
-        >>> print(shrunk)
-        [(-1.6, 1.6), (-0.8, 0.8)]  # 80% of original space
-    """
-    if shrink_percent <= 0:
-        return bounds
-    
-    if shrink_percent >= 50:
-        raise ValueError("shrink_percent must be < 50% to maintain valid parameter space")
-    
-    shrunk_bounds = []
-    shrink_fraction = shrink_percent / 100.0
-    
-    for bound_min, bound_max in bounds:
-        # Calculate the range and how much to shrink from each side
-        param_range = bound_max - bound_min
-        shrink_amount = param_range * shrink_fraction
-        
-        # Shrink equally from both sides
-        new_min = bound_min + shrink_amount
-        new_max = bound_max - shrink_amount
-        
-        shrunk_bounds.append((new_min, new_max))
-    
-    return shrunk_bounds
-
-
-def boundary_penalty_hard(x, bounds, shrink_percent, penalty_weight=1e6):
-    """
-    Hard boundary penalty using shrunken bounds.
-    
-    This function creates a hard boundary by applying a large penalty to points
-    outside the shrunken parameter space. Unlike the soft exponential penalty,
-    this creates a sharp boundary at the shrunk bounds edge.
-    
-    :param x: Parameter vector to evaluate
-    :type x: *array-like*
-    :param bounds: Original parameter bounds as [(min, max), ...]
-    :type bounds: *list or array-like*
-    :param shrink_percent: Percentage to shrink bounds from each edge (0-100)
-    :type shrink_percent: *float*
-    :param penalty_weight: Large penalty value for points outside shrunken bounds
-    :type penalty_weight: *float*
-    
-    :returns: Penalty value (0 if within shrunken bounds, penalty_weight if outside)
-    :rtype: *float*
-    
-    :example:
-        >>> bounds = [(-2, 2), (-1, 1)]
-        >>> penalty = boundary_penalty_hard([1.8, 0], bounds, 10)  # x=1.8 outside shrunk bound 1.6
-        >>> print(penalty)
-        1000000.0  # Large penalty
-        
-        >>> penalty = boundary_penalty_hard([1.0, 0], bounds, 10)  # x=1.0 inside shrunk bound 1.6  
-        >>> print(penalty)
-        0.0  # No penalty
-    """
-    if shrink_percent <= 0:
-        return 0.0
-    
-    # Get shrunken bounds
-    shrunken_bounds = shrink_bounds(bounds, shrink_percent)
-    
-    # Check if point is within shrunken bounds
-    for i, (param_val, (shrunk_min, shrunk_max)) in enumerate(zip(x, shrunken_bounds)):
-        if param_val < shrunk_min or param_val > shrunk_max:
-            return penalty_weight
-    
-    return 0.0
-
-
-def minimize_objective_single(idx, obj_fn, bounds, set_bounds, starting_points, method, options, n_attempts, grad_obj_fn=None):
+def minimize_objective_single(idx, obj_fn, bounds, starting_point, method, options, grad_obj_fn=None):
     """
     Single optimization run - used for parallelization.
     
@@ -1055,74 +908,32 @@ def minimize_objective_single(idx, obj_fn, bounds, set_bounds, starting_points, 
     :returns: Optimization result object.
     :rtype: *scipy.optimize.OptimizeResult*
     """
-    # Optional: Add simple function caching for expensive acquisitions
-    _obj_cache = {}
-    _grad_cache = {}
     
-    def cached_obj_fn(x):
-        x_key = tuple(x.flatten())
-        if x_key not in _obj_cache:
-            _obj_cache[x_key] = obj_fn(x)
-        return _obj_cache[x_key]
-    
-    def cached_grad_fn(x):
-        if grad_obj_fn is None:
-            return None
-        x_key = tuple(x.flatten())
-        if x_key not in _grad_cache:
-            _grad_cache[x_key] = grad_obj_fn(x)
-        return _grad_cache[x_key]
-    
-    # Use pre-generated starting point to avoid clustering
-    t0 = starting_points[idx]
-    
-    # Keep minimizing until a valid solution is found
-    test_iter = 0
-    while True:
-        if test_iter > 0:
-            # Generate a new random starting point for retry
-            t0 = np.random.uniform(
-                low=[b[0] for b in bounds], 
-                high=[b[1] for b in bounds]
-            )
-            
-        # Too many iterations
-        if test_iter >= n_attempts:
-            err_msg = "ERROR: Cannot find a valid solution to objective function minimization.\n" 
-            err_msg += "Current iterations: %d\n" % test_iter
-            err_msg += "Maximum iterations: %d\n" % n_attempts
-            err_msg += "Try increasing the number of initial training samples.\n"
-            raise RuntimeError(err_msg)
-        
-        test_iter += 1
+    # Minimize the function
+    tmp = minimize(fun=obj_fn, 
+                    x0=np.array(starting_point).flatten(), 
+                    jac=grad_obj_fn, 
+                    bounds=bounds, 
+                    method=method, 
+                    options=options)
 
-        # Use cached functions for potential speedup
-        active_grad_fn = cached_grad_fn if grad_obj_fn is not None else None
-        
-        # Minimize the function
-        tmp = minimize(fun=cached_obj_fn, 
-                       x0=np.array(t0).flatten(), 
-                       jac=active_grad_fn, 
-                       bounds=set_bounds, 
-                       method=method, 
-                       options=options)
+    x_opt = tmp.x 
+    f_opt = tmp.fun
 
-        x_opt = tmp.x 
-        f_opt = tmp.fun
-
-        # If solution is finite and allowed by the prior, save
-        if np.all(np.isfinite(x_opt)) and np.all(np.isfinite(f_opt)):
-            if np.isfinite(lnprior_uniform(x_opt, bounds)):
-                return tmp
-            else:
-                print("Warning: Utility function optimization prior fail", x_opt)
+    # If solution is finite and allowed by the prior, save
+    if np.all(np.isfinite(x_opt)) and np.all(np.isfinite(f_opt)):
+        if np.isfinite(lnprior_uniform(x_opt, bounds)):
+            return x_opt, f_opt
         else:
-            print("Warning: Utility function optimization infinite fail", x_opt, f_opt)
+            print("Warning: Utility function optimization prior fail", x_opt)
+            return np.nan, np.nan
+    else:
+        print("Warning: Utility function optimization infinite fail", x_opt, f_opt)
+        return np.nan, np.nan
 
 
 def minimize_objective(obj_fn, bounds=None, nopt=1, method="l-bfgs-b",
-                       ps=None, options=None, n_attempts=5, boundary_margin=0, shrink_percent=0, 
-                       ncore=1, grad_obj_fn=None, early_stop_threshold=None):
+                       ps=None, options=None, grad_obj_fn=None):
     """
     Find the global minimum of an acquisition function using multiple restarts.
     
@@ -1165,29 +976,9 @@ def minimize_objective(obj_fn, bounds=None, nopt=1, method="l-bfgs-b",
         
         Default is {"max_iter": 50}.
     :type options: *dict or None, optional*
-    :param n_attempts: Maximum number of retry attempts if an optimization fails (returns
-        infinite or out-of-bounds results). Default is 5.
-    :type n_attempts: *int, optional*
-    :param boundary_margin: Soft boundary margin as fraction of parameter range. If > 0,
-        adds exponential penalty near parameter boundaries to discourage sampling at edges.
-        For example, 0.1 means penalty is applied within 10% of boundary. Default is 0 (disabled).
-    :type boundary_margin: *float, optional*
-    :param shrink_percent: Hard boundary shrinking percentage (0-50). If > 0, creates
-        hard boundaries by shrinking the parameter space uniformly from all edges.
-        For example, 10 shrinks bounds by 10% from each side, leaving 80% of original space.
-        This creates a sharp cutoff rather than soft penalty. Default is 0 (disabled).
-    :type shrink_percent: *float, optional*
-    :param ncore: Number of CPU cores to use for parallel optimization restarts. If ncore > 1
-        and nopt > 1, runs multiple optimization restarts in parallel using multiprocessing.
-        Default is 1 (serial execution).
-    :type ncore: *int, optional*
     :param grad_obj_fn: Gradient of the objective function. If provided, can significantly
         speed up optimization for methods like l-bfgs-b. Default is None (use finite differences).
     :type grad_obj_fn: *callable or None, optional*
-    :param early_stop_threshold: If provided, stop optimization early when a solution
-        better than this threshold is found. Can significantly speed up optimization
-        when a "good enough" solution is acceptable. Default is None (no early stopping).
-    :type early_stop_threshold: *float or None, optional*
     
     :returns: 
         - **theta_best** (*ndarray of shape (ndim,)*) -- Parameter values that minimize the objective function.
@@ -1294,92 +1085,18 @@ def minimize_objective(obj_fn, bounds=None, nopt=1, method="l-bfgs-b",
     # Pre-flatten starting points to avoid repeated operations
     starting_points = np.array([pt.flatten() for pt in starting_points])
 
-    bound_methods = ["nelder-mead", "l-bfgs-b", "tnc", "slsqp", "powell", "trust-constr"]
-    if str(method).lower() not in bound_methods:
-        set_bounds = None
-    else:
-        set_bounds = bounds
-
     # Serial execution 
-    if ncore <= 1 or nopt <= 1:
-        min_res = []
-        objective = []
-        all_results = []
-        
-        for ii in range(nopt):
-            result = minimize_objective_single(ii, obj_fn, bounds, set_bounds, starting_points, method, options, n_attempts, grad_obj_fn)
-            all_results.append(result)
-            if result.x is not None:
-                min_res.append(result.x)
-                objective.append(result.fun)
-                
-                # Early stopping if we found a very good solution
-                if early_stop_threshold is not None and result.fun < early_stop_threshold:
-                    if len(objective) > 0:  # Have at least one valid result
-                        break
-    else:
-        # Parallel execution using multiprocessing
-        import multiprocessing as mp
-        from functools import partial
-        
-        # Create partial function for multiprocessing
-        minimize_function = partial(minimize_objective_single, 
-                                    obj_fn=obj_fn, 
-                                    bounds=bounds, 
-                                    set_bounds=set_bounds, 
-                                    starting_points=starting_points, 
-                                    method=method, 
-                                    options=options, 
-                                    n_attempts=n_attempts,
-                                    grad_obj_fn=grad_obj_fn)
-
-        # Use MPI-safe multiprocessing if available
-        try:
-            from . import parallel_utils
-            if parallel_utils.is_mpi_active():
-                # Use single process in MPI context to avoid conflicts
-                pool = None
-            else:
-                pool = mp.Pool(processes=min(ncore, nopt))
-        except ImportError:
-            pool = mp.Pool(processes=min(ncore, nopt))
-        
-        if pool is not None:
-            try:
-                all_results = pool.map(minimize_function, range(nopt))
-            finally:
-                pool.close()
-                pool.join()
-        else:
-            # Fallback to serial execution
-            all_results = [minimize_function(i) for i in range(nopt)]
-        
-        # Extract results
-        min_res = []
-        objective = []
-        for r in all_results:
-            if r.x is not None:
-                min_res.append(r.x)
-                objective.append(r.fun)
-
-    if len(min_res) == 0:
-        raise RuntimeError("ERROR: No valid solutions found in any optimization runs!")
-
+    min_theta = []
+    min_obj = []
+    
+    for ii in range(nopt):
+        minx, miny = minimize_objective_single(ii, obj_fn, bounds, starting_points[ii], method, options, grad_obj_fn)
+        min_theta.append(minx)
+        min_obj.append(miny)
+  
     # Return value that minimizes objective function out of all minimizations
-    best_ind = np.argmin(objective)
-    theta_best = min_res[best_ind]  
-    obj_best = objective[best_ind]
-    
-    # Find corresponding result object - we need to map back to the original results
-    result_idx = 0
-    valid_count = 0
-    for i, r in enumerate(all_results):
-        if r.x is not None:
-            if valid_count == best_ind:
-                result_idx = i
-                break
-            valid_count += 1
-    
-    res_best = all_results[result_idx]
+    best_ind = np.argmin(min_obj)
+    theta_best = min_theta[best_ind]  
+    obj_best = min_obj[best_ind]
 
-    return theta_best, obj_best, res_best
+    return theta_best, obj_best
