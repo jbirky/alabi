@@ -306,11 +306,6 @@ class SurrogateModel(object):
 
         # Output scaling function. Fit when initial training samples are created 
         self.y_scaler = y_scaler
-        # check whether the scaler reverses the sign of lnlike_fn (needed to determine sign of acquisition function)
-        if self.y_scaler == nlog_scaler:
-            self.y_inverted = True 
-        else:
-            self.y_inverted = False
 
         # define prior sampler with scaled and unscaled bounds 
         self._prior_sampler = partial(ut.prior_sampler, bounds=self._bounds, sampler="uniform", random_state=None)
@@ -474,8 +469,11 @@ class SurrogateModel(object):
         if nsample is None:
             nsample = 50 * self.ndim
 
-        _theta = self._prior_sampler(nsample=nsample, sampler=sampler, random_state=None)
-        theta = self.theta_scaler.inverse_transform(_theta)
+        # _theta = self._prior_sampler(nsample=nsample, sampler=sampler, random_state=None)
+        # theta = self.theta_scaler.inverse_transform(_theta)
+        
+        theta = self.prior_sampler(nsample=nsample, sampler=sampler, random_state=None)
+        _theta = self.theta_scaler.transform(theta)
         
         y = ut.eval_fn(self.true_log_likelihood, theta, ncore=self.ncore).reshape(-1, 1)
         self.y_scaler.fit(y)
@@ -1356,11 +1354,6 @@ class SurrogateModel(object):
         
         :returns: A cached likelihood function that can be called with theta_xs
         :rtype: *callable*
-        
-        Example:
-            >>> cached_lnlike = sm.create_cached_surrogate_likelihood()
-            >>> lnlike_1 = cached_lnlike(theta_1)
-            >>> lnlike_2 = cached_lnlike(theta_2)  # No GP recomputation
         """
         
         # Determine training data and hyperparameters for the specified iteration
@@ -1373,7 +1366,7 @@ class SurrogateModel(object):
             else:
                 _theta_cond = self._theta[:self.ninit_train + iter]
                 _y_cond = self._y[:self.ninit_train + iter]
-                hyperparams = self.training_results["gp_hyperparameters"][:self.ntrain + iter]
+                hyperparams = self.training_results["gp_hyperparameters"][-1]
         else:
             _theta_cond = self._theta
             _y_cond = self._y
@@ -1387,8 +1380,12 @@ class SurrogateModel(object):
                                         white_noise=self.white_noise,
                                         hyperparameters=hyperparams)
         
-        # Compute the GP once - this is the expensive operation we want to cache
-        gp_iter.compute(_theta_cond)
+        # Compute the GP and save so that it doesn't need to be recomputed later
+        try:
+            gp_iter.compute(_theta_cond)
+        except Exception as e:
+            print(f"create_cached_surrogate_likelihood: Error computing GP at iteration {iter}: {e}")
+            raise
         
         # Return a picklable cached surrogate likelihood object
         return CachedSurrogateLikelihood(gp_iter, _y_cond, self.theta_scaler, 

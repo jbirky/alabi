@@ -18,6 +18,8 @@ import multiprocessing as mp
 from functools import partial
 import warnings
 import time
+from scipy.special import betainc, betaincinv
+from sklearn.preprocessing import FunctionTransformer, MinMaxScaler
 
 # Import parallel utilities for MPI-safe multiprocessing
 try:
@@ -39,6 +41,8 @@ __all__ = ["agp_utility",
            "prior_transform_uniform",
            "lnprior_normal",
            "prior_transform_normal",
+           "BetaWarpingFunction",
+           "beta_warping_transformer"
            ]
 
 
@@ -986,58 +990,6 @@ def minimize_objective(obj_fn, bounds=None, nopt=1, method="l-bfgs-b",
     :rtype: *tuple*
     
     :raises RuntimeError: If no valid solutions are found after all optimization attempts.
-    
-    .. note::
-        
-        This function is critical for acquisition function optimization in active learning.
-        The key challenges addressed are:
-        
-        1. **Multi-modality**: Acquisition functions often have many local minima
-        2. **Numerical stability**: Some points may yield infinite or invalid values
-        3. **Boundary constraints**: Solutions must respect parameter bounds
-        4. **Robustness**: Multiple restarts help avoid getting stuck in local minima
-        
-        The function automatically retries failed optimizations with new initial points
-        and filters out invalid solutions (infinite values, out-of-bounds points).
-    
-    **Examples**
-    
-    Basic optimization of BAPE utility:
-    
-    .. code-block:: python
-        
-        >>> bounds = [(-2, 2), (-1, 1)]
-        >>> theta_next, obj_min = minimize_objective(
-        ...     obj_fn=lambda x: bape_utility(x, y_train, gp, bounds),
-        ...     grad_obj_fn=lambda x: grad_bape_utility(x, y_train, gp, bounds),
-        ...     bounds=bounds,
-        ...     nopt=5
-        ... )
-    
-    Multiple restarts for robust optimization:
-    
-    .. code-block:: python
-        
-        >>> theta_next, obj_min = minimize_objective(
-        ...     obj_fn=acquisition_fn,
-        ...     grad_obj_fn=None,  # Use finite differences
-        ...     bounds=bounds,
-        ...     nopt=10,
-        ...     method="nelder-mead"
-        ... )
-    
-    Custom optimization settings:
-    
-    .. code-block:: python
-        
-        >>> options = {"max_iter": 100, "ftol": 1e-8}
-        >>> theta_next, obj_min = minimize_objective(
-        ...     obj_fn=acquisition_fn,
-        ...     grad_obj_fn=grad_fn,
-        ...     bounds=bounds,
-        ...     options=options,
-        ...     method="l-bfgs-b"
-        ... )
     """
     
     warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -1100,3 +1052,61 @@ def minimize_objective(obj_fn, bounds=None, nopt=1, method="l-bfgs-b",
     obj_best = min_obj[best_ind]
 
     return theta_best, obj_best
+
+
+# Pickleable wrapper functions for FunctionTransformer
+class BetaWarpingFunction:
+    """Wrapper class to make warping functions pickleable."""
+    
+    def __init__(self, alpha=2.0, beta=2.0):
+        self.alpha = alpha
+        self.beta = beta
+    
+    def transform(self, X):
+        self.minmax_scaler = MinMaxScaler()
+        X_scaled = self.minmax_scaler.fit_transform(X)
+        
+        # Apply Beta CDF warping per feature
+        X_warped = np.zeros_like(X_scaled)
+        for i in range(X_scaled.shape[1]):
+            # betainc is the regularized incomplete beta function
+            # betainc(a, b, x) = B_x(a, b) / B(a, b)
+            X_warped[:, i] = betainc(self.alpha, self.beta, X_scaled[:, i])
+            
+        return X_warped
+    
+    def inverse_transform(self, X):
+        
+        # Apply inverse Beta CDF per feature
+        X_unwarped = np.zeros_like(X)
+        for i in range(X.shape[1]):
+            # betaincinv is the inverse of regularized incomplete beta function
+            X_unwarped[:, i] = betaincinv(self.alpha, self.beta, X[:, i])
+        
+        return self.minmax_scaler.inverse_transform(X_unwarped)
+    
+    
+# Create sklearn FunctionTransformer
+def beta_warping_transformer(alpha=2.0, beta=2.0):
+    """
+    Create a scikit-learn FunctionTransformer for Beta CDF warping.
+    
+    Parameters
+    ----------
+    alpha : float or array-like
+        Shape parameter α for Beta distribution
+    beta : float or array-like
+        Shape parameter β for Beta distribution
+    
+    Returns
+    -------
+    transformer : FunctionTransformer
+        Scikit-learn transformer object
+    """
+    warping_funcs = BetaWarpingFunction(alpha=alpha, beta=beta)
+    
+    return FunctionTransformer(
+        func=warping_funcs.transform,
+        inverse_func=warping_funcs.inverse_transform,
+        check_inverse=True
+    )
