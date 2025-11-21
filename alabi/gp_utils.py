@@ -259,7 +259,6 @@ def configure_gp(theta, y, kernel,
         gp.compute(theta)
     except Exception as e:
         print(f"configure_gp error: {e}")
-        breakpoint()
         return None
 
     return gp
@@ -442,20 +441,21 @@ def optimize_gp(gp, _theta, _y, gp_hyper_prior, p0, bounds=None,
             gp.set_parameter_vector(init_hp)
             
     else:
-        # Optimize GP hyperparameters by maximizing marginal log_likelihood
-        res = minimize(_nll, p0, args=(gp, _y, gp_hyper_prior), method=method,
-                       jac=jac, bounds=bounds, options=optimizer_kwargs)
-
-        if not res.success:
-            print("\nWarning: GP hyperparameter optimization failed.\n")
-            return None
-
-        # Set the optimized hyperparameters
+        # Single optimization run
         try:
-            gp.set_parameter_vector(res.x)
+            result = minimize(obj_fn, p0, method=method, jac=jac, bounds=bounds, options=optimizer_kwargs)
+            
+            if result.success and np.isfinite(gp_hyper_prior(result.x)):
+                gp.set_parameter_vector(result.x)
+                gp.recompute()
+            else:
+                print("\nWarning: GP hyperparameter optimization failed. Using initial values.\n")
+                gp.set_parameter_vector(init_hp)
+                gp.recompute()
+                
+        except Exception as e:
+            print(f"\nWarning: GP hyperparameter optimization failed with error: {e}. Using initial values.\n")
+            gp.set_parameter_vector(init_hp)
             gp.recompute()
-        except:
-            print("\nWarning: GP hyperparameter optimization failed. Cannot recompute gp.\n")
-            return None
 
     return gp

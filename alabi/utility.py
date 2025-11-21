@@ -806,30 +806,7 @@ def jones_utility(theta, predict_gp, bounds, y_best, zeta=0.01):
     
     :raises ValueError: If the utility computation results in invalid values.
     :raises RuntimeError: If the GP has not been computed before calling this function.
-    
-    **Examples**
-    
-    Evaluate Expected Improvement at a test point:
-    
-    .. code-block:: python
-        
-        >>> theta_test = np.array([0.5, 1.2])
-        >>> ei_value = jones_utility(theta_test, y_train, gp, bounds)
-    
-    Find next point for optimization:
-    
-    .. code-block:: python
-        
-        >>> from scipy.optimize import minimize
-        >>> result = minimize(lambda x: jones_utility(x, y_train, gp, bounds, zeta=0.01), x0)
-        >>> next_point = result.x
-    
-    Use higher exploration parameter:
-    
-    .. code-block:: python
-        
-        >>> ei_explore = jones_utility(theta_test, y_train, gp, bounds, zeta=0.1)
-    
+
     **References**
     
     Jones et al. (1998): "Efficient global optimization of expensive black-box 

@@ -1403,7 +1403,7 @@ class SurrogateModel(object):
                 grad_obj_fn = partial(self.grad_utility, predict_gp=predict_gp, bounds=self._bounds)
     
         # Always use serial execution for acquisition function optimization
-        _thetaN, _yN = ut.minimize_objective(obj_fn, 
+        _thetaN, _ = ut.minimize_objective(obj_fn, 
                                         bounds=self._bounds,
                                         nopt=nopt,
                                         ps=self._prior_sampler,
@@ -1411,17 +1411,12 @@ class SurrogateModel(object):
                                         options=optimizer_kwargs,
                                         grad_obj_fn=grad_obj_fn)
 
-        if ~np.all(np.isfinite(_thetaN)) and ~np.isfinite(_yN):
-            print("_thetaN:", _thetaN)
-            print("_yN:", _yN)
-            raise RuntimeError("Acquisition function optimization failed to find a valid point. "
-                               "Check the acquisition function and optimizer settings.")
-
         opt_timing = time.time() - opt_timing_0
         # self.training_results["acquisition_optimizer_niter"].append(opt_result.nit)
 
         # evaluate function at the optimized theta
         _thetaN = _thetaN.reshape(1, -1)
+        _yN = self._lnlike_fn(_thetaN)
 
         return _thetaN, _yN, opt_timing
 
