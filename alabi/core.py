@@ -1382,7 +1382,7 @@ class SurrogateModel(object):
         """
 
         opt_timing_0 = time.time()
-            
+        
         predict_gp = lambda _theta_xs: self.gp.predict(self._y, _theta_xs, return_var=True)
         
         # Create objective function with appropriate parameters for different algorithms
@@ -1398,9 +1398,9 @@ class SurrogateModel(object):
         grad_obj_fn = None
         if hasattr(self, 'grad_utility') and self.grad_utility is not None:
             if self.algorithm == "jones":
-                grad_obj_fn = partial(self.grad_utility, predict_gp=predict_gp, bounds=self._bounds, y_best=y_best)
+                grad_obj_fn = partial(self.grad_utility, gp=self.gp, bounds=self._bounds, y_best=y_best)
             else:
-                grad_obj_fn = partial(self.grad_utility, predict_gp=predict_gp, bounds=self._bounds)
+                grad_obj_fn = partial(self.grad_utility, gp=self.gp, bounds=self._bounds)
     
         # Always use serial execution for acquisition function optimization
         _thetaN, _ = ut.minimize_objective(obj_fn, 
@@ -1422,7 +1422,7 @@ class SurrogateModel(object):
 
 
     def active_train(self, niter=100, algorithm="bape", gp_opt_freq=20, save_progress=False,
-                     obj_opt_method="l-bfgs-b", nopt=5, optimizer_kwargs={}, 
+                     obj_opt_method="l-bfgs-b", nopt=5, optimizer_kwargs={}, use_grad_opt=True,
                      show_progress=True, allow_opt_multiproc=True): 
         """
         Perform active learning to iteratively improve the surrogate model.
@@ -1497,7 +1497,9 @@ class SurrogateModel(object):
 
         # Set algorithm
         self.algorithm = str(algorithm).lower()
-        self.utility = ut.assign_utility(self.algorithm)
+        self.utility, self.grad_utility = ut.assign_utility(self.algorithm)
+        if use_grad_opt == False:
+            self.grad_utility = None
 
         # GP hyperparameter optimization frequency
         self.gp_opt_freq = gp_opt_freq

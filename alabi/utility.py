@@ -559,6 +559,123 @@ def logsubexp(x1, x2):
         return -np.inf
     else:
         return x1 + np.log(1.0 - np.exp(x2 - x1))
+    
+    
+#===========================================================
+# GP prediction gradient functions
+#===========================================================
+
+def numerical_kernel_gradient(xs, x_train, gp, h=1e-6):
+    """
+    Compute numerical gradient of GP kernel k(xs, x_train) with respect to xs.
+    
+    :param xs: (*array_like, shape (d,) or (1, d)*)
+        Query point(s) to compute gradient at
+    :param x_train: (*array_like, shape (n, d)*)
+        Training points
+    :param gp: (*george.GP*)
+        Gaussian Process object with kernel
+    :param h: (*float, default=1e-6*)
+        Step size for finite differences
+        
+    :returns: *ndarray, shape (n, d)*
+        Numerical gradient of kernel k(xs, x_train) w.r.t. xs
+        Each row corresponds to gradient w.r.t. one training point
+    """
+    xs = np.atleast_2d(xs)
+    x_train = np.atleast_2d(x_train)
+    
+    if xs.shape[0] != 1:
+        raise ValueError("This function handles single query point only")
+    
+    n_train, d = x_train.shape
+    xs_flat = xs.flatten()
+    
+    # Initialize gradient array
+    grad_k = np.zeros((n_train, d))
+    
+    # Compute gradient for each dimension
+    for i in range(d):
+        # Create perturbed points
+        xs_plus = xs_flat.copy()
+        xs_minus = xs_flat.copy()
+        xs_plus[i] += h
+        xs_minus[i] -= h
+        
+        # Evaluate kernel at perturbed points
+        k_plus = gp.kernel.get_value(xs_plus.reshape(1, -1), x_train).flatten()
+        k_minus = gp.kernel.get_value(xs_minus.reshape(1, -1), x_train).flatten()
+        
+        # Central difference
+        grad_k[:, i] = (k_plus - k_minus) / (2 * h)
+    
+    return grad_k
+
+
+def grad_gp_mean_prediction(xs, gp):
+    """
+    Compute the gradient of the GP mean prediction with respect to the input
+    locations.
+
+    :param xs: (*array-like, required*)
+        Input locations to evaluate the gradient at.
+
+    :param gp: (*george.GP, required*)
+        The computed Gaussian process object.
+
+    :returns: (*array*)
+        The gradient of the GP mean prediction at the input locations.
+    """
+    xs = np.asarray(xs).reshape(1, -1)
+    
+    # Use the grad_gp_kernel function to get kernel gradients
+    # grad_ks shape: (n_train_points, n_dims) for single query point
+
+    grad_ks = numerical_kernel_gradient(xs, gp._x, gp, h=1e-6)
+
+    # The GP mean gradient is: ∇μ(x) = ∇k(x, X_train)^T @ α
+    # where α = K^{-1} @ y_train
+    grad_mean = np.dot(grad_ks.T, gp._alpha)
+    
+    return grad_mean.flatten()
+
+
+def grad_gp_var_prediction(xs, gp):
+    """
+    Compute the gradient of the GP variance prediction with respect to the input
+    locations.
+
+    :param xs: (*array-like, required*)
+        Input locations to evaluate the gradient at.
+
+    :param gp: (*george.GP, required*)
+        The computed Gaussian process object.
+
+    :returns: (*array*)
+        The gradient of the GP variance prediction at the input locations.
+    """
+    xs = np.array(xs).reshape(1, -1)
+    
+    # Get kernel gradients: ∇k(x*, X_train)
+    # grad_ks shape: (n_train_points, n_dims) for single query point
+    grad_ks = numerical_kernel_gradient(xs, gp._x, gp, h=1e-6)
+
+    # Get kernel values: k(x*, X_train)
+    ks = gp.kernel.get_value(xs, gp._x).flatten()  # shape: (n_train_points,)
+    
+    # Get inverse covariance matrix
+    Kinv = gp.solver.get_inverse()  # shape: (n_train_points, n_train_points)
+    
+    # For stationary kernels, ∇k(x*, x*) = 0, so the variance gradient is:
+    # ∇σ²(x*) = -2 * ∇k(x*, X_train)^T @ K^{-1} @ k(x*, X_train)
+    # 
+    # grad_ks.T shape: (n_dims, n_train_points)
+    # Kinv @ ks shape: (n_train_points,)
+    # Result shape: (n_dims,)
+    
+    grad_var = -2.0 * np.dot(grad_ks.T, np.dot(Kinv, ks))
+    
+    return grad_var.flatten()
 
 
 #===========================================================
@@ -621,14 +738,6 @@ def agp_utility(theta, predict_gp, bounds):
         theta_test = np.array([0.5, 1.2])
         utility = agp_utility(theta_test, y_train, gp, bounds)
     
-    Find next point by minimizing negative utility:
-    
-    .. code-block:: python
-    
-        from scipy.optimize import minimize
-        result = minimize(lambda x: agp_utility(x, y_train, gp, bounds), x0)
-        next_point = result.x
-    
     **References**
     
     Wang & Li (2017): "Adaptive Gaussian Process Approximation for Bayesian 
@@ -637,9 +746,6 @@ def agp_utility(theta, predict_gp, bounds):
 
     if not np.isfinite(lnprior_uniform(theta, bounds)):
         return np.inf
-
-    # if not gp.computed:
-    #     gp.compute(theta)
 
     mu, var = predict_gp(theta.reshape(1,-1))
 
@@ -650,6 +756,31 @@ def agp_utility(theta, predict_gp, bounds):
         raise ValueError("util: %e. mu: %e. var: %e" % (util, mu, var))
 
     return float(util)
+
+
+def grad_agp_utility(theta, gp, bounds):
+    
+    # Ensure theta is properly shaped
+    theta = np.asarray(theta).flatten()
+    
+    if not np.isfinite(lnprior_uniform(theta, bounds)):
+        return np.full(len(theta), np.inf)  # Return array of infs with correct shape
+    
+    d_mu = grad_gp_mean_prediction(theta, gp)
+    d_var = grad_gp_var_prediction(theta, gp)
+    
+    # Ensure d_mu and d_var are arrays with correct shape
+    d_mu = np.asarray(d_mu).flatten()
+    d_var = np.asarray(d_var).flatten()
+    
+    # Check dimension consistency
+    if len(d_mu) != len(theta) or len(d_var) != len(theta):
+        raise ValueError(f"Dimension mismatch: theta has {len(theta)} dims, "
+                        f"d_mu has {len(d_mu)} dims, d_var has {len(d_var)} dims")
+
+    d_agp = -(d_mu + 0.5 * d_var)
+
+    return d_agp.flatten()  # Ensure output is 1D array
 
 
 def bape_utility(theta, predict_gp, bounds):
@@ -711,14 +842,6 @@ def bape_utility(theta, predict_gp, bounds):
         >>> theta_test = np.array([0.5, 1.2])
         >>> utility = bape_utility(theta_test, y_train, gp, bounds)
     
-    Find next point by minimizing negative utility:
-    
-    .. code-block:: python
-        
-        >>> from scipy.optimize import minimize
-        >>> result = minimize(lambda x: bape_utility(x, y_train, gp, bounds), x0)
-        >>> next_point = result.x
-    
     **References**
     
     Kandasamy et al. (2015): "Query efficient posterior estimation in scientific 
@@ -742,6 +865,46 @@ def bape_utility(theta, predict_gp, bounds):
         raise ValueError("util: %e. mu: %e. var: %e" % (util, mu, var))
 
     return float(util)
+
+
+def grad_bape_utility(theta, gp, bounds):
+    
+    # Ensure theta is properly shaped
+    theta = np.asarray(theta).flatten()
+    
+    if not np.isfinite(lnprior_uniform(theta, bounds)):
+        return np.full(len(theta), np.inf)  # Return array of infs with correct shape
+
+    mu, var = gp(theta.reshape(1,-1))
+    
+    d_mu = grad_gp_mean_prediction(theta, gp)
+    d_var = grad_gp_var_prediction(theta, gp)
+    
+    # Check dimension consistency
+    if len(d_mu) != len(theta) or len(d_var) != len(theta):
+        raise ValueError(f"Dimension mismatch: theta has {len(theta)} dims, "
+                        f"d_mu has {len(d_mu)} dims, d_var has {len(d_var)} dims")
+
+    # Gradient of BAPE utility in log form:
+    # bape_util = -((2.0 * mu + var) + logsubexp(var, 0.0))
+    #           = -(2*mu + var + log(exp(var) - 1))
+    # 
+    # ∇bape_util/∇μ = -2
+    # ∇bape_util/∇σ² = -(1 + exp(σ²)/(exp(σ²) - 1))
+    #
+    # Using chain rule:
+    # ∇bape_util/∇θ = (∇bape_util/∇μ)(∇μ/∇θ) + (∇bape_util/∇σ²)(∇σ²/∇θ)
+    
+    exp_var = np.exp(var)
+    
+    # Partial derivatives of the log-form BAPE utility
+    d_bape_d_mu = -2.0
+    d_bape_d_var = -(1.0 + exp_var / (exp_var - 1.0))
+    
+    # Apply chain rule
+    d_bape = d_bape_d_mu * d_mu + d_bape_d_var * d_var
+    
+    return d_bape
 
 
 def jones_utility(theta, predict_gp, bounds, y_best, zeta=0.01):
@@ -845,18 +1008,19 @@ def assign_utility(algorithm):
     # Assign utility function
     if algorithm == "bape":
         utility = bape_utility
+        grad_utility = grad_bape_utility
     elif algorithm == "agp":
         utility = agp_utility
-    elif algorithm == "alternate":
-        # If alternate, AGP on even, BAPE on odd
-        utility = agp_utility
+        grad_utility = grad_agp_utility
     elif algorithm == "jones":
         utility = jones_utility
+        grad_utility = None
     else:
-        errMsg = "Unknown algorithm. Valid options: bape, agp, jones, kg (knowledge_gradient), or alternate."
-        raise ValueError(errMsg)
+        print(f"ERROR: Unknown utility function: {algorithm}. Defaulting to BAPE.")
+        utility = bape_utility
+        grad_utility = grad_bape_utility
 
-    return utility
+    return utility, grad_utility
 
 
 def minimize_objective_single(idx, obj_fn, bounds, starting_point, method, options, grad_obj_fn=None):
