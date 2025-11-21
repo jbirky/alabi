@@ -1054,39 +1054,42 @@ def minimize_objective(obj_fn, bounds=None, nopt=1, method="l-bfgs-b",
     return theta_best, obj_best
 
 
-# Pickleable wrapper functions for FunctionTransformer
 class BetaWarpingFunction:
-    """Wrapper class to make warping functions pickleable."""
-    
+    """
+    Swersky et al. 2017 Beta CDF warping function for sklearn FunctionTransformer.
+    """
     def __init__(self, alpha=2.0, beta=2.0):
         self.alpha = alpha
         self.beta = beta
+        self.minmax_scaler = MinMaxScaler()
+        self._is_fitted = False
     
     def transform(self, X):
-        self.minmax_scaler = MinMaxScaler()
-        X_scaled = self.minmax_scaler.fit_transform(X)
+        if not self._is_fitted:
+            self.minmax_scaler.fit(X)
+            self._is_fitted = True
+        
+        X_scaled = self.minmax_scaler.transform(X)
         
         # Apply Beta CDF warping per feature
         X_warped = np.zeros_like(X_scaled)
         for i in range(X_scaled.shape[1]):
-            # betainc is the regularized incomplete beta function
-            # betainc(a, b, x) = B_x(a, b) / B(a, b)
             X_warped[:, i] = betainc(self.alpha, self.beta, X_scaled[:, i])
-            
+        
         return X_warped
     
     def inverse_transform(self, X):
+        if not self._is_fitted:
+            raise ValueError("Transformer must be fitted before inverse_transform")
         
         # Apply inverse Beta CDF per feature
         X_unwarped = np.zeros_like(X)
         for i in range(X.shape[1]):
-            # betaincinv is the inverse of regularized incomplete beta function
             X_unwarped[:, i] = betaincinv(self.alpha, self.beta, X[:, i])
         
         return self.minmax_scaler.inverse_transform(X_unwarped)
     
     
-# Create sklearn FunctionTransformer
 def beta_warping_transformer(alpha=2.0, beta=2.0):
     """
     Create a scikit-learn FunctionTransformer for Beta CDF warping.

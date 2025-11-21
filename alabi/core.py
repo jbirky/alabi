@@ -469,11 +469,13 @@ class SurrogateModel(object):
         if nsample is None:
             nsample = 50 * self.ndim
 
-        # _theta = self._prior_sampler(nsample=nsample, sampler=sampler, random_state=None)
-        # theta = self.theta_scaler.inverse_transform(_theta)
+        # note: initial samples should be drawn uniformly in scaled space
+        # if theta_scaler is a non-linear transform, then samples in real space will be non-uniform
+        _theta = self._prior_sampler(nsample=nsample, sampler=sampler, random_state=None)
+        theta = self.theta_scaler.inverse_transform(_theta)
         
-        theta = self.prior_sampler(nsample=nsample, sampler=sampler, random_state=None)
-        _theta = self.theta_scaler.transform(theta)
+        # theta = self.prior_sampler(nsample=nsample, sampler=sampler, random_state=None)
+        # _theta = self.theta_scaler.transform(theta)
         
         y = ut.eval_fn(self.true_log_likelihood, theta, ncore=self.ncore).reshape(-1, 1)
         self.y_scaler.fit(y)
@@ -544,31 +546,6 @@ class SurrogateModel(object):
             
         :param test_file: (*str, optional, default="initial_test_sample.npz"*)
             Filename for cached test samples relative to savedir. Currently unused.
-
-        .. note::
-        
-            This method must be called before init_gp() to provide training data for the
-            Gaussian Process. The samples are automatically scaled using the configured
-            theta_scaler and y_scaler.
-            
-            The method sets several important attributes:
-                - _theta, _y: Scaled training samples used by GP
-                - theta0, y0: Unscaled original training samples  
-                - ntrain: Number of training samples
-        
-        .. code-block:: python
-
-            Basic usage with default uniform sampling:
-            
-            >>> sm.init_samples(ntrain=200)
-            
-            Use Sobol sampling for better space coverage:
-            
-            >>> sm.init_samples(ntrain=150, sampler="sobol")
-            
-            Reload from cached file:
-            
-            >>> sm.init_samples(reload=True)
         """
 
         # Load or create training sample
