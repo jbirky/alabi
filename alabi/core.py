@@ -13,14 +13,15 @@ from alabi import parallel_utils
 import numpy as np
 from sklearn import preprocessing
 from functools import partial
+import george
 from george import kernels
-import multiprocessing as mp
+import multiprocess as mp
 import time
 import os
-import re
 import warnings
 import tqdm
 import pickle
+import scipy.optimize as op
 
 
 # Define scaling functions 
@@ -369,6 +370,29 @@ class SurrogateModel(object):
                                  "obj_fn_opt_time" : [],
                                  "acquisition_optimizer_niter" : []
                                  }
+        
+            
+    
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        
+        # If self.gp is the problematic object, we need to handle it
+        if hasattr(self, 'gp') and hasattr(self.gp, '__dict__'):
+            # Try to find and remove unpickleable attributes from gp
+            gp_dict = self.gp.__dict__.copy()
+            cleaned_gp_dict = {}
+            
+            for key, value in gp_dict.items():
+                try:
+                    pickle.dumps(value)
+                    cleaned_gp_dict[key] = value
+                except:
+                    print(f"Removing unpickleable attribute from gp: {key}")
+        
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
 
     
     def save(self):
@@ -605,7 +629,7 @@ class SurrogateModel(object):
             self.theta_test = []
             self.y_test = []
             self.ntest = 0
-
+            
 
     def set_hyperparam_prior_bounds(self):
         """
@@ -618,288 +642,101 @@ class SurrogateModel(object):
         """
 
         # Configure GP hyperparameter prior
-        hp_bounds = self.gp.get_parameter_bounds()
-        pnames = self.gp.get_parameter_names(include_frozen=False)
+        # hp_bounds = self.gp.get_parameter_bounds()
+        # pnames = self.gp.get_parameter_names(include_frozen=False)
+        
+        if self.uniform_scales == True:
+            pnames = self.param_names_optimized
+        else:
+            pnames = self.param_names_full
+        hp_bounds = [[None, None] for _ in pnames]
         
         if self.fit_mean:
-            mean_bounds = [np.mean(self._y) - np.std(self._y),
-                           np.mean(self._y) + np.std(self._y)]
+            mean_y, std_y = np.mean(self._y), np.std(self._y)
+            mean_bounds = [mean_y - std_y, mean_y + std_y]
             hp_bounds[pnames.index("mean:value")] = mean_bounds
             
         if self.fit_amp:
-            amp_bounds = [0.1, 10]
+            amp_bounds = [np.var(self._y) * 10**self.gp_amp_rng[0], np.var(self._y) * 10**self.gp_amp_rng[1]] 
             hp_bounds[pnames.index("kernel:k1:log_constant")] = amp_bounds
 
         if self.fit_white_noise:
             wn_bounds = [self.white_noise - 3, self.white_noise + 3]
             hp_bounds[pnames.index("white_noise:value")] = wn_bounds
+            
+        if self.uniform_scales == True:
+            hp_bounds[pnames.index("kernel:k2:metric:log_M")] = self.gp_scale_rng
+        else:
+            for ii in range(self.ndim):
+                hp_bounds[pnames.index(f"kernel:k2:metric:log_M_{ii}_{ii}")] = self.gp_scale_rng
 
         self.hp_bounds = np.array(hp_bounds)
         self.gp_hyper_prior = partial(ut.lnprior_uniform, bounds=self.hp_bounds)
-
+        
     
-    def fit_gp(self, _theta=None, _y=None, hyperparameters=None):
-        """
-        Fit Gaussian Process to training data with current hyperparameters.
+    def expand_hyperparameter_vector(self, optimized_params):
         
-        :param _theta: (*array, optional*) 
-            Scaled training parameter samples. If None, uses ``self._theta``.
+        if optimized_params is None:
+            raise ValueError("optimized_params cannot be None")
             
-        :param _y: (*array, optional*) 
-            Scaled training output values. If None, uses ``self._y``.
-            
-        :returns: (*tuple*) 
-            - gp: Fitted george.GP object
-            - timing: Time taken to fit the GP in seconds
-        """
-
-        if _theta is None:
-            _theta = self._theta
-
-        if _y is None:
-            _y = self._y
-
-        t0 = time.time()
-
-        self.set_hyperparam_prior_bounds()
-        gp = gp_utils.configure_gp(_theta, _y, self.kernel, 
-                                    fit_amp=self.fit_amp, 
-                                    fit_mean=self.fit_mean,
-                                    fit_white_noise=self.fit_white_noise,
-                                    white_noise=self.white_noise,
-                                    hyperparameters=hyperparameters)
-        if gp is None:
-            print(f"Warning: fit_gp failed with point {_theta[-1]}. Reoptimizing hyperparameters...")
-            # Use the current opt_gp_kwargs settings which should have correct multi_proc value
-            gp, _ = self.opt_gp(**self.opt_gp_kwargs)
-            
-        gp.compute(_theta)
+        if self.uniform_scales == False:
+            return optimized_params
         
-        timing = time.time() - t0
-
-        return gp, timing
-
-
-    def opt_gp(self, method="ml", regularize=True, amp_0=1.0, mu_0=1.0, sigma_0=2.0,
-               cv_folds=5, cv_scoring="mse", cv_n_candidates=20, multi_proc=True, 
-               cv_stage2_candidates=None, cv_stage2_width=0.5, cv_stage3_candidates=None, cv_stage3_width=0.2,
-               cv_weighted_mse_method="exponential", cv_weighted_mse_temperature=1.0):
-        """
-        Optimize GP hyperparameters using marginal likelihood or cross-validation.
+        full_params = np.ones(len(self.param_names_full))
         
-        :param method: (*str, optional, default="ml"*)
-            Optimization method to use:
-            
-            - "ml": Maximum marginal likelihood (default, fast)
-            - "cv": k-fold cross-validation (slower but prevents overfitting)
-            
-        :param cv_folds: (*int, optional, default=5*)
-            Number of folds for cross-validation (only used if method="cv")
-            
-        :param cv_scoring: (*str, optional, default='mse'*)
-            Scoring metric for cross-validation. Options: 'mse', 'mae', 'r2'
-            
-        :param cv_n_candidates: (*int, optional, default=20*)
-            Number of hyperparameter candidates to evaluate for CV
-            
-        :param multi_proc: (*bool, optional, default=True*)
-            Whether to use multiprocessing for CV evaluation.
-            Only used when method="cv".
-            
-        :param cv_two_stage: (*bool, optional, default=False*)
-            Whether to use two-stage CV optimization (explore-exploit strategy).
-            Only used when method="cv".
-            
-        :param cv_stage2_candidates: (*int, optional, default=None*)
-            Number of candidates for stage 2 grid search. If None, uses
-            cv_n_candidates // 2.
-            
-        :param cv_stage2_width: (*float, optional, default=0.5*)
-            Width factor for stage 2 search around best parameters.
-            Smaller values = tighter search around best from stage 1.
-            
-        :param cv_three_stage: (*bool, optional, default=False*)
-            Whether to use three-stage CV optimization (explore-exploit-refine).
-            Requires cv_two_stage=True. Only used when method="cv".
-            
-        :param cv_stage3_candidates: (*int, optional, default=None*)
-            Number of candidates for stage 3 ultra-fine search. If None, uses
-            max(cv_stage2_candidates // 2, 3). Only used when cv_three_stage=True.
-            
-        :param cv_stage3_width: (*float, optional, default=0.2*)
-            Width factor for stage 3 search around stage 2 best parameters.
-            Should be smaller than cv_stage2_width for finer refinement.
-            
-        :returns: (*tuple*) 
-            - op_gp: Optimized george.GP object with updated hyperparameters
-            - timing: Time taken for optimization in seconds
-        """
-
-        t0 = time.time()
-
-        self.set_hyperparam_prior_bounds()
+        if self.fit_mean:
+            full_params[self.param_names_full.index("mean:value")] = optimized_params[self.param_names_optimized.index("mean:value")]
+        if self.fit_amp:
+            full_params[self.param_names_full.index("kernel:k1:log_constant")] = optimized_params[self.param_names_optimized.index("kernel:k1:log_constant")]
+        if self.fit_white_noise:
+            full_params[self.param_names_full.index("white_noise:value")] = optimized_params[self.param_names_optimized.index("white_noise:value")]
         
-        failed = True
+        # if self.uniform_scales == True:  use same scale length for all dimensions
+        for ii in range(self.ndim):
+            full_params[self.param_names_full.index(f"kernel:k2:metric:log_M_{ii}_{ii}")] = optimized_params[self.param_names_optimized.index("kernel:k2:metric:log_M")]
+   
+        return np.array(full_params)
         
-        if multi_proc and self.ncore > 1:
-            pool = mp.Pool(processes=self.ncore)
+        
+    def set_hyperparameter_vector(self, tmp_gp, optimized_params):
+        
+        if optimized_params is None:
+            raise ValueError("optimized_params cannot be None. Cannot set hyperparameters.")
+            
+        if self.uniform_scales == True:
+            full_params = self.expand_hyperparameter_vector(optimized_params)
         else:
-            pool = None
-
-        if method.lower() == "cv":
-            # Cross-validation hyperparameter optimization
-            if self.verbose:
-                print(f"\nOptimizing GP hyperparameters using {cv_folds}-fold cross-validation...")
+            full_params = optimized_params
+                
+        tmp_gp.set_parameter_vector(full_params)
             
-            try:                         
-                candidates = ut.prior_sampler(bounds=self.hp_bounds, nsample=cv_n_candidates, sampler="lhs", random_state=None)
-
-                # Add current hyperparameters as a candidate if GP exists
-                if hasattr(self, "gp"):
-                    current_hp = self.gp.get_parameter_vector()
-                    if np.isfinite(self.gp_hyper_prior(current_hp)):
-                        # Replace first candidate with current hyperparameters
-                        candidates[0] = current_hp
-                     
-                # suppress outputs if running parallel chains   
-                if multi_proc:
-                    verbose = False
-                else:
-                    verbose = self.verbose
-                
-                # Optimize using cross-validation
-                op_gp, best_params, cv_results = gp_utils.optimize_gp_kfold_cv(
-                    self.gp, self._theta, self._y,
-                    candidates,
-                    self.y_scaler,
-                    k_folds=cv_folds,
-                    scoring=cv_scoring,
-                    pool=pool,
-                    stage2_candidates=cv_stage2_candidates,
-                    stage2_width=cv_stage2_width,
-                    stage3_candidates=cv_stage3_candidates,
-                    stage3_width=cv_stage3_width,
-                    weighted_mse_method=cv_weighted_mse_method,
-                    weighted_mse_temperature=cv_weighted_mse_temperature,
-                    verbose=verbose
-                )
-                
-                # Store CV results for analysis
-                if not hasattr(self, 'cv_results'):
-                    self.cv_results = []
-                self.cv_results.append(cv_results)
-                
-                failed = False
-                
-                if self.verbose:
-                    print(f"CV optimization completed. Best {cv_scoring}: {cv_results['best_score']:.4f} ± {cv_results['best_score_std']:.4f}")
-                
-            except Exception as e:
-                import traceback
-                import sys
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                tb_line = traceback.extract_tb(exc_traceback)[-1]
-                print(f"Warning: CV hyperparameter optimization failed: {str(e)}")
-                print(f"Error at line {tb_line.lineno} in {tb_line.filename}: {tb_line.line}")
-                print("Falling back to marginal likelihood optimization...")
-                failed = True
+        return tmp_gp
+    
+    
+    def get_hyperparameter_dict(self, gp):
+        """
+        Get current GP hyperparameters as a dictionary.
         
-        if method.lower() == "ml" or failed:
-            # Standard marginal likelihood optimization
-            if self.verbose and method.lower() == "ml":
-                print("\nOptimizing GP hyperparameters using marginal likelihood...")
-            
-            # create array of random initial hyperparameters:
-            # Use more restarts for better exploration but with early stopping
-            n_restarts = max(self.gp_nopt, 5) 
-            p0 = ut.prior_sampler(bounds=self.hp_bounds, nsample=n_restarts, sampler='uniform', random_state=None)
-            
-            if hasattr(self, "gp"):
-                # if gp exists, use current hyperparameters as a starting point 
-                current_hp = self.gp.get_parameter_vector(include_frozen=False)
-                if np.isfinite(self.gp_hyper_prior(current_hp)):
-                    p0[0] = current_hp
-
-            op_gp = gp_utils.optimize_gp(self.gp, self._theta, self._y,
-                                        self.gp_hyper_prior, p0,
-                                        method=self.gp_opt_method,
-                                        bounds=self.hp_bounds,
-                                        optimizer_kwargs=self.optimizer_kwargs,
-                                        regularize=regularize, amp_0=amp_0, mu_0=mu_0, sigma_0=sigma_0)
-            if op_gp is None:
-                print("Warning: opt_gp hyperparameter optimization failed. Reoptimizing hyperparameters...")
-                failed = True 
-            else:
-                failed = False
-                
-        if method.lower() == "mlcv":
-            
-            if self.verbose and method.lower() == "ml":
-                print("\nOptimizing GP hyperparameters using marginal likelihood...")
-            
-            # create array of random initial hyperparameters:
-            # Use more restarts for better exploration but with early stopping
-            n_restarts = max(self.gp_nopt, 5) 
-            p0 = ut.prior_sampler(bounds=self.hp_bounds, nsample=n_restarts, sampler='uniform', random_state=None)
-            
-            if hasattr(self, "gp"):
-                # if gp exists, use current hyperparameters as a starting point 
-                current_hp = self.gp.get_parameter_vector(include_frozen=False)
-                if np.isfinite(self.gp_hyper_prior(current_hp)):
-                    p0[0] = current_hp
-
-            op_gp = gp_utils.optimize_gp(self.gp, self._theta, self._y,
-                                        self.gp_hyper_prior, p0,
-                                        method=self.gp_opt_method,
-                                        bounds=self.hp_bounds,
-                                        optimizer_kwargs=self.optimizer_kwargs)
-            
-            # use ml optimized hyperparameters as starting point for cv
-            candidates = ut.prior_sampler(bounds=self.hp_bounds, nsample=cv_n_candidates, sampler="lhs", random_state=None)
-            candidates[0] = current_hp
-                    
-            # suppress outputs if running parallel chains   
-            if multi_proc:
-                verbose = False
-            else:
-                verbose = self.verbose
-            
-            # Optimize using cross-validation
-            op_gp, best_params, cv_results = gp_utils.optimize_gp_kfold_cv(
-                self.gp, self._theta, self._y,
-                candidates,
-                self.y_scaler,
-                k_folds=cv_folds,
-                scoring=cv_scoring,
-                pool=pool,
-                stage2_candidates=cv_stage2_candidates,
-                stage2_width=cv_stage2_width,
-                stage3_candidates=cv_stage3_candidates,
-                stage3_width=cv_stage3_width,
-                weighted_mse_method=cv_weighted_mse_method,
-                weighted_mse_temperature=cv_weighted_mse_temperature,
-                verbose=verbose
-            )
-            
-            # Store CV results for analysis
-            if not hasattr(self, 'cv_results'):
-                self.cv_results = []
-            self.cv_results.append(cv_results)
-
-        tf = time.time()
-        timing = tf - t0
-        self.training_results["gp_hyperparam_opt_time"].append(timing)
-
-        if self.verbose:
-            opt_method_str = "CV" if method.lower() == "cv" and not failed else "ML"
-            print(f"Optimized {len(self.gp.get_parameter_names(include_frozen=False))} hyperparameters using {opt_method_str}: ({np.round(timing, 3)}s)")
-
-        # Ensure pool cleanup
-        if pool is not None:
-            pool.close()
-            pool.join()
-
-        return op_gp, timing
+        :returns: (*dict*) 
+            Dictionary of current GP hyperparameters with names as keys and values as values.
+        """
+        
+        hp_dict = gp.get_parameter_dict()
+        
+        if self.uniform_scales == True:
+            hp_dict["kernel:k2:metric:log_M"] = hp_dict.pop("kernel:k2:metric:log_M_0_0")
+            for ii in range(1, self.ndim):
+                del hp_dict[f"kernel:k2:metric:log_M_{ii}_{ii}"]
+        
+        return hp_dict
+    
+    
+    def get_hyperparameter_vector(self, gp):
+        
+        hp_dict = self.get_hyperparameter_dict(gp)
+        hp_vector = np.fromiter(hp_dict.values(), dtype=float)
+        
+        return hp_vector
 
         
     def init_gp(self, 
@@ -909,10 +746,12 @@ class SurrogateModel(object):
                 fit_white_noise=True, 
                 white_noise=-12, 
                 gp_scale_rng=[-2,2],
+                gp_amp_rng=[-1,1],
+                uniform_scales=False,
                 overwrite=False,
                 gp_opt_method="newton-cg", 
                 gp_nopt=3,
-                optimizer_kwargs={"max_iter": 50},
+                optimizer_kwargs={"maxiter": 100, "xatol": 1e-4, "fatol": 1e-3, "adaptive": True},
                 hyperopt_method="ml",
                 regularize=True,
                 amp_0=1.0,
@@ -968,6 +807,10 @@ class SurrogateModel(object):
             Log-scale bounds for the characteristic length scale parameters of the kernel.
             Format: [log_min_scale, log_max_scale]. These bounds apply to all input dimensions.
             Default is [-2, 2], corresponding to scales between ~0.14 and ~7.4 in original units.
+            
+        :param uniform_scales: (*bool, optional*) 
+            If True, the same scale length will be used for all input dimensions. If False, each dimension
+            will have its own independent scale length. Default is False.
 
         :param overwrite: (*bool, optional*) 
             If True, allows reinitializing the GP even if one already exists. If False and a GP
@@ -983,8 +826,8 @@ class SurrogateModel(object):
 
         :param optimizer_kwargs: (*dict, optional*) 
             Additional keyword arguments passed to the scipy optimizer. Common options include
-            'max_iter' (maximum iterations) and convergence tolerances. 
-            Default is {"max_iter": 50}.
+            'maxiter' (maximum iterations) and convergence tolerances. 
+            Default is {"maxiter": 50}.
 
         :param hyperopt_method: (*str, optional, default='ml'*)
             Method for optimizing GP hyperparameters:
@@ -1044,7 +887,7 @@ class SurrogateModel(object):
             >>> # High-precision optimization
             >>> sm.init_gp(gp_opt_method="l-bfgs-b",
             ...            gp_nopt=5,
-            ...            optimizer_kwargs={"max_iter": 100, "ftol": 1e-9})
+            ...            optimizer_kwargs={"maxiter": 100, "ftol": 1e-9})
         """
         
         if hasattr(self, 'gp') and (overwrite == False):
@@ -1056,15 +899,7 @@ class SurrogateModel(object):
         self.fit_mean = fit_mean
         self.fit_white_noise = fit_white_noise
         self.white_noise = white_noise
-        
-        # count total optional hyperparameters
-        self.gp_nparam = self.ndim
-        if self.fit_mean:
-            self.gp_nparam += 1
-        if self.fit_amp:
-            self.gp_nparam += 1
-        if self.fit_white_noise:
-            self.gp_nparam += 1
+        self.uniform_scales = uniform_scales
 
         # GP hyperparameter optimization method
         self.gp_opt_method = gp_opt_method
@@ -1072,38 +907,27 @@ class SurrogateModel(object):
         # GP hyperparameter number of opt restarts
         self.gp_nopt = gp_nopt
 
-        # GP hyperparameter optimization kwargs
-        self.optimizer_kwargs = optimizer_kwargs
-
-        # GP hyperparameter optimization method (ml or cv)
-        self.hyperopt_method = hyperopt_method
-        self.cv_folds = cv_folds
-        self.cv_scoring = cv_scoring
-        self.cv_n_candidates = cv_n_candidates
-        self.cv_stage2_candidates = cv_stage2_candidates
-        self.cv_stage2_width = cv_stage2_width
-        self.cv_stage3_candidates = cv_stage3_candidates
-        self.cv_stage3_width = cv_stage3_width
-        self.cv_weighted_mse_temperature = cv_weighted_mse_temperature
-        
         # Save all kwargs needed for opt_gp function
-        self.opt_gp_kwargs = {"method": self.hyperopt_method,
+        self.opt_gp_kwargs = {"hyperopt_method": hyperopt_method,
                               "regularize": regularize,
                               "amp_0": amp_0,
                               "mu_0": mu_0,
                               "sigma_0": sigma_0,
-                              "cv_folds": self.cv_folds,
-                              "cv_scoring": self.cv_scoring,
-                              "cv_n_candidates": self.cv_n_candidates,
-                              "cv_stage2_candidates": self.cv_stage2_candidates,
-                              "cv_stage2_width": self.cv_stage2_width,
-                              "cv_stage3_candidates": self.cv_stage3_candidates,
-                              "cv_stage3_width": self.cv_stage3_width,
-                              "cv_weighted_mse_temperature": self.cv_weighted_mse_temperature,
+                              "optimizer_kwargs": optimizer_kwargs,
+                              "cv_folds": cv_folds,
+                              "cv_scoring": cv_scoring,
+                              "cv_n_candidates": cv_n_candidates,
+                              "cv_stage2_candidates": cv_stage2_candidates,
+                              "cv_stage2_width": cv_stage2_width,
+                              "cv_stage3_candidates": cv_stage3_candidates,
+                              "cv_stage3_width": cv_stage3_width,
+                              "cv_weighted_mse_temperature": cv_weighted_mse_temperature,
                               "multi_proc": multi_proc}
 
         # set the bounds for scale length parameters
         self.gp_scale_rng = gp_scale_rng
+        self.gp_amp_rng = gp_amp_rng
+        
         # metric_bounds expects log-scale bounds
         log_metric_bounds = [(min(gp_scale_rng), max(gp_scale_rng)) for _ in range(self.ndim)]
         metric_bounds = [(np.e**min(gp_scale_rng), np.e**max(gp_scale_rng)) for _ in range(self.ndim)]
@@ -1114,13 +938,11 @@ class SurrogateModel(object):
         
         while valid_scales == False and attempt < max_attempts:
             attempt += 1
+            
             # Generate initial scale length in linear scale (metric parameter expects linear scale)
             # gp_scale_rng is in log scale, so convert to linear scale for initial guess
             log_initial_lscale = np.random.uniform(min(gp_scale_rng), max(gp_scale_rng), self.ndim)
             initial_lscale = np.exp(log_initial_lscale)
-
-            # if self.verbose:
-            #     print(f"Attempt {attempt}: Trying initial scale lengths: {initial_lscale} (log: {log_initial_lscale})")
             
             # Note: metric is linear scale, but metric_bounds are log scale!
             # https://github.com/dfm/george/issues/150
@@ -1179,24 +1001,349 @@ class SurrogateModel(object):
             raise RuntimeError(f"Failed to initialize GP after {max_attempts} attempts. "
                                f"Check your data, kernel choice, and scale bounds. "
                                f"Current settings: kernel={kernel}, gp_scale_rng={gp_scale_rng}")
+                
+        self.param_names_full = self.gp.get_parameter_names(include_frozen=False)
+        self.param_names_optimized = []
+        if fit_mean:
+            self.param_names_optimized.append("mean:value")
+        if fit_amp:
+            self.param_names_optimized.append("kernel:k1:log_constant")
+        if fit_white_noise:
+            self.param_names_optimized.append("white_noise:value")
+        if self.uniform_scales:
+            self.param_names_optimized.append("kernel:k2:metric:log_M")
+        else:
+            for ii in range(self.ndim):
+                self.param_names_optimized.append(f"kernel:k2:metric:log_M_{ii}_{ii}")
+                
+        # Infer lengthscale indices (used if regularization is enabled)
+        self.hp_length_indices = []
+        self.hp_other_indices = []
+        for ii, name in enumerate(self.param_names_full):
+            # Common patterns for lengthscale parameters in george kernels
+            if any(pattern in name.lower() for pattern in ["metric:log_m"]):
+                self.hp_length_indices.append(ii)
+            else:
+                self.hp_other_indices.append(ii)
+        if self.uniform_scales:
+            # Only one lengthscale parameter when uniform scales are used
+            self.hp_length_index = [self.param_names_optimized.index("kernel:k2:metric:log_M")]
 
         # Fit GP with training sample and kernel
-        self.gp, _ = self.fit_gp()
+        self.gp, _ = self._fit_gp()
 
         # Optimize GP hyperparameters
-        self.gp, _ = self.opt_gp(**self.opt_gp_kwargs)
+        # self.gp, _ = self._opt_gp(**self.opt_gp_kwargs)
         
-        # Store GP initialization parameters for multiprocessing
-        self._gp_kernel = kernel
-        self._gp_fit_amp = fit_amp
-        self._gp_fit_mean = fit_mean  
-        self._gp_fit_white_noise = fit_white_noise
-        self._gp_white_noise = white_noise
+        
+    def _fit_gp(self, _theta=None, _y=None, hyperparameters=None):
+        """
+        Fit Gaussian Process to training data with current hyperparameters.
+        
+        :param _theta: (*array, optional*) 
+            Scaled training parameter samples. If None, uses ``self._theta``.
+            
+        :param _y: (*array, optional*) 
+            Scaled training output values. If None, uses ``self._y``.
+            
+        :returns: (*tuple*) 
+            - gp: Fitted george.GP object
+            - timing: Time taken to fit the GP in seconds
+        """
+
+        if _theta is None:
+            _theta = self._theta
+
+        if _y is None:
+            _y = self._y
+
+        t0 = time.time()
+
+        self.set_hyperparam_prior_bounds()
+
+        if self.fit_amp == True:
+            kernel = self.kernel * np.var(_y)
+        else:
+            kernel = self.kernel
+
+        gp = george.GP(kernel=kernel, fit_mean=self.fit_mean, mean=np.median(_y),
+                    white_noise=self.white_noise, fit_white_noise=self.fit_white_noise)
+
+        try:
+            gp = self.set_hyperparameter_vector(gp, hyperparameters)
+            gp.compute(_theta)
+        except:
+            print(f"Warning: fit_gp failed with point {_theta[-1]}. Reoptimizing hyperparameters...")
+            # Use the current opt_gp_kwargs settings which should have correct multi_proc value
+            gp, _ = self._opt_gp(**self.opt_gp_kwargs)
+        
+        timing = time.time() - t0
+
+        return gp, timing
+    
+    
+    def _opt_gp(self, hyperopt_method="ml", regularize=True, amp_0=1.0, mu_0=1.0, sigma_0=2.0,
+               optimizer_kwargs={"maxiter": 100, "xatol": 1e-4, "fatol": 1e-3, "adaptive": True},
+               cv_folds=5, cv_scoring="mse", cv_n_candidates=20, multi_proc=True, 
+               cv_stage2_candidates=None, cv_stage2_width=0.5, cv_stage3_candidates=None, cv_stage3_width=0.2,
+               cv_weighted_mse_method="exponential", cv_weighted_mse_temperature=1.0):
+        """
+        Optimize GP hyperparameters using marginal likelihood or cross-validation.
+        
+        :param method: (*str, optional, default="ml"*)
+            Optimization method to use:
+            
+            - "ml": Maximum marginal likelihood (default, fast)
+            - "cv": k-fold cross-validation (slower but prevents overfitting)
+            
+        :param cv_folds: (*int, optional, default=5*)
+            Number of folds for cross-validation (only used if method="cv")
+            
+        :param cv_scoring: (*str, optional, default='mse'*)
+            Scoring metric for cross-validation. Options: 'mse', 'mae', 'r2'
+            
+        :param cv_n_candidates: (*int, optional, default=20*)
+            Number of hyperparameter candidates to evaluate for CV
+            
+        :param multi_proc: (*bool, optional, default=True*)
+            Whether to use multiprocessing for CV evaluation.
+            Only used when method="cv".
+            
+        :param cv_two_stage: (*bool, optional, default=False*)
+            Whether to use two-stage CV optimization (explore-exploit strategy).
+            Only used when method="cv".
+            
+        :param cv_stage2_candidates: (*int, optional, default=None*)
+            Number of candidates for stage 2 grid search. If None, uses
+            cv_n_candidates // 2.
+            
+        :param cv_stage2_width: (*float, optional, default=0.5*)
+            Width factor for stage 2 search around best parameters.
+            Smaller values = tighter search around best from stage 1.
+            
+        :param cv_three_stage: (*bool, optional, default=False*)
+            Whether to use three-stage CV optimization (explore-exploit-refine).
+            Requires cv_two_stage=True. Only used when method="cv".
+            
+        :param cv_stage3_candidates: (*int, optional, default=None*)
+            Number of candidates for stage 3 ultra-fine search. If None, uses
+            max(cv_stage2_candidates // 2, 3). Only used when cv_three_stage=True.
+            
+        :param cv_stage3_width: (*float, optional, default=0.2*)
+            Width factor for stage 3 search around stage 2 best parameters.
+            Should be smaller than cv_stage2_width for finer refinement.
+            
+        :returns: (*tuple*) 
+            - op_gp: Optimized george.GP object with updated hyperparameters
+            - timing: Time taken for optimization in seconds
+        """
+
+        t0 = time.time()
+        
+        if multi_proc and self.ncore > 1:
+            pool = mp.Pool(processes=self.ncore)
+        else:
+            pool = None
+        
+        if hyperopt_method.lower() not in ["ml", "cv"]:
+            hyperopt_method = "ml"
+            print(f"Invalid method '{hyperopt_method}'. Must be 'ml' or 'cv'. Defaulting to 'ml'.")
+        
+        if self.gp_opt_method in ["newton-cg", "l-bfgs-b"]:
+            use_gradient = True
+
+        self.set_hyperparam_prior_bounds()
+            
+        if hyperopt_method.lower() == "ml":
+            current_gp = self.gp
+            current_gp.compute(self._theta)
+
+            # Define the objective function (negative log-likelihood in this case).
+            def nll(p_opt):
+                if self.uniform_scales:
+                    p = self.expand_hyperparameter_vector(p_opt)
+                else:
+                    p = p_opt
+                tmp_gp = self.set_hyperparameter_vector(current_gp, p)
+                ll = -tmp_gp.log_likelihood(self._y, quiet=True)
+                if regularize:
+                    reg = gp_utils.regularization_term(p, self.hp_length_indices, amp_0=amp_0, mu_0=mu_0, sigma_0=sigma_0)
+                    ll += reg
+                return ll if np.isfinite(ll) else 1e25
+
+            # And the gradient of the objective function.
+            def grad_nll(p_opt):
+                if self.uniform_scales:
+                    p = self.expand_hyperparameter_vector(p_opt)
+                else:
+                    p = p_opt
+                tmp_gp = self.set_hyperparameter_vector(current_gp, p)
+                grad_lnlike = -tmp_gp.grad_log_likelihood(self._y, quiet=True)
+                
+                if self.uniform_scales:
+                    gll = np.zeros(len(p_opt))
+                    gll[self.hp_length_index] = np.mean(grad_lnlike[self.hp_length_indices])
+                    gll[self.hp_other_indices] = grad_lnlike[self.hp_other_indices]
+                else:
+                    gll = grad_lnlike
+                        
+                if regularize:
+                    reg_grad = gp_utils.regularization_gradient(p, self.hp_length_indices, amp_0=amp_0, mu_0=mu_0, sigma_0=sigma_0)           
+                    if self.uniform_scales:
+                        reg_grad_avg = np.mean(reg_grad[self.hp_length_indices])
+                        gll[self.hp_length_index] += reg_grad_avg
+                    else:
+                        gll += reg_grad
+
+                return gll
+            
+            if use_gradient:
+                jac = grad_nll
+            else:
+                jac = None
+            
+            def optimize_fn(x0):
+                return op.minimize(fun=nll, x0=x0, jac=jac, method=self.gp_opt_method, bounds=self.hp_bounds, options=optimizer_kwargs)
+
+            current_hp = self.get_hyperparameter_vector(current_gp)
+            
+            if self.gp_nopt <= 1:
+                results = optimize_fn(current_hp)
+            else:
+                p0 = ut.prior_sampler(bounds=self.hp_bounds, nsample=self.gp_nopt, sampler="lhs", random_state=None)
+                p0[0] = current_hp
+                
+                if pool is None:
+                    # Sequential with progress bar
+                    opt_results = [optimize_fn(p) for p in tqdm.tqdm(p0, desc="Optimizing GP")]
+                else:
+                    # Parallel with progress bar using imap
+                    opt_results = list(tqdm.tqdm(
+                        pool.imap(optimize_fn, p0),
+                        total=len(p0),
+                        desc=f"Optimizing GP ({self.ncore} cores)"
+                    ))
+
+                def get_fun_value(res):
+                    return res.fun
+                results = min(opt_results, key=get_fun_value)
+            
+            op_gp = self.set_hyperparameter_vector(current_gp, results.x)
+            op_gp.compute(self._theta)
+            
+            if self.verbose:
+                nll_0 = nll(current_hp)
+                nll_fit = nll(results.x)
+                if regularize:
+                    reg_0 = gp_utils.regularization_term(self.expand_hyperparameter_vector(current_hp), self.hp_length_indices, amp_0=amp_0, mu_0=mu_0, sigma_0=sigma_0)
+                    reg_fit = gp_utils.regularization_term(self.expand_hyperparameter_vector(results.x), self.hp_length_indices, amp_0=amp_0, mu_0=mu_0, sigma_0=sigma_0)
+                    print(f"Initial -logL: \t {nll_0:.4f} | \t Regularization: {reg_0:.4f} | \t Total: {nll_0 + reg_0:.4f}")
+                    print(f"Final -logL: \t {nll_fit:.4f} | \t Regularization: {reg_fit:.4f} | \t Total: {nll_fit + reg_fit:.4f} ")
+                else:
+                    print(f"Initial -logL: \t {nll_0:.4f} | \t Regularization: None")
+                    print(f"Final -logL: \t {nll_fit:.4f} | \t Regularization: None ")
+                print(f"{results.nit} iterations | Success: {results.success} | Message: {results.message} \n")
+
+        if hyperopt_method.lower() == "cv":
+            # Cross-validation hyperparameter optimization    
+            if self.verbose:
+                print(f"\nOptimizing GP hyperparameters using {cv_folds}-fold cross-validation...")
+            
+            try:                         
+                candidates = ut.prior_sampler(bounds=self.hp_bounds, nsample=cv_n_candidates, sampler="lhs", random_state=None)
+
+                # Add current hyperparameters as a candidate if GP exists
+                if hasattr(self, "gp"):
+                    current_hp = self.gp.get_parameter_vector()
+                    if np.isfinite(self.gp_hyper_prior(current_hp)):
+                        # Replace first candidate with current hyperparameters
+                        candidates[0] = current_hp
+                
+                # Expand hyperparameters if using uniform scales
+                # CV function expects full parameter vectors that can be set directly on GP
+                if self.uniform_scales:
+                    candidates_expanded = np.array([self.expand_hyperparameter_vector(c) for c in candidates])
+                else:
+                    candidates_expanded = candidates
+                     
+                # suppress outputs if running parallel chains   
+                if multi_proc:
+                    verbose_cv = False  # Suppress for parallel chains
+                else:
+                    verbose_cv = True  # Always show CV diagnostics
+                
+                # Optimize using cross-validation
+                cv_result = gp_utils.optimize_gp_kfold_cv(
+                    self.gp, self._theta, self._y,
+                    candidates_expanded,
+                    self.y_scaler,
+                    k_folds=cv_folds,
+                    scoring=cv_scoring,
+                    pool=pool,
+                    stage2_candidates=cv_stage2_candidates,
+                    stage2_width=cv_stage2_width,
+                    stage3_candidates=cv_stage3_candidates,
+                    stage3_width=cv_stage3_width,
+                    weighted_mse_method=cv_weighted_mse_method,
+                    weighted_mse_temperature=cv_weighted_mse_temperature,
+                    verbose=verbose_cv
+                )
+                
+                # Check if CV optimization succeeded
+                if cv_result is None:
+                    raise ValueError("CV optimization returned None")
+                    
+                op_gp, best_params, cv_results = cv_result
+                
+                # Store CV results for analysis
+                if not hasattr(self, 'cv_results'):
+                    self.cv_results = []
+                self.cv_results.append(cv_results)
+                
+                if self.verbose:
+                    print(f"CV optimization completed. Best {cv_scoring}: {cv_results['best_score']:.4f} ± {cv_results['best_score_std']:.4f}")
+                
+            except Exception as e:
+                import traceback
+                import sys
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                tb_line = traceback.extract_tb(exc_traceback)[-1]
+                print(f"Warning: CV hyperparameter optimization failed: {str(e)}")
+                print(f"Error at line {tb_line.lineno} in {tb_line.filename}: {tb_line.line}")
+                print("Falling back to maximum likelihood optimization...")
+                
+                # Fall back to ML optimization if CV fails
+                op_gp = None
+
+        # If op_gp is not set (CV failed or wasn't used), use current GP or initialize one
+        if 'op_gp' not in locals() or op_gp is None:
+            if hasattr(self, 'gp'):
+                op_gp = self.gp
+            else:
+                # Create a basic GP with default hyperparameters
+                if self.fit_amp:
+                    kernel = self.kernel * np.var(self._y)
+                else:
+                    kernel = self.kernel
+                op_gp = george.GP(kernel=kernel, fit_mean=self.fit_mean, mean=np.median(self._y),
+                                white_noise=self.white_noise, fit_white_noise=self.fit_white_noise)
+                op_gp.compute(self._theta)
+
+        tf = time.time()
+        timing = tf - t0
+        self.training_results["gp_hyperparam_opt_time"].append(timing)
+        
+        # Ensure pool cleanup
+        if pool is not None:
+            pool.close()
+            pool.join()
+
+        return op_gp, timing
         
     
     def eval_gp_at_iteration(self, iter, return_var=False):
         
-        gp_iter = self.gp 
+        # gp_iter = self.gp 
         if len(self.training_results["iteration"]) == 0:
             _theta_cond = self._theta
             _y_cond = self._y
@@ -1206,11 +1353,13 @@ class SurrogateModel(object):
                 _theta_cond = self._theta
                 _y_cond = self._y
                 # Use the latest parameters (last in the list)
-                gp_iter.set_parameter_vector(self.training_results["gp_hyperparameters"][-1])
+                # gp_iter.set_parameter_vector(self.training_results["gp_hyperparameters"][-1])
+                gp_iter = self.set_hyperparameter_vector(self.gp, self.training_results["gp_hyperparameters"][-1])
             else:
                 _theta_cond = self._theta[:self.ninit_train + iter]
                 _y_cond = self._y[:self.ninit_train + iter]
-                gp_iter.set_parameter_vector(self.training_results["gp_hyperparameters"][:self.ninit_train + iter])
+                # gp_iter.set_parameter_vector(self.training_results["gp_hyperparameters"][:self.ninit_train + iter])
+                gp_iter = self.set_hyperparameter_vector(self.gp, self.training_results["gp_hyperparameters"][iter])
             
         gp_iter.compute(_theta_cond)
 
@@ -1531,7 +1680,7 @@ class SurrogateModel(object):
             y_prop = np.append(self._y, yN)
 
             # Fit GP with new training point
-            self.gp, fit_gp_timing = self.fit_gp(_theta=theta_prop, _y=y_prop, hyperparameters=self.gp.get_parameter_vector())
+            self.gp, fit_gp_timing = self._fit_gp(_theta=theta_prop, _y=y_prop, hyperparameters=self.gp.get_parameter_vector())
 
             # If proposed (theta, y) did not cause fitting issues, save to surrogate model obj
             self._theta = theta_prop
@@ -1588,7 +1737,7 @@ class SurrogateModel(object):
                 reopt_kwargs = self.opt_gp_kwargs
                 reopt_kwargs["multi_proc"] = allow_opt_multiproc
                 # re-optimize hyperparamters
-                self.gp, _ = self.opt_gp(**reopt_kwargs)
+                self.gp, _ = self._opt_gp(**reopt_kwargs)
                 
                 # record which iteration hyperparameters were optimized
                 self.training_results["gp_hyperparameter_opt_iteration"].append(ii + first_iter)
@@ -1817,7 +1966,7 @@ class SurrogateModel(object):
         # Final GP optimization with all combined data
         if self.verbose:
             print("\nPerforming final GP optimization with combined dataset...")
-        self.gp, _ = self.opt_gp(**self.opt_gp_kwargs)
+        self.gp, _ = self._opt_gp(**self.opt_gp_kwargs)
         
         if self.cache:
             self.save()
@@ -2168,7 +2317,7 @@ class SurrogateModel(object):
             fname = f"{self.savedir}/{samples_file}"
         else:
             if self.like_fn_name == "true":
-                fname = "{self.savedir}/emcee_samples_final_{self.like_fn_name}.npz"
+                fname = f"{self.savedir}/emcee_samples_final_{self.like_fn_name}.npz"
             else:
                 if len(self.training_results["iteration"]) == 0:
                     current_iter = 0
@@ -2502,12 +2651,12 @@ class SurrogateModel(object):
                 # Create a new sampler for the next run
                 if mode == "dynamic":
                     dsampler = dynesty.DynamicNestedSampler(self.like_fn, 
-                                                            prior_transform, 
+                                                            self.prior_transform, 
                                                             ndim=self.ndim, 
                                                             **sampler_kwargs)
                 else:
                     dsampler = dynesty.NestedSampler(self.like_fn, 
-                                                     prior_transform, 
+                                                     self.prior_transform, 
                                                      ndim=self.ndim, 
                                                      **sampler_kwargs)
             else:
@@ -4065,7 +4214,7 @@ class SurrogateModel(object):
                 if hasattr(self, 'gp') and self.gp is not None:
                     try:
                         # Refit GP with combined data using current hyperparameters
-                        self.gp, _ = self.fit_gp(_theta=self._theta, _y=self._y, hyperparameters=self.gp.get_parameter_vector())
+                        self.gp, _ = self._fit_gp(_theta=self._theta, _y=self._y, hyperparameters=self.gp.get_parameter_vector())
                         
                         # Check for numerical stability by computing a test prediction
                         try:
@@ -4075,14 +4224,14 @@ class SurrogateModel(object):
                         except:
                             print("Warning: GP numerically unstable after hyperparameter restoration, re-optimizing...")
                             # If unstable, re-optimize hyperparameters
-                            self.gp, _ = self.opt_gp(**self.opt_gp_kwargs)
+                            self.gp, _ = self._opt_gp(**self.opt_gp_kwargs)
                     except Exception as e:
                         print(f"Warning: Hyperparameter preservation failed ({e}), falling back to standard fitting")
                         # If hyperparameter preservation fails, fall back to standard fitting  
-                        self.gp, _ = self.fit_gp(_theta=self._theta, _y=self._y)
+                        self.gp, _ = self._fit_gp(_theta=self._theta, _y=self._y)
                 else:
                     # No existing GP, use standard fitting
-                    self.gp, _ = self.fit_gp(_theta=self._theta, _y=self._y)
+                    self.gp, _ = self._fit_gp(_theta=self._theta, _y=self._y)
             else:
                 print("Warning: No new points added after duplicate removal")
         

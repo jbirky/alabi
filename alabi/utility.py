@@ -20,13 +20,7 @@ import warnings
 import time
 from scipy.special import betainc, betaincinv
 from sklearn.preprocessing import FunctionTransformer, MinMaxScaler
-
-# Import parallel utilities for MPI-safe multiprocessing
-try:
-    from alabi import parallel_utils
-except ImportError:
-    # Fallback if parallel_utils is not available
-    parallel_utils = None
+from alabi import parallel_utils
 import tqdm
 
 __all__ = ["agp_utility", 
@@ -875,7 +869,7 @@ def grad_bape_utility(theta, gp, bounds):
     if not np.isfinite(lnprior_uniform(theta, bounds)):
         return np.full(len(theta), np.inf)  # Return array of infs with correct shape
 
-    mu, var = gp(theta.reshape(1,-1))
+    mu, var = gp.predict(gp._y, theta.reshape(1,-1), return_var=True)
     
     d_mu = grad_gp_mean_prediction(theta, gp)
     d_var = grad_gp_var_prediction(theta, gp)
@@ -1144,7 +1138,7 @@ def minimize_objective(obj_fn, bounds=None, nopt=1, method="l-bfgs-b",
             # Faster convergence for Nelder-Mead
             options = {"maxiter": 200, "xatol": 1e-6, "fatol": 1e-6}
         else:
-            options = {"maxiter": 50}
+            options = {"maxiter": 100}
     else:
         # Make a copy to avoid modifying the original
         options = options.copy()
