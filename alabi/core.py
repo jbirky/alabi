@@ -271,7 +271,7 @@ class SurrogateModel(object):
         :meth:`run_pymultinest` : Run nested sampling with PyMultiNest
     """
 
-    def __init__(self, lnlike_fn=None, bounds=None, param_names=None,
+    def __init__(self, lnlike_fn=None, bounds=None, param_names=None, 
                  theta_scaler=preprocessing.MinMaxScaler(), y_scaler=no_scaler,
                  cache=True, savedir="results/", model_name="surrogate_model",
                  verbose=True, ncore=mp.cpu_count(), ignore_warnings=True,
@@ -345,12 +345,10 @@ class SurrogateModel(object):
             warnings.filterwarnings("ignore", category=FutureWarning)
 
         # Number of cores alabi is allowed to use
-        if ncore > mp.cpu_count():
-            self.ncore = mp.cpu_count()
-        elif ncore <= 0:
+        if ncore <= 0:
             self.ncore = 1
         else:
-            self.ncore = ncore
+            self.ncore = min(ncore, mp.cpu_count())
 
         # false if emcee, dynesty, and ultranest have not been run for this object
         self.emcee_run = False
@@ -371,7 +369,6 @@ class SurrogateModel(object):
                                  "acquisition_optimizer_niter" : []
                                  }
         
-            
     
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -479,6 +476,22 @@ class SurrogateModel(object):
         """
         
         return self.y_scaler.inverse_transform(self._y.reshape(-1, 1)).flatten()
+    
+    
+    def refit_scalers(self, theta, y):
+        """
+        Refit the theta and y scalers using current training data.
+        Useful if training data has changed significantly.
+        """
+
+        self.theta_scaler.fit(theta)
+        _theta = self.theta_scaler.transform(theta)
+        
+        self.y_scaler.fit(y)
+        _y = self.y_scaler.transform(y).flatten()
+        
+        return _theta, _y
+
 
     def init_train(self, nsample=None, sampler="uniform", fname="initial_training_sample.npz"):
         """
@@ -495,20 +508,16 @@ class SurrogateModel(object):
 
         # note: initial samples should be drawn uniformly in scaled space
         # if theta_scaler is a non-linear transform, then samples in real space will be non-uniform
-        _theta = self._prior_sampler(nsample=nsample, sampler=sampler, random_state=None)
-        theta = self.theta_scaler.inverse_transform(_theta)
+        # _theta = self._prior_sampler(nsample=nsample, sampler=sampler, random_state=None)
+        # theta = self.theta_scaler.inverse_transform(_theta)
         
-        # theta = self.prior_sampler(nsample=nsample, sampler=sampler, random_state=None)
-        # _theta = self.theta_scaler.transform(theta)
-        
+        theta = self.prior_sampler(nsample=nsample, sampler=sampler, random_state=None)   
         y = ut.eval_fn(self.true_log_likelihood, theta, ncore=self.ncore).reshape(-1, 1)
-        self.y_scaler.fit(y)
-        _y = self.y_scaler.transform(y).flatten()
 
         if self.cache:
             np.savez(f"{self.savedir}/{fname}", theta=theta, y=y)
 
-        return _theta, _y
+        return theta, y
 
 
     def load_train(self, cache_file):
@@ -525,18 +534,12 @@ class SurrogateModel(object):
         sims = np.load(cache_file)
         theta = sims["theta"]
         y = sims["y"]
-        
-        _theta = self.theta_scaler.transform(theta)
-        
-        # Fit and transform y scale 
-        self.y_scaler.fit(y.reshape(-1, 1))
-        _y = self.y_scaler.transform(y.reshape(-1, 1)).flatten()
 
         if self.ndim != theta.shape[1]:
             raise ValueError(f"Dimension of bounds (n={self.ndim}) does not \
                               match dimension of training theta (n={theta.shape[1]})")
 
-        return _theta, _y
+        return theta, y
 
 
     def init_samples(self, ntrain=100, ntest=0, reload=False, sampler="uniform",
@@ -576,14 +579,16 @@ class SurrogateModel(object):
         if reload == True:
             try:
                 cache_file = f"{self.savedir}/{train_file}"
-                print(f"Loading training sample from {cache_file}...")
-                _theta, _y = self.load_train(cache_file)
-                
-            except:
-                print(f"Unable to reload {cache_file}. Computing new samples...")
-                _theta, _y = self.init_train(nsample=ntrain, sampler=sampler, fname=train_file)
+                theta, y = self.load_train(cache_file)
+                print(f"Loaded {len(theta)} training samples from {cache_file}.")
+            except Exception as e:
+                print(f"Unable to reload {cache_file} due to error: {e}. Computing new samples with {self.ncore} cores...")
+                theta, y = self.init_train(nsample=ntrain, sampler=sampler, fname=train_file)
         else:
-            _theta, _y = self.init_train(nsample=ntrain, sampler=sampler)
+            theta, y = self.init_train(nsample=ntrain, sampler=sampler)
+            
+        # Fit scalers
+        _theta, _y = self.refit_scalers(theta, y)
             
         # Training dataset scaled
         self._theta0 = _theta
@@ -605,21 +610,21 @@ class SurrogateModel(object):
             if reload == True:
                 try:
                     cache_file = f"{self.savedir}/{test_file}"
-                    print(f"Loading test sample from {cache_file}...")
-                    _theta_test, _y_test = self.load_test(cache_file)
-                except:
-                    print(f"Unable to reload {cache_file}. Computing new samples...")
-                    _theta_test, _y_test = self.init_train(nsample=ntest, sampler=sampler, fname=test_file)
+                    theta_test, y_test = self.load_train(cache_file)
+                    print(f"Loaded {len(theta_test)} test samples from {cache_file}.")
+                except Exception as e:
+                    print(f"Unable to reload {cache_file} due to error: {e}. Computing new samples with {self.ncore} cores...")
+                    theta_test, y_test = self.init_train(nsample=ntest, sampler=sampler, fname=test_file)
             else:
-                _theta_test, _y_test = self.init_train(nsample=ntest, sampler=sampler, fname=test_file)
+                theta_test, y_test = self.init_train(nsample=ntest, sampler=sampler, fname=test_file)
 
-            # Test dataset scaled
-            self._theta_test = _theta_test
-            self._y_test = _y_test
+            # Save test dataset
+            self.theta_test = theta_test
+            self.y_test = y_test
             
-            # Test dataset unscaled
-            self.theta_test = self.theta_scaler.inverse_transform(self._theta_test)
-            self.y_test = self.y_scaler.inverse_transform(self._y_test.reshape(-1, 1)).flatten()
+            # Test dataset scaled
+            self._theta_test = self.theta_scaler.transform(self.theta_test)
+            self._y_test = self.y_scaler.transform(self.y_test.reshape(-1, 1)).flatten()
 
             # record number of test samples
             self.ntest = len(self._theta_test)
@@ -764,7 +769,7 @@ class SurrogateModel(object):
                 cv_stage2_width=0.3,
                 cv_stage3_candidates=None,
                 cv_stage3_width=0.2,
-                cv_weighted_mse_temperature=1.0,
+                cv_weighted_factor=1.0,
                 multi_proc=True):
         """
         Initialize the Gaussian Process surrogate model with specified kernel and hyperparameters.
@@ -921,7 +926,7 @@ class SurrogateModel(object):
                               "cv_stage2_width": cv_stage2_width,
                               "cv_stage3_candidates": cv_stage3_candidates,
                               "cv_stage3_width": cv_stage3_width,
-                              "cv_weighted_mse_temperature": cv_weighted_mse_temperature,
+                              "cv_weighted_factor": cv_weighted_factor,
                               "multi_proc": multi_proc}
 
         # set the bounds for scale length parameters
@@ -1086,7 +1091,7 @@ class SurrogateModel(object):
                optimizer_kwargs={"maxiter": 100, "xatol": 1e-4, "fatol": 1e-3, "adaptive": True},
                cv_folds=5, cv_scoring="mse", cv_n_candidates=20, multi_proc=True, 
                cv_stage2_candidates=None, cv_stage2_width=0.5, cv_stage3_candidates=None, cv_stage3_width=0.2,
-               cv_weighted_mse_method="exponential", cv_weighted_mse_temperature=1.0):
+               cv_weighted_mse_method="exponential", cv_weighted_factor=1.0):
         """
         Optimize GP hyperparameters using marginal likelihood or cross-validation.
         
@@ -1254,10 +1259,7 @@ class SurrogateModel(object):
 
                 # Add current hyperparameters as a candidate if GP exists
                 if hasattr(self, "gp"):
-                    current_hp = self.gp.get_parameter_vector()
-                    if np.isfinite(self.gp_hyper_prior(current_hp)):
-                        # Replace first candidate with current hyperparameters
-                        candidates[0] = current_hp
+                    candidates[0] = self.get_hyperparameter_vector(self.gp)
                 
                 # Expand hyperparameters if using uniform scales
                 # CV function expects full parameter vectors that can be set directly on GP
@@ -1285,7 +1287,7 @@ class SurrogateModel(object):
                     stage3_candidates=cv_stage3_candidates,
                     stage3_width=cv_stage3_width,
                     weighted_mse_method=cv_weighted_mse_method,
-                    weighted_mse_temperature=cv_weighted_mse_temperature,
+                    weighted_mse_factor=cv_weighted_factor,
                     verbose=verbose_cv
                 )
                 
@@ -1353,13 +1355,14 @@ class SurrogateModel(object):
                 _theta_cond = self._theta
                 _y_cond = self._y
                 # Use the latest parameters (last in the list)
-                # gp_iter.set_parameter_vector(self.training_results["gp_hyperparameters"][-1])
                 gp_iter = self.set_hyperparameter_vector(self.gp, self.training_results["gp_hyperparameters"][-1])
-            else:
+            elif iter <= self.training_results["iteration"][-1]:
                 _theta_cond = self._theta[:self.ninit_train + iter]
                 _y_cond = self._y[:self.ninit_train + iter]
-                # gp_iter.set_parameter_vector(self.training_results["gp_hyperparameters"][:self.ninit_train + iter])
-                gp_iter = self.set_hyperparameter_vector(self.gp, self.training_results["gp_hyperparameters"][iter])
+                last_hp = self.training_results["gp_hyperparameters"][np.floor(iter / self.gp_opt_freq).astype(int)]
+                gp_iter = self.set_hyperparameter_vector(self.gp, last_hp)
+            else:
+                raise ValueError(f"Iteration {iter} exceeds available training iterations ({self.training_results['iteration'][-1]}).")
             
         gp_iter.compute(_theta_cond)
 

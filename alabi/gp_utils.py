@@ -509,7 +509,7 @@ def _evaluate_candidate_worker(args):
     Worker function for parallel evaluation of a single hyperparameter candidate.
     
     :param args: tuple containing (cand_idx, hyperparams, gp, theta, y,  
-                                   k_folds, scoring, weighted_mse_method, weighted_mse_temperature)
+                                   k_folds, scoring, weighted_mse_method, weighted_mse_factor)
     :returns: tuple (cand_idx, fold_scores, success_flag)
     """
     import copy
@@ -517,7 +517,7 @@ def _evaluate_candidate_worker(args):
     from sklearn.model_selection import KFold
     from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
-    (cand_idx, hyperparams, gp, _theta, _y, y_scaler, k_folds, scoring, weighted_mse_method, weighted_mse_temperature) = args
+    (cand_idx, hyperparams, gp, _theta, _y, y_scaler, k_folds, scoring, weighted_mse_method, weighted_mse_factor) = args
 
     try:
         # Check for basic hyperparameter validity
@@ -610,7 +610,7 @@ def _evaluate_candidate_worker(args):
                 elif scoring == 'weighted_mse':
                     fold_score = weighted_mse_by_probability(y_val, y_pred, 
                                                            weight_method=weighted_mse_method,
-                                                           temperature=weighted_mse_temperature)
+                                                           temperature=weighted_mse_factor)
                 else:
                     raise ValueError(f"Unsupported scoring method: {scoring}")
                 
@@ -637,7 +637,7 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
                          k_folds=5, scoring="mse", pool=None, 
                          stage2_candidates=None, stage2_width=0.5,
                          stage3_candidates=None, stage3_width=0.2,
-                         weighted_mse_method="exponential", weighted_mse_temperature=1.0,
+                         weighted_mse_method="exponential", weighted_mse_factor=1.0,
                          verbose=True):
     """
     Optimize Gaussian Process hyperparameters using k-fold cross-validation.
@@ -704,7 +704,7 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
         - 'softmax': w = softmax(y_true / temperature)
         - 'rank': w based on rank order of y_true
         
-    :param weighted_mse_temperature: (*float, optional, default=1.0*)
+    :param weighted_mse_factor: (*float, optional, default=1.0*)
         Temperature parameter for exponential/softmax weighting.
         Lower values emphasize high-probability regions more strongly.
         
@@ -773,13 +773,12 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
         worker_args = []
         for cand_idx, hyperparams in enumerate(hyperparameter_candidates):
             args = (cand_idx, hyperparams, gp, _theta, _y, y_scaler, 
-                   k_folds, scoring, weighted_mse_method, weighted_mse_temperature)
+                   k_folds, scoring, weighted_mse_method, weighted_mse_factor)
             worker_args.append(args)
         
         # Evaluate all candidates in parallel with progress bar
         failed_candidate_errors = []  # Track errors for diagnostics
         with tqdm(total=len(worker_args), desc="Evaluating candidates", unit="candidate") as pbar:
-            # Use pool.imap for progress tracking
             results = []
             for result in pool.imap(_evaluate_candidate_worker, worker_args):
                 results.append(result)
@@ -816,7 +815,7 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
         # Sequential evaluation using the worker function
         failed_candidate_errors = []  # Track errors for diagnostics
         for cand_idx, hyperparams in enumerate(hyperparameter_candidates):
-            args = (cand_idx, hyperparams, gp, _theta, _y, y_scaler, k_folds, scoring, weighted_mse_method, weighted_mse_temperature)
+            args = (cand_idx, hyperparams, gp, _theta, _y, y_scaler, k_folds, scoring, weighted_mse_method, weighted_mse_factor)
             results = _evaluate_candidate_worker(args)
             cand_idx_result, fold_scores, status = results
             
@@ -940,7 +939,7 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
                 worker_args_s2 = []
                 for cand_idx, hyperparams in enumerate(stage2_hyperparam_candidates):
                     args = (cand_idx, hyperparams, gp, _theta, _y, y_scaler,
-                           k_folds, scoring, weighted_mse_method, weighted_mse_temperature)
+                           k_folds, scoring, weighted_mse_method, weighted_mse_factor)
                     worker_args_s2.append(args)
                 
                 with tqdm(total=len(worker_args_s2), desc="Stage 2 candidates", unit="candidate") as pbar:
@@ -972,7 +971,7 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
             else:
                 # Sequential evaluation for stage 2
                 for cand_idx, hyperparams in enumerate(stage2_hyperparam_candidates):
-                    args = (cand_idx, hyperparams, gp, _theta, _y, y_scaler, k_folds, scoring, weighted_mse_method, weighted_mse_temperature)
+                    args = (cand_idx, hyperparams, gp, _theta, _y, y_scaler, k_folds, scoring, weighted_mse_method, weighted_mse_factor)
                     results_s2 = _evaluate_candidate_worker(args)
                     cand_idx_result, fold_scores, status = results_s2
                     
@@ -1065,7 +1064,7 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
             worker_args_s3 = []
             for cand_idx, hyperparams in enumerate(stage3_hyperparam_candidates):
                 args = (cand_idx, hyperparams, gp, _theta, _y, y_scaler,
-                       k_folds, scoring, weighted_mse_method, weighted_mse_temperature)
+                       k_folds, scoring, weighted_mse_method, weighted_mse_factor)
                 worker_args_s3.append(args)
             
             with tqdm(total=len(worker_args_s3), desc="Stage 3 candidates", unit="candidate") as pbar:
@@ -1097,7 +1096,7 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
         else:
             # Sequential evaluation for stage 3
             for cand_idx, hyperparams in enumerate(stage3_hyperparam_candidates):
-                args = (cand_idx, hyperparams, gp, _theta, _y, y_scaler, k_folds, scoring, weighted_mse_method, weighted_mse_temperature)
+                args = (cand_idx, hyperparams, gp, _theta, _y, y_scaler, k_folds, scoring, weighted_mse_method, weighted_mse_factor)
                 results_s3 = _evaluate_candidate_worker(args)
                 cand_idx_result, fold_scores, status = results_s3
                 

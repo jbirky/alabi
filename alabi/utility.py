@@ -248,13 +248,13 @@ def eval_fn(fn, theta, ncore=mp.cpu_count()):
         for ii, tt in tqdm.tqdm(enumerate(theta)):
             y[ii] = fn(tt)
     else:
-        # Use MPI-safe multiprocessing
-        if parallel_utils is not None:
-            y = parallel_utils.safe_pool_map(fn, theta, ncore)
-        else:
-            # Fallback to original implementation
-            with mp.Pool(ncore) as p:
-                y = np.array(p.map(fn, theta))
+        # # Use MPI-safe multiprocessing
+        # if parallel_utils is not None:
+        #     y = parallel_utils.safe_pool_map(fn, theta, ncore)
+        # else:
+        #     # Fallback to original implementation with progress bar
+        with mp.Pool(ncore) as p:
+            y = np.array(list(tqdm.tqdm(p.imap(fn, theta), total=len(theta))))
     y = np.array(y)
 
     tf = time.time()
