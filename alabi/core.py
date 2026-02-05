@@ -484,11 +484,50 @@ class SurrogateModel(object):
         Useful if training data has changed significantly.
         """
 
-        self.theta_scaler.fit(theta)
+        self.theta_scaler.fit(self.bounds.T)
         _theta = self.theta_scaler.transform(theta)
         
-        self.y_scaler.fit(y)
-        _y = self.y_scaler.transform(y).flatten()
+        y_2d = y.reshape(-1, 1)
+        _y = self.y_scaler.fit_transform(y_2d).flatten()
+        
+        if np.any(np.isnan(_theta)):
+            raise ValueError("Refitted theta_scaler produced NaN values!")
+        if np.any(np.isinf(_theta)):
+            raise ValueError("Refitted theta_scaler produced Inf values!")
+        if np.any(np.isnan(_y)):
+            raise ValueError("Refitted y_scaler produced NaN values!")
+        if np.any(np.isinf(_y)):
+            raise ValueError("Refitted y_scaler produced Inf values!")
+        
+        # try to transform theta with current scaler to check if it's compatible
+        # try:
+        #     _theta = self.theta_scaler.transform(theta)
+        #     if np.any(np.isnan(_theta)) or np.any(np.isinf(_theta)):
+        #         if self.verbose:
+        #             print("Warning: Current theta_scaler cannot transform theta. Refitting scaler with new theta.")
+        #         self.theta_scaler = self.theta_scaler.fit(theta)
+        #         _theta = self.theta_scaler.transform(theta)
+        #     else:
+        #         self.theta_scaler = self.theta_scaler.fit(theta)
+        #         _theta = self.theta_scaler.transform(theta)
+        # except:
+        #     self.theta_scaler = self.theta_scaler.fit(theta)
+        #     _theta = self.theta_scaler.transform(theta)
+        
+        # y_2d = y.reshape(-1, 1)
+        # try:
+        #     _y = self.y_scaler.transform(y_2d).flatten()
+        #     if np.any(np.isnan(_y)) or np.any(np.isinf(_y)):
+        #         if self.verbose:
+        #             print("Warning: Current y_scaler cannot transform y. Refitting scaler with new y.")
+        #         self.y_scaler = self.y_scaler.fit(y_2d)
+        #         _y = self.y_scaler.transform(y_2d).flatten()
+        #     else:
+        #         self.y_scaler = self.y_scaler.fit(y_2d)
+        #         _y = self.y_scaler.transform(y_2d).flatten()
+        # except:
+        #     self.y_scaler = self.y_scaler.fit(y_2d)
+        #     _y = self.y_scaler.transform(y_2d).flatten()
         
         return _theta, _y
 
@@ -508,12 +547,25 @@ class SurrogateModel(object):
 
         # note: initial samples should be drawn uniformly in scaled space
         # if theta_scaler is a non-linear transform, then samples in real space will be non-uniform
-        # _theta = self._prior_sampler(nsample=nsample, sampler=sampler, random_state=None)
-        # theta = self.theta_scaler.inverse_transform(_theta)
+        _theta = self._prior_sampler(nsample=nsample, sampler=sampler, random_state=None)
+        theta = self.theta_scaler.inverse_transform(_theta)
         
-        theta = self.prior_sampler(nsample=nsample, sampler=sampler, random_state=None)   
+        # theta = self.prior_sampler(nsample=nsample, sampler=sampler, random_state=None)   
         y = ut.eval_fn(self.true_log_likelihood, theta, ncore=self.ncore).reshape(-1, 1)
-
+        
+        # replace any nan or inf values 
+        for ii in range(len(y)):
+            if np.isnan(y[ii]) or np.isinf(y[ii]):
+                ynan = True
+                # if self.verbose:
+                #     print(f"Warning: Initial training sample {ii} produced invalid value {y[ii]}. Replacing with prior sample...")
+                while ynan == True:
+                    # resample theta
+                    new_theta = self.prior_sampler(nsample=1, sampler="uniform", random_state=None)
+                    y[ii] = self.true_log_likelihood(new_theta).reshape(-1, 1)
+                    theta[ii] = new_theta
+                    if not (np.isnan(y[ii]) or np.isinf(y[ii])):
+                        ynan = False
         if self.cache:
             np.savez(f"{self.savedir}/{fname}", theta=theta, y=y)
 
@@ -587,23 +639,6 @@ class SurrogateModel(object):
         else:
             theta, y = self.init_train(nsample=ntrain, sampler=sampler)
             
-        # Fit scalers
-        _theta, _y = self.refit_scalers(theta, y)
-            
-        # Training dataset scaled
-        self._theta0 = _theta
-        self._theta = _theta
-        self._y = _y
-        
-        # Training dataset unscaled 
-        self.theta0 = self.theta_scaler.inverse_transform(self._theta0)
-        self.y0 = self.y_scaler.inverse_transform(self._y.reshape(-1, 1)).flatten()
-        
-        # record number of training samples
-        self.ninit_train = len(self._theta0)
-        self.ntrain = self.ninit_train
-        self.nactive = 0
-
         # --------------------------------------------------------
         # Load or create test sample
         if ntest > 0:
@@ -622,18 +657,40 @@ class SurrogateModel(object):
             self.theta_test = theta_test
             self.y_test = y_test
             
+            # Fit scalers
+            _theta, _y = self.refit_scalers(np.append(theta, theta_test, axis=0), np.append(y, y_test, axis=0))
+            
             # Test dataset scaled
             self._theta_test = self.theta_scaler.transform(self.theta_test)
             self._y_test = self.y_scaler.transform(self.y_test.reshape(-1, 1)).flatten()
 
             # record number of test samples
             self.ntest = len(self._theta_test)
+        
         else:
+            # Fit scalers
+            _theta, _y = self.refit_scalers(theta, y)
+        
             self._theta_test = []
             self._y_test = []
             self.theta_test = []
             self.y_test = []
             self.ntest = 0
+            
+        # Training dataset scaled
+        self._theta0 = _theta
+        self._theta = _theta
+        self._y = _y
+        self._y0 = _y
+        
+        # Training dataset unscaled 
+        self.theta0 = self.theta_scaler.inverse_transform(self._theta0)
+        self.y0 = self.y_scaler.inverse_transform(self._y.reshape(-1, 1)).flatten()
+        
+        # record number of training samples
+        self.ninit_train = len(self._theta0)
+        self.ntrain = self.ninit_train
+        self.nactive = 0
             
 
     def set_hyperparam_prior_bounds(self):
@@ -757,18 +814,18 @@ class SurrogateModel(object):
                 gp_opt_method="newton-cg", 
                 gp_nopt=3,
                 optimizer_kwargs={"maxiter": 100, "xatol": 1e-4, "fatol": 1e-3, "adaptive": True},
-                hyperopt_method="ml",
+                hyperopt_method="cv",
                 regularize=True,
                 amp_0=1.0,
                 mu_0=1.0,
                 sigma_0=2.0,
                 cv_folds=5,
                 cv_scoring="mse",
-                cv_n_candidates=20,
-                cv_stage2_candidates=20,
-                cv_stage2_width=0.3,
-                cv_stage3_candidates=None,
-                cv_stage3_width=0.2,
+                cv_n_candidates=100,
+                cv_stage2_candidates=50,
+                cv_stage2_width=0.5,
+                cv_stage3_candidates=25,
+                cv_stage3_width=0.25,
                 cv_weighted_factor=1.0,
                 multi_proc=True):
         """
@@ -1036,6 +1093,8 @@ class SurrogateModel(object):
 
         # Fit GP with training sample and kernel
         self.gp, _ = self._fit_gp()
+        
+        self.initial_gp_hyperparameters = self.get_hyperparameter_vector(self.gp)
 
         # Optimize GP hyperparameters
         # self.gp, _ = self._opt_gp(**self.opt_gp_kwargs)
@@ -1066,21 +1125,59 @@ class SurrogateModel(object):
 
         self.set_hyperparam_prior_bounds()
 
+        # Validate input data
+        if not np.all(np.isfinite(_theta)):
+            raise ValueError(f"_theta contains NaN or Inf values")
+        if not np.all(np.isfinite(_y)):
+            raise ValueError(f"_y contains NaN or Inf values: {_y[~np.isfinite(_y)]}")
+
+        y_median = np.median(_y)
+        y_var = np.var(_y)
+        
+        if not np.isfinite(y_median):
+            raise ValueError(f"median(_y) is not finite: {y_median}")
+        if not np.isfinite(y_var) or y_var == 0:
+            raise ValueError(f"var(_y) is not finite or zero: {y_var}")
+
         if self.fit_amp == True:
-            kernel = self.kernel * np.var(_y)
+            kernel = self.kernel * y_var
         else:
             kernel = self.kernel
 
-        gp = george.GP(kernel=kernel, fit_mean=self.fit_mean, mean=np.median(_y),
+        gp = george.GP(kernel=kernel, fit_mean=self.fit_mean, mean=y_median,
                     white_noise=self.white_noise, fit_white_noise=self.fit_white_noise)
 
         try:
+            # Check if hyperparameters contain NaN or Inf
+            if hyperparameters is not None:
+                hyperparameters_array = np.atleast_1d(hyperparameters)
+                if not np.all(np.isfinite(hyperparameters_array)):
+                    print(f"Warning: Hyperparameters contain NaN or Inf: {hyperparameters_array}")
+                    print("Reoptimizing hyperparameters from scratch...")
+                    gp, opt_timing = self._opt_gp(**self.opt_gp_kwargs)
+                    # Validate the reoptimized GP
+                    reopt_params = gp.get_parameter_vector()
+                    if not np.all(np.isfinite(reopt_params)):
+                        raise ValueError(f"Reoptimized GP still has invalid parameters: {reopt_params}")
+                    return gp, time.time() - t0
+            
             gp = self.set_hyperparameter_vector(gp, hyperparameters)
             gp.compute(_theta)
-        except:
-            print(f"Warning: fit_gp failed with point {_theta[-1]}. Reoptimizing hyperparameters...")
+            
+            # Validate GP after computation by checking all parameters
+            params = gp.get_parameter_vector()
+            if not np.all(np.isfinite(params)):
+                raise ValueError(f"GP parameters contain NaN or Inf after compute: {params}")
+                    
+        except Exception as e:
+            print(f"Warning: fit_gp failed with point {_theta[-1]}. Error: {e}")
+            print("Reoptimizing hyperparameters...")
             # Use the current opt_gp_kwargs settings which should have correct multi_proc value
             gp, _ = self._opt_gp(**self.opt_gp_kwargs)
+            # Validate the reoptimized GP
+            final_params = gp.get_parameter_vector()
+            if not np.all(np.isfinite(final_params)):
+                raise ValueError(f"Failed to recover GP with valid parameters. Params: {final_params}")
         
         timing = time.time() - t0
 
@@ -1346,23 +1443,26 @@ class SurrogateModel(object):
     def eval_gp_at_iteration(self, iter, return_var=False):
         
         # gp_iter = self.gp 
-        if len(self.training_results["iteration"]) == 0:
+        if (iter == 0) or (len(self.training_results["iteration"]) == 0):
+            _theta_cond = self._theta[:self.ninit_train]
+            _y_cond = self._y[:self.ninit_train]
+            try:
+                gp_iter = self.set_hyperparameter_vector(self.gp, self.training_results["gp_hyperparameters"][0])
+            except:
+                gp_iter = self.set_hyperparameter_vector(self.gp, self.initial_gp_hyperparameters)
+        # Handle iter=-1 case to use all data instead of excluding last element
+        elif (iter == -1) or (iter == len(self.training_results["iteration"])):
             _theta_cond = self._theta
             _y_cond = self._y
+            # Use the latest parameters (last in the list)
+            gp_iter = self.set_hyperparameter_vector(self.gp, self.training_results["gp_hyperparameters"][-1])
+        elif (iter > 0) and (iter < len(self.training_results["iteration"])):
+            _theta_cond = self._theta[:self.ninit_train + iter]
+            _y_cond = self._y[:self.ninit_train + iter]
+            last_hp = self.training_results["gp_hyperparameters"][iter]
+            gp_iter = self.set_hyperparameter_vector(self.gp, last_hp)
         else:
-            # Handle iter=-1 case to use all data instead of excluding last element
-            if iter == -1:
-                _theta_cond = self._theta
-                _y_cond = self._y
-                # Use the latest parameters (last in the list)
-                gp_iter = self.set_hyperparameter_vector(self.gp, self.training_results["gp_hyperparameters"][-1])
-            elif iter <= self.training_results["iteration"][-1]:
-                _theta_cond = self._theta[:self.ninit_train + iter]
-                _y_cond = self._y[:self.ninit_train + iter]
-                last_hp = self.training_results["gp_hyperparameters"][np.floor(iter / self.gp_opt_freq).astype(int)]
-                gp_iter = self.set_hyperparameter_vector(self.gp, last_hp)
-            else:
-                raise ValueError(f"Iteration {iter} exceeds available training iterations ({self.training_results['iteration'][-1]}).")
+            raise ValueError(f"Iteration {iter} exceeds available training iterations ({self.training_results['iteration'][-1]}).")
             
         gp_iter.compute(_theta_cond)
 
@@ -1553,7 +1653,9 @@ class SurrogateModel(object):
                 grad_obj_fn = partial(self.grad_utility, gp=self.gp, bounds=self._bounds, y_best=y_best)
             else:
                 grad_obj_fn = partial(self.grad_utility, gp=self.gp, bounds=self._bounds)
-    
+
+        if self.ncore > 1:
+            pool = mp.Pool(processes=self.ncore)
         # Always use serial execution for acquisition function optimization
         _thetaN, _ = ut.minimize_objective(obj_fn, 
                                         bounds=self._bounds,
@@ -1561,16 +1663,38 @@ class SurrogateModel(object):
                                         ps=self._prior_sampler,
                                         method=self.obj_opt_method,
                                         options=optimizer_kwargs,
-                                        grad_obj_fn=grad_obj_fn)
+                                        grad_obj_fn=grad_obj_fn,
+                                        pool=pool)
+        if self.ncore > 1:
+            pool.close()
 
         opt_timing = time.time() - opt_timing_0
         # self.training_results["acquisition_optimizer_niter"].append(opt_result.nit)
+        
+        thetaN = self.theta_scaler.inverse_transform(_thetaN.reshape(1, -1)).reshape(1,-1)
+        yN = self.true_log_likelihood(thetaN)
+        
+        # Validate new training point
+        if not np.any(np.isfinite(thetaN.flatten())):
+            raise ValueError(f"New theta contains NaN or Inf: {thetaN}")
+        if not np.any(np.isfinite(yN.flatten())):
+            raise ValueError(f"New y value is NaN or Inf: {yN}. Check your likelihood function at theta={thetaN}") 
+        
+        # add theta and y to training samples
+        theta_prop = np.append(self.theta(), thetaN, axis=0)
+        y_prop = np.append(self.y(), yN)
+        
+        # refit scaling functions including new point
+        _theta_prop, _y_prop = self.refit_scalers(theta_prop, y_prop)
+        
+        if not np.all(np.isfinite(_theta_prop)):
+            print("_theta_prop contains NaN or Inf after scaling. Check training data and scalers.")
+            breakpoint()
+        if not np.all(np.isfinite(_y_prop)):
+            print("_y_prop contains NaN or Inf after scaling. Check training data and scalers.")
+            breakpoint()
 
-        # evaluate function at the optimized theta
-        _thetaN = _thetaN.reshape(1, -1)
-        _yN = self._lnlike_fn(_thetaN)
-
-        return _thetaN, _yN, opt_timing
+        return _theta_prop, _y_prop, opt_timing
 
 
     def active_train(self, niter=100, algorithm="bape", gp_opt_freq=20, save_progress=False,
@@ -1676,23 +1800,35 @@ class SurrogateModel(object):
         for ii in iterator:
 
             # Find next training point! (always single-threaded)
-            thetaN, yN, opt_timing = self.find_next_point(nopt=nopt, optimizer_kwargs=optimizer_kwargs)
-
-            # add theta and y to training samples
-            theta_prop = np.append(self._theta, thetaN, axis=0)
-            y_prop = np.append(self._y, yN)
+            _theta_prop, _y_prop, opt_timing = self.find_next_point(nopt=nopt, optimizer_kwargs=optimizer_kwargs)
 
             # Fit GP with new training point
-            self.gp, fit_gp_timing = self._fit_gp(_theta=theta_prop, _y=y_prop, hyperparameters=self.gp.get_parameter_vector())
+            self.gp, fit_gp_timing = self._fit_gp(_theta=_theta_prop, _y=_y_prop, hyperparameters=self.gp.get_parameter_vector())
+
+            # Validate GP hyperparameters after fitting
+            current_params = self.gp.get_parameter_vector()
+            if not np.all(np.isfinite(current_params)):
+                print(f"Error: GP hyperparameters contain NaN or Inf after fitting: {current_params}")
+                print(f"Attempting to recover by reoptimizing from scratch...")
+                self.gp, fit_gp_timing = self._fit_gp(_theta=_theta_prop, _y=_y_prop, hyperparameters=None)
+                current_params = self.gp.get_parameter_vector()
+                if not np.all(np.isfinite(current_params)):
+                    raise ValueError(f"Failed to recover GP with valid hyperparameters. Last params: {current_params}")
 
             # If proposed (theta, y) did not cause fitting issues, save to surrogate model obj
-            self._theta = theta_prop
-            self._y = y_prop
+            self._theta = _theta_prop
+            self._y = _y_prop
 
             # print("Total training samples:", len(self._theta))
 
             # record active learning train runtime
             self.train_runtime = time.time() - train_t0 
+
+            # Validate GP state before predictions
+            gp_params = self.gp.get_parameter_vector()
+            if not np.all(np.isfinite(gp_params)):
+                print(f"Error: GP parameters contain NaN/Inf before prediction: {gp_params}")
+                raise ValueError("GP parameters are invalid. Cannot make predictions.")
 
             # evaluate gp training error (scaled)
             _ypred = self.gp.predict(self._y, self._theta, return_cov=False, return_var=False)
@@ -3172,7 +3308,7 @@ class SurrogateModel(object):
 
     def run_ultranest(self, like_fn=None, prior_transform=None, sampler_kwargs={}, run_kwargs={},
                       multi_proc=False, prior_transform_comment=None, samples_file=None,
-                      log_dir=None, resume="overwrite", min_ess=int(1e4)):
+                      log_dir=None, resume="overwrite", min_ess=int(1e4), slice_steps=0):
         """
         Sample the posterior using the UltraNest nested sampling algorithm.
         
@@ -3425,7 +3561,7 @@ class SurrogateModel(object):
             'num_test_samples': 2,
             'draw_multiple': True,
             'num_bootstraps': 30,
-            'vectorized': True,
+            'vectorized': False,
             'ndraw_min': 128,
             'ndraw_max': 65536,
             'storage_backend': 'hdf5',
@@ -3503,6 +3639,13 @@ class SurrogateModel(object):
                 resume=resume if run_number == 1 else "overwrite",  # Only resume on first run
                 **final_sampler_kwargs
             )
+            
+            if slice_steps > 0:
+                from ultranest import stepsampler
+                self.ultranest_sampler.stepsampler = stepsampler.SliceSampler(
+                    nsteps=slice_steps,
+                    generate_direction=stepsampler.generate_mixture_random_direction,
+                )
             
             # Run UltraNest sampling (always in serial/MPI-compatible mode)
             current_results = self.ultranest_sampler.run(

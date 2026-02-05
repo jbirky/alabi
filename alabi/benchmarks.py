@@ -13,9 +13,11 @@ __all__ = ["test1d",
            "rosenbrock",
            "gaussian_shells",
            "eggbox", 
+           "gaussian_2d",
            "multimodal",
            "logo",
-           "random_gaussian_covariance"]
+           "random_gaussian_covariance",
+           "multimodal_gaussian_nd"]
 
 
 # ================================
@@ -48,6 +50,47 @@ rosenbrock_bounds = [(-5,5), (-5,5)]
 
 rosenbrock = {"fn": rosenbrock_fn,
               "bounds": rosenbrock_bounds}
+
+
+# ================================
+# An N-dimensional Rosenbrock function 
+# ================================
+
+def rosenbrock_nd(x, a, b):
+    """
+    ND Rosenbrock function from Pagani et al. (2020): https://arxiv.org/pdf/1903.09556
+    
+    :param x: input vector of shape (n_samples, ndim) or (ndim,)
+    :param a: scalar parameter
+    :param b: matrix of parameters
+    """
+    n1, n2 = b.shape
+    ndim = (n1 - 1)*n2 + 1
+    
+    # Handle both 1D and 2D input
+    if x.ndim == 1:
+        x = x.reshape(1, -1)
+        squeeze_output = True
+    else:
+        squeeze_output = False
+    
+    # Vectorized computation for multiple samples
+    log_like = - a*(x[:, 0] - 1)**2
+    cnorm = np.sqrt(a / np.pi) * np.pi**ndim
+    
+    # Compute diff term for all samples: shape (n_samples, n1-2)
+    diff_term = (x[:, 2:n1] - x[:, 1:n1-1]**2)**2
+    # Sum b coefficients along n2 dimension: shape (n1-2,)
+    b_sum_per_col = b[:, 2:].sum(axis=0)
+    # Multiply and sum over dimensions
+    log_like -= (diff_term * b_sum_per_col).sum(axis=1)
+    
+    cnorm *= np.sqrt(np.prod(b[:, 2:]))
+    log_like -= np.log(cnorm)
+    
+    if squeeze_output:
+        return log_like[0]
+    return log_like
 
 
 # ================================
@@ -127,6 +170,25 @@ logo = {"fn": logo_fn,
 
 
 # ================================
+# Gaussian  (2D)
+# ================================
+
+
+def gaussian_2d_fn(theta):
+    """
+    2D Gaussian function with mean at the center and covariance matrix as identity.
+    """
+    theta = np.asarray(theta).flatten()
+    mean = np.array([0.5, 0.5])
+    cov = np.array([[0.1, 0.0], [0.0, 0.1]])
+    return multivariate_normal.logpdf(theta, mean=mean, cov=cov)
+
+gaussian_2d_bounds = [(0,1), (0,1)]
+gaussian_2d = {"fn": gaussian_2d_fn,
+               "bounds": gaussian_2d_bounds}
+
+
+# ================================
 # N-dimensional gaussian (ND)
 # ================================
 
@@ -142,3 +204,12 @@ def random_gaussian_covariance(n_dims):
     # Construct covariance matrix: C = Q * Λ * Q^T
     cov = Q @ np.diag(eigenvals) @ Q.T
     return cov
+
+
+def multimodal_gaussian_nd(x, means, covs, amps):
+    
+    nmodes = len(means)
+    log_prob = np.array([ amps[ii] * multivariate_normal.logpdf(x, mean=means[ii], cov=covs[ii]) for ii in range(nmodes) ])
+    prob = np.sum(np.exp(log_prob), axis=0)
+
+    return np.exp(prob)

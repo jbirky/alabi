@@ -219,9 +219,13 @@ def configure_gp(theta, y, kernel,
         attempts several fixes before giving up.
     """
 
-    if np.any(~np.isfinite(theta)) or np.any(~np.isfinite(y)):
-        print("theta, y:", theta, y)
-        raise ValueError("All theta and y values must be finite!")
+    if np.any(~np.isfinite(theta)):
+        print("theta", theta)
+        raise ValueError("All theta values must be finite!")
+
+    if np.any(~np.isfinite(y)):
+        print("y", y)
+        raise ValueError("All y values must be finite!")
 
     if fit_amp == True:
         kernel *= np.var(y)
@@ -779,6 +783,7 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
         # Evaluate all candidates in parallel with progress bar
         failed_candidate_errors = []  # Track errors for diagnostics
         with tqdm(total=len(worker_args), desc="Evaluating candidates", unit="candidate") as pbar:
+            # Use pool.imap for progress tracking
             results = []
             for result in pool.imap(_evaluate_candidate_worker, worker_args):
                 results.append(result)

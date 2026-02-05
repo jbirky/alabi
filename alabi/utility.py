@@ -63,7 +63,7 @@ def prior_sampler(bounds=None, nsample=1, sampler='uniform', random_state=None):
     :param sampler: (*{'uniform', 'sobol', 'lhs', 'halton', 'hammersly', 'grid'}, optional*)
         Sampling method to use:
         
-        - 'uniform': Pseudo-random uniform sampling
+        - 'uniform': random uniform sampling
         - 'sobol': Sobol sequence (quasi-random, good space-filling)
         - 'lhs': Latin Hypercube Sampling (stratified sampling)
         - 'halton': Halton sequence (quasi-random, low discrepancy)
@@ -1072,7 +1072,7 @@ def minimize_objective_single(idx, obj_fn, bounds, starting_point, method, optio
 
 
 def minimize_objective(obj_fn, bounds=None, nopt=1, method="l-bfgs-b",
-                       ps=None, options=None, grad_obj_fn=None):
+                       ps=None, options=None, grad_obj_fn=None, pool=None):
     """
     Find the global minimum of an acquisition function using multiple restarts.
     
@@ -1163,23 +1163,29 @@ def minimize_objective(obj_fn, bounds=None, nopt=1, method="l-bfgs-b",
     # Generate all starting points at once to ensure good space-filling distribution
     # This prevents clustering that can occur when generating points individually
     if ps is None:
-        # Use Sobol sequence for better space-filling and faster generation
-        starting_points = prior_sampler(bounds, nsample=nopt, sampler='sobol')
+        starting_points = prior_sampler(bounds, nsample=nopt, sampler="lhs")
     else:
         # Use provided sampler to generate all points at once
         starting_points = ps(nsample=nopt)
     
     # Pre-flatten starting points to avoid repeated operations
     starting_points = np.array([pt.flatten() for pt in starting_points])
-
-    # Serial execution 
-    min_theta = []
-    min_obj = []
     
-    for ii in range(nopt):
-        minx, miny = minimize_objective_single(ii, obj_fn, bounds, starting_points[ii], method, options, grad_obj_fn)
-        min_theta.append(minx)
-        min_obj.append(miny)
+    if pool is not None:
+        def single_opt(ii):
+            return minimize_objective_single(ii, obj_fn, bounds, starting_points[ii], method, options, grad_obj_fn)
+
+        opt_results = pool.map(single_opt, np.arange(nopt))
+        min_theta = [res[0] for res in opt_results]
+        min_obj = [res[1] for res in opt_results]
+    else:
+        # Serial execution 
+        min_theta = []
+        min_obj = []
+        for ii in range(nopt):
+            minx, miny = minimize_objective_single(ii, obj_fn, bounds, starting_points[ii], method, options, grad_obj_fn)
+            min_theta.append(minx)
+            min_obj.append(miny)
   
     # Return value that minimizes objective function out of all minimizations
     best_ind = np.argmin(min_obj)
@@ -1192,19 +1198,39 @@ def minimize_objective(obj_fn, bounds=None, nopt=1, method="l-bfgs-b",
 class BetaWarpingFunction:
     """
     Swersky et al. 2017 Beta CDF warping function for sklearn FunctionTransformer.
+    
+    Note: This transformer must be refit when new data extends beyond the 
+    original data range to update the internal MinMaxScaler bounds.
     """
     def __init__(self, alpha=2.0, beta=2.0):
         self.alpha = alpha
         self.beta = beta
         self.minmax_scaler = MinMaxScaler()
-        self._is_fitted = False
+    
+    def fit(self, X, y=None):
+        """
+        Fit the MinMaxScaler to the data, establishing the data range bounds.
+        
+        This updates the internal min/max values used for scaling. Should be
+        called whenever new data extends beyond the previous range.
+        """
+        self.minmax_scaler.fit(X)
+        return self
     
     def transform(self, X):
-        if not self._is_fitted:
-            self.minmax_scaler.fit(X)
-            self._is_fitted = True
-        
+
         X_scaled = self.minmax_scaler.transform(X)
+        
+        # Validate that scaled values are in valid range [0, 1]
+        if np.any(X_scaled < 0) or np.any(X_scaled > 1):
+            invalid_mask = (X_scaled < 0) | (X_scaled > 1)
+            invalid_values = X_scaled[invalid_mask]
+            raise ValueError(
+                f"Scaled values outside [0, 1] range detected: {invalid_values}. "
+                f"Min={np.min(X_scaled)}, Max={np.max(X_scaled)}. "
+                f"This indicates the transformer needs to be refit with the new data range. "
+                f"Call fit() with data that includes both old and new samples."
+            )
         
         # Apply Beta CDF warping per feature
         X_warped = np.zeros_like(X_scaled)
@@ -1213,9 +1239,18 @@ class BetaWarpingFunction:
         
         return X_warped
     
+    def fit_transform(self, X, y=None):
+        """Fit and transform in one step."""
+        return self.fit(X, y).transform(X)
+    
     def inverse_transform(self, X):
-        if not self._is_fitted:
-            raise ValueError("Transformer must be fitted before inverse_transform")
+        
+        # Validate input range
+        if np.any(X < 0) or np.any(X > 1):
+            raise ValueError(
+                f"Input to inverse_transform must be in [0, 1]. "
+                f"Got min={np.min(X)}, max={np.max(X)}"
+            )
         
         # Apply inverse Beta CDF per feature
         X_unwarped = np.zeros_like(X)
@@ -1223,8 +1258,8 @@ class BetaWarpingFunction:
             X_unwarped[:, i] = betaincinv(self.alpha, self.beta, X[:, i])
         
         return self.minmax_scaler.inverse_transform(X_unwarped)
-    
-    
+
+
 def beta_warping_transformer(alpha=2.0, beta=2.0):
     """
     Create a scikit-learn FunctionTransformer for Beta CDF warping.
@@ -1242,9 +1277,8 @@ def beta_warping_transformer(alpha=2.0, beta=2.0):
         Scikit-learn transformer object
     """
     warping_funcs = BetaWarpingFunction(alpha=alpha, beta=beta)
-    
     return FunctionTransformer(
         func=warping_funcs.transform,
         inverse_func=warping_funcs.inverse_transform,
-        check_inverse=True
+        check_inverse=False
     )
