@@ -1,19 +1,19 @@
 <!doctype html>
 <html class="no-js" lang="en" data-content_root="../../">
-  <head><meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
-        <link rel="canonical" href="https://alabi.jessicabirky.com/_modules/alabi/utility.html" />
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
+        <link rel="canonical" href="https://alabi.jessicabirky.com/_modules/alabi/utility.html">
 
-    <!-- Generated with Sphinx 7.3.7 and Furo 2025.07.19 -->
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
         <title>alabi.utility - alabi</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=25af2a20" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/tabs.css?v=4c969af8" />
-    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=9c3e77be" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
-    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=a7f7f5d3" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=0cf789f7" />
     
     
 
@@ -29,18 +29,27 @@
   --color-sidebar-item-background--hover: white;
   --color-brand-primary: #004080;
   --color-brand-content: #0059b3;
+  --font-size--small: 0.875rem;
+  --font-size--normal: 1rem;
+  --font-size--large: 1.125rem;
+  --font-size-h1: 2.2rem;
+  --font-size-h2: 1.8rem;
+  --font-size-h3: 1.5rem;
+  --font-size-h4: 1.3rem;
+  --font-size-h5: 1.1rem;
+  --font-size-h6: 1rem;
   
   }
   @media not print {
     body[data-theme="dark"] {
-      --color-code-background: #2b2b2b;
-  --color-code-foreground: #f8f8f2;
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
   
     }
     @media (prefers-color-scheme: dark) {
       body:not([data-theme="light"]) {
-        --color-code-background: #2b2b2b;
-  --color-code-foreground: #f8f8f2;
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
   
       }
     }
@@ -155,14 +164,10 @@
   </symbol>
 </svg>
 
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
-<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
-<label class="overlay sidebar-overlay" for="__navigation">
-  <div class="visually-hidden">Hide navigation sidebar</div>
-</label>
-<label class="overlay toc-overlay" for="__toc">
-  <div class="visually-hidden">Hide table of contents sidebar</div>
-</label>
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
 
 <a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
 
@@ -172,8 +177,7 @@
   <header class="mobile-header">
     <div class="header-left">
       <label class="nav-overlay-icon" for="__navigation">
-        <div class="visually-hidden">Toggle site navigation sidebar</div>
-        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
       </label>
     </div>
     <div class="header-center">
@@ -181,8 +185,7 @@
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
-        <button class="theme-toggle">
-          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
           <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
           <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
           <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
@@ -190,8 +193,7 @@
         </button>
       </div>
       <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
-        <div class="visually-hidden">Toggle table of contents sidebar</div>
-        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
   </header>
@@ -217,17 +219,21 @@
 <li class="toctree-l1"><a class="reference internal" href="../../mcmc_tutorial.html">MCMC sampling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_bayesian_optimization.html">Bayesian Optimization</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<p class="caption" role="heading"><span class="caption-text">Benchmark Examples</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_demo_1d.html">Visualize Active Learning</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../plot_demo_2d.html">2D Benchmarks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plot_demo_2d.html">Test 2D Benchmarks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_line_fit.html">Fit a line to data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../plot_kl_divergence.html">KL Divergence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plot_kl_divergence.html">KL Divergence: Gaussian</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_gaussian_nd.html">Test computational scaling</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Applications</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../trappist_stellar_evolution.html">Stellar Evolution</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../modules.html">alabi</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of alabi</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../modules.html">alabi</a><input aria-label="Toggle navigation of alabi" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../alabi.html">alabi package</a></li>
 </ul>
 </li>
@@ -257,8 +263,7 @@
         </a>
         <div class="content-icon-container">
           <div class="theme-toggle-container theme-toggle-content">
-            <button class="theme-toggle">
-              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
               <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
               <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
               <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
@@ -266,8 +271,7 @@
             </button>
           </div>
           <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
-            <div class="visually-hidden">Toggle table of contents sidebar</div>
-            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
@@ -292,12 +296,13 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">betainc</span><span class="p">,</span> <span class="n">betaincinv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">FunctionTransformer</span><span class="p">,</span> <span class="n">MinMaxScaler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">alabi</span><span class="w"> </span><span class="kn">import</span> <span class="n">parallel_utils</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">tqdm</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.gp_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">grad_gp_mean_prediction</span><span class="p">,</span> <span class="n">grad_gp_var_prediction</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;agp_utility&quot;</span><span class="p">,</span> 
            <span class="s2">&quot;bape_utility&quot;</span><span class="p">,</span> 
-           <span class="s2">&quot;grad_bape_utility&quot;</span><span class="p">,</span>
            <span class="s2">&quot;jones_utility&quot;</span><span class="p">,</span>
            <span class="s2">&quot;assign_utility&quot;</span><span class="p">,</span>
            <span class="s2">&quot;minimize_objective&quot;</span><span class="p">,</span> 
@@ -307,7 +312,10 @@
            <span class="s2">&quot;lnprior_uniform&quot;</span><span class="p">,</span>
            <span class="s2">&quot;prior_transform_uniform&quot;</span><span class="p">,</span>
            <span class="s2">&quot;lnprior_normal&quot;</span><span class="p">,</span>
-           <span class="s2">&quot;prior_transform_normal&quot;</span><span class="p">,]</span>
+           <span class="s2">&quot;prior_transform_normal&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;BetaWarpingFunction&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;beta_warping_transformer&quot;</span>
+           <span class="p">]</span>
 
 
 <span class="c1">#===========================================================</span>
@@ -335,7 +343,7 @@
 <span class="sd">    :param sampler: (*{&#39;uniform&#39;, &#39;sobol&#39;, &#39;lhs&#39;, &#39;halton&#39;, &#39;hammersly&#39;, &#39;grid&#39;}, optional*)</span>
 <span class="sd">        Sampling method to use:</span>
 <span class="sd">        </span>
-<span class="sd">        - &#39;uniform&#39;: Pseudo-random uniform sampling</span>
+<span class="sd">        - &#39;uniform&#39;: random uniform sampling</span>
 <span class="sd">        - &#39;sobol&#39;: Sobol sequence (quasi-random, good space-filling)</span>
 <span class="sd">        - &#39;lhs&#39;: Latin Hypercube Sampling (stratified sampling)</span>
 <span class="sd">        - &#39;halton&#39;: Halton sequence (quasi-random, low discrepancy)</span>
@@ -526,8 +534,14 @@
         <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">tt</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">theta</span><span class="p">)):</span>
             <span class="n">y</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">fn</span><span class="p">(</span><span class="n">tt</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># # Use MPI-safe multiprocessing</span>
+        <span class="c1"># if parallel_utils is not None:</span>
+        <span class="c1">#     y = parallel_utils.safe_pool_map(fn, theta, ncore)</span>
+        <span class="c1"># else:</span>
+        <span class="c1">#     # Fallback to original implementation with progress bar</span>
         <span class="k">with</span> <span class="n">mp</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">ncore</span><span class="p">)</span> <span class="k">as</span> <span class="n">p</span><span class="p">:</span>
-            <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">theta</span><span class="p">))</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">imap</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">theta</span><span class="p">),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">))))</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
 
     <span class="n">tf</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Computed </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span><span class="si">}</span><span class="s2"> function evaluations: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">tf</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">t0</span><span class="p">)</span><span class="si">}</span><span class="s2">s </span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -610,16 +624,20 @@
 <span class="sd">    </span>
 <span class="sd">    This function implements the inverse CDF transformation for uniform distributions,</span>
 <span class="sd">    mapping from the unit hypercube [0,1]^ndim to the parameter space with given bounds.</span>
-<span class="sd">    It is commonly used in nested sampling algorithms like dynesty.</span>
+<span class="sd">    It is commonly used in nested sampling algorithms like dynesty and UltraNest.</span>
 <span class="sd">    </span>
-<span class="sd">    :param theta: (*array-like of shape (ndim,)*)</span>
-<span class="sd">        Random variables uniformly distributed on [0,1] for each dimension.</span>
+<span class="sd">    :param theta: (*array-like*)</span>
+<span class="sd">        Random variables uniformly distributed on [0,1]. Can be:</span>
+<span class="sd">        - 1D array of shape (ndim,) for a single parameter vector</span>
+<span class="sd">        - 2D array of shape (nsamples, ndim) for multiple parameter vectors</span>
 <span class="sd">        </span>
 <span class="sd">    :param bounds: (*array-like of shape (ndim, 2)*)</span>
 <span class="sd">        Parameter bounds as [(min, max), ...] for each dimension.</span>
 <span class="sd">        </span>
-<span class="sd">    :returns: *ndarray of shape (ndim,)*</span>
+<span class="sd">    :returns: *ndarray*</span>
 <span class="sd">        Transformed parameter values within the specified bounds.</span>
+<span class="sd">        - If input is 1D: returns 1D array of shape (ndim,)</span>
+<span class="sd">        - If input is 2D: returns 2D array of shape (nsamples, ndim)</span>
 <span class="sd">        </span>
 <span class="sd">    **Notes**</span>
 <span class="sd">    </span>
@@ -635,14 +653,22 @@
 <span class="sd">    </span>
 <span class="sd">    **Examples**</span>
 <span class="sd">    </span>
-<span class="sd">    Transform unit cube samples to parameter bounds:</span>
+<span class="sd">    Transform single parameter vector:</span>
 <span class="sd">    </span>
 <span class="sd">    .. code-block:: python</span>
 <span class="sd">    </span>
 <span class="sd">        bounds = [(-2, 2), (0, 10)]</span>
-<span class="sd">        theta_unit = [0.25, 0.8]  # Uniform on [0,1]</span>
+<span class="sd">        theta_unit = [0.25, 0.8]  # Single vector</span>
 <span class="sd">        theta_params = prior_transform_uniform(theta_unit, bounds)</span>
 <span class="sd">        print(theta_params)  # [-1.0, 8.0]</span>
+<span class="sd">    </span>
+<span class="sd">    Transform multiple parameter vectors:</span>
+<span class="sd">    </span>
+<span class="sd">    .. code-block:: python</span>
+<span class="sd">    </span>
+<span class="sd">        theta_unit = [[0.25, 0.8], [0.5, 0.2]]  # Multiple vectors</span>
+<span class="sd">        theta_params = prior_transform_uniform(theta_unit, bounds)</span>
+<span class="sd">        print(theta_params)  # [[-1.0, 8.0], [0.0, 2.0]]</span>
 <span class="sd">    </span>
 <span class="sd">    Use with nested sampling:</span>
 <span class="sd">    </span>
@@ -650,14 +676,38 @@
 <span class="sd">    </span>
 <span class="sd">        def my_prior_transform(u):</span>
 <span class="sd">            return prior_transform_uniform(u, bounds)</span>
-<span class="sd">        # Pass to dynesty sampler</span>
+<span class="sd">        # Pass to dynesty/UltraNest sampler</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">pt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">))</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bounds</span><span class="p">):</span>
-        <span class="n">pt</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-
-    <span class="k">return</span> <span class="n">pt</span></div>
+    
+    <span class="c1"># Convert to numpy array and handle input validation</span>
+    <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span>
+    
+    <span class="c1"># Determine if input is 1D or 2D</span>
+    <span class="k">if</span> <span class="n">theta</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># Single parameter vector</span>
+        <span class="n">ndim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span> <span class="o">!=</span> <span class="n">ndim</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bounds length (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span><span class="si">}</span><span class="s2">) must match theta dimensions (</span><span class="si">{</span><span class="n">ndim</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        
+        <span class="n">pt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">ndim</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bounds</span><span class="p">):</span>
+            <span class="n">pt</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">pt</span>
+        
+    <span class="k">elif</span> <span class="n">theta</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="c1"># Multiple parameter vectors</span>
+        <span class="n">nsamples</span><span class="p">,</span> <span class="n">ndim</span> <span class="o">=</span> <span class="n">theta</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span> <span class="o">!=</span> <span class="n">ndim</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bounds length (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span><span class="si">}</span><span class="s2">) must match theta dimensions (</span><span class="si">{</span><span class="n">ndim</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        
+        <span class="n">pt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nsamples</span><span class="p">,</span> <span class="n">ndim</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bounds</span><span class="p">):</span>
+            <span class="n">pt</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">pt</span>
+        
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;theta must be 1D or 2D array, got </span><span class="si">{</span><span class="n">theta</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">D array with shape </span><span class="si">{</span><span class="n">theta</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
 
@@ -678,17 +728,107 @@
 <div class="viewcode-block" id="prior_transform_normal">
 <a class="viewcode-back" href="../../alabi.html#alabi.utility.prior_transform_normal">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">prior_transform_normal</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-
-    <span class="n">pt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">))</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bounds</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># uniform prior transform</span>
-            <span class="n">pt</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="c1"># gaussian prior transform</span>
-            <span class="n">pt</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Transform uniform random variables to parameter space with mixed prior distributions.</span>
+<span class="sd">    </span>
+<span class="sd">    This function implements prior transformations supporting both uniform and Gaussian</span>
+<span class="sd">    priors for different parameters. It maps from the unit hypercube [0,1]^ndim to</span>
+<span class="sd">    the parameter space, handling each dimension according to its specified prior type.</span>
+<span class="sd">    </span>
+<span class="sd">    :param x: (*array-like*)</span>
+<span class="sd">        Random variables uniformly distributed on [0,1]. Can be:</span>
+<span class="sd">        - 1D array of shape (ndim,) for a single parameter vector</span>
+<span class="sd">        - 2D array of shape (nsamples, ndim) for multiple parameter vectors</span>
+<span class="sd">        </span>
+<span class="sd">    :param bounds: (*array-like of shape (ndim, 2)*)</span>
+<span class="sd">        Parameter bounds as [(min, max), ...] for each dimension. Used for uniform priors.</span>
+<span class="sd">        </span>
+<span class="sd">    :param data: (*list of tuples*)</span>
+<span class="sd">        Prior specification for each dimension as [(mean, std), ...]. </span>
+<span class="sd">        - If data[i] = (None, None): use uniform prior with bounds[i]</span>
+<span class="sd">        - If data[i] = (mean, std): use Gaussian prior with specified mean and standard deviation</span>
+<span class="sd">        </span>
+<span class="sd">    :returns: *ndarray*</span>
+<span class="sd">        Transformed parameter values according to their prior distributions.</span>
+<span class="sd">        - If input is 1D: returns 1D array of shape (ndim,)</span>
+<span class="sd">        - If input is 2D: returns 2D array of shape (nsamples, ndim)</span>
+<span class="sd">        </span>
+<span class="sd">    **Notes**</span>
+<span class="sd">    </span>
+<span class="sd">    For uniform priors (when data[i][0] is None):</span>
+<span class="sd">    </span>
+<span class="sd">    .. math::</span>
+<span class="sd">        \\theta&#39;_i = (b_{i,\\text{max}} - b_{i,\\text{min}}) x_i + b_{i,\\text{min}}</span>
+<span class="sd">    </span>
+<span class="sd">    For Gaussian priors (when data[i] = (μ, σ)):</span>
+<span class="sd">    </span>
+<span class="sd">    .. math::</span>
+<span class="sd">        \\theta&#39;_i = \\Phi^{-1}(x_i; \\mu_i, \\sigma_i)</span>
+<span class="sd">    </span>
+<span class="sd">    where Φ^{-1} is the inverse normal CDF (percent-point function).</span>
+<span class="sd">    </span>
+<span class="sd">    **Examples**</span>
+<span class="sd">    </span>
+<span class="sd">    Mixed uniform and Gaussian priors:</span>
+<span class="sd">    </span>
+<span class="sd">    .. code-block:: python</span>
+<span class="sd">    </span>
+<span class="sd">        bounds = [(-2, 2), (0, 10)]</span>
+<span class="sd">        data = [(None, None), (5.0, 1.0)]  # uniform, then Gaussian(5, 1)</span>
+<span class="sd">        x_unit = [0.5, 0.84]  # Single vector</span>
+<span class="sd">        x_params = prior_transform_normal(x_unit, bounds, data)</span>
+<span class="sd">        print(x_params)  # [0.0, ~6.0] (second value from normal inverse CDF)</span>
+<span class="sd">    </span>
+<span class="sd">    Vectorized transformation:</span>
+<span class="sd">    </span>
+<span class="sd">    .. code-block:: python</span>
+<span class="sd">    </span>
+<span class="sd">        x_unit = [[0.5, 0.84], [0.25, 0.16]]  # Multiple vectors</span>
+<span class="sd">        x_params = prior_transform_normal(x_unit, bounds, data)</span>
+<span class="sd">        # Returns 2D array with transformed parameters</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     
-    <span class="k">return</span> <span class="n">pt</span></div>
+    <span class="c1"># Convert to numpy array and handle input validation</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span>
+    
+    <span class="c1"># Determine if input is 1D or 2D</span>
+    <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># Single parameter vector</span>
+        <span class="n">ndim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span> <span class="o">!=</span> <span class="n">ndim</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">!=</span> <span class="n">ndim</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bounds length (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span><span class="si">}</span><span class="s2">) and data length (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2">) &quot;</span>
+                           <span class="sa">f</span><span class="s2">&quot;must match x dimensions (</span><span class="si">{</span><span class="n">ndim</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        
+        <span class="n">pt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">ndim</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bounds</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># uniform prior transform</span>
+                <span class="n">pt</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># gaussian prior transform</span>
+                <span class="n">pt</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">pt</span>
+        
+    <span class="k">elif</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="c1"># Multiple parameter vectors</span>
+        <span class="n">nsamples</span><span class="p">,</span> <span class="n">ndim</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span> <span class="o">!=</span> <span class="n">ndim</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">!=</span> <span class="n">ndim</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bounds length (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span><span class="si">}</span><span class="s2">) and data length (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="si">}</span><span class="s2">) &quot;</span>
+                           <span class="sa">f</span><span class="s2">&quot;must match x dimensions (</span><span class="si">{</span><span class="n">ndim</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        
+        <span class="n">pt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">nsamples</span><span class="p">,</span> <span class="n">ndim</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bounds</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># uniform prior transform</span>
+                <span class="n">pt</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">x</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># gaussian prior transform</span>
+                <span class="n">pt</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">x</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">pt</span>
+        
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;x must be 1D or 2D array, got </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">ndim</span><span class="si">}</span><span class="s2">D array with shape </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
 
@@ -712,6 +852,123 @@
         <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">x1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span><span class="p">))</span>
+    
+    
+<span class="c1">#===========================================================</span>
+<span class="c1"># GP prediction gradient functions</span>
+<span class="c1">#===========================================================</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">numerical_kernel_gradient</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">x_train</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute numerical gradient of GP kernel k(xs, x_train) with respect to xs.</span>
+<span class="sd">    </span>
+<span class="sd">    :param xs: (*array_like, shape (d,) or (1, d)*)</span>
+<span class="sd">        Query point(s) to compute gradient at</span>
+<span class="sd">    :param x_train: (*array_like, shape (n, d)*)</span>
+<span class="sd">        Training points</span>
+<span class="sd">    :param gp: (*george.GP*)</span>
+<span class="sd">        Gaussian Process object with kernel</span>
+<span class="sd">    :param h: (*float, default=1e-6*)</span>
+<span class="sd">        Step size for finite differences</span>
+<span class="sd">        </span>
+<span class="sd">    :returns: *ndarray, shape (n, d)*</span>
+<span class="sd">        Numerical gradient of kernel k(xs, x_train) w.r.t. xs</span>
+<span class="sd">        Each row corresponds to gradient w.r.t. one training point</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>
+    <span class="n">x_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">x_train</span><span class="p">)</span>
+    
+    <span class="k">if</span> <span class="n">xs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;This function handles single query point only&quot;</span><span class="p">)</span>
+    
+    <span class="n">n_train</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">x_train</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">xs_flat</span> <span class="o">=</span> <span class="n">xs</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+    
+    <span class="c1"># Initialize gradient array</span>
+    <span class="n">grad_k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_train</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
+    
+    <span class="c1"># Compute gradient for each dimension</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+        <span class="c1"># Create perturbed points</span>
+        <span class="n">xs_plus</span> <span class="o">=</span> <span class="n">xs_flat</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">xs_minus</span> <span class="o">=</span> <span class="n">xs_flat</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">xs_plus</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">h</span>
+        <span class="n">xs_minus</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-=</span> <span class="n">h</span>
+        
+        <span class="c1"># Evaluate kernel at perturbed points</span>
+        <span class="n">k_plus</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">xs_plus</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">x_train</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">k_minus</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">xs_minus</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">x_train</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        
+        <span class="c1"># Central difference</span>
+        <span class="n">grad_k</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">k_plus</span> <span class="o">-</span> <span class="n">k_minus</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">h</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">grad_k</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">grad_gp_mean_prediction</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">gp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the gradient of the GP mean prediction with respect to the input</span>
+<span class="sd">    locations.</span>
+
+<span class="sd">    :param xs: (*array-like, required*)</span>
+<span class="sd">        Input locations to evaluate the gradient at.</span>
+
+<span class="sd">    :param gp: (*george.GP, required*)</span>
+<span class="sd">        The computed Gaussian process object.</span>
+
+<span class="sd">    :returns: (*array*)</span>
+<span class="sd">        The gradient of the GP mean prediction at the input locations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="c1"># Use the grad_gp_kernel function to get kernel gradients</span>
+    <span class="c1"># grad_ks shape: (n_train_points, n_dims) for single query point</span>
+
+    <span class="n">grad_ks</span> <span class="o">=</span> <span class="n">numerical_kernel_gradient</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">gp</span><span class="o">.</span><span class="n">_x</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span>
+
+    <span class="c1"># The GP mean gradient is: ∇μ(x) = ∇k(x, X_train)^T @ α</span>
+    <span class="c1"># where α = K^{-1} @ y_train</span>
+    <span class="n">grad_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">grad_ks</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">gp</span><span class="o">.</span><span class="n">_alpha</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">grad_mean</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">grad_gp_var_prediction</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">gp</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the gradient of the GP variance prediction with respect to the input</span>
+<span class="sd">    locations.</span>
+
+<span class="sd">    :param xs: (*array-like, required*)</span>
+<span class="sd">        Input locations to evaluate the gradient at.</span>
+
+<span class="sd">    :param gp: (*george.GP, required*)</span>
+<span class="sd">        The computed Gaussian process object.</span>
+
+<span class="sd">    :returns: (*array*)</span>
+<span class="sd">        The gradient of the GP variance prediction at the input locations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="c1"># Get kernel gradients: ∇k(x*, X_train)</span>
+    <span class="c1"># grad_ks shape: (n_train_points, n_dims) for single query point</span>
+    <span class="n">grad_ks</span> <span class="o">=</span> <span class="n">numerical_kernel_gradient</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">gp</span><span class="o">.</span><span class="n">_x</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">h</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">)</span>
+
+    <span class="c1"># Get kernel values: k(x*, X_train)</span>
+    <span class="n">ks</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">gp</span><span class="o">.</span><span class="n">_x</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>  <span class="c1"># shape: (n_train_points,)</span>
+    
+    <span class="c1"># Get inverse covariance matrix</span>
+    <span class="n">Kinv</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">solver</span><span class="o">.</span><span class="n">get_inverse</span><span class="p">()</span>  <span class="c1"># shape: (n_train_points, n_train_points)</span>
+    
+    <span class="c1"># For stationary kernels, ∇k(x*, x*) = 0, so the variance gradient is:</span>
+    <span class="c1"># ∇σ²(x*) = -2 * ∇k(x*, X_train)^T @ K^{-1} @ k(x*, X_train)</span>
+    <span class="c1"># </span>
+    <span class="c1"># grad_ks.T shape: (n_dims, n_train_points)</span>
+    <span class="c1"># Kinv @ ks shape: (n_train_points,)</span>
+    <span class="c1"># Result shape: (n_dims,)</span>
+    
+    <span class="n">grad_var</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">grad_ks</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">Kinv</span><span class="p">,</span> <span class="n">ks</span><span class="p">))</span>
+    
+    <span class="k">return</span> <span class="n">grad_var</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
 
 
 <span class="c1">#===========================================================</span>
@@ -721,7 +978,7 @@
 
 <div class="viewcode-block" id="agp_utility">
 <a class="viewcode-back" href="../../alabi.html#alabi.utility.agp_utility">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">agp_utility</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">bounds</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">agp_utility</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">predict_gp</span><span class="p">,</span> <span class="n">bounds</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the AGP (Adaptive Gaussian Process) utility function based on posterior entropy.</span>
 <span class="sd">    </span>
@@ -776,14 +1033,6 @@
 <span class="sd">        theta_test = np.array([0.5, 1.2])</span>
 <span class="sd">        utility = agp_utility(theta_test, y_train, gp, bounds)</span>
 <span class="sd">    </span>
-<span class="sd">    Find next point by minimizing negative utility:</span>
-<span class="sd">    </span>
-<span class="sd">    .. code-block:: python</span>
-<span class="sd">    </span>
-<span class="sd">        from scipy.optimize import minimize</span>
-<span class="sd">        result = minimize(lambda x: agp_utility(x, y_train, gp, bounds), x0)</span>
-<span class="sd">        next_point = result.x</span>
-<span class="sd">    </span>
 <span class="sd">    **References**</span>
 <span class="sd">    </span>
 <span class="sd">    Wang &amp; Li (2017): &quot;Adaptive Gaussian Process Approximation for Bayesian </span>
@@ -793,10 +1042,7 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">lnprior_uniform</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)):</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">gp</span><span class="o">.</span><span class="n">computed</span><span class="p">:</span>
-        <span class="n">gp</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
-        
-    <span class="n">mu</span><span class="p">,</span> <span class="n">var</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">theta</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">return_var</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">mu</span><span class="p">,</span> <span class="n">var</span> <span class="o">=</span> <span class="n">predict_gp</span><span class="p">(</span><span class="n">theta</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">util</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">mu</span> <span class="o">+</span> <span class="mf">0.5</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">2.0</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">e</span><span class="o">*</span><span class="n">var</span><span class="p">))</span>
@@ -808,7 +1054,7 @@
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">grad_agp_utility</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">bounds</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">grad_agp_utility</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">bounds</span><span class="p">):</span>
     
     <span class="c1"># Ensure theta is properly shaped</span>
     <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
@@ -835,7 +1081,7 @@
 
 <div class="viewcode-block" id="bape_utility">
 <a class="viewcode-back" href="../../alabi.html#alabi.utility.bape_utility">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">bape_utility</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">bounds</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">bape_utility</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">predict_gp</span><span class="p">,</span> <span class="n">bounds</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the BAPE (Bayesian Active Posterior Estimation) utility function.</span>
 <span class="sd">    </span>
@@ -894,14 +1140,6 @@
 <span class="sd">        &gt;&gt;&gt; theta_test = np.array([0.5, 1.2])</span>
 <span class="sd">        &gt;&gt;&gt; utility = bape_utility(theta_test, y_train, gp, bounds)</span>
 <span class="sd">    </span>
-<span class="sd">    Find next point by minimizing negative utility:</span>
-<span class="sd">    </span>
-<span class="sd">    .. code-block:: python</span>
-<span class="sd">        </span>
-<span class="sd">        &gt;&gt;&gt; from scipy.optimize import minimize</span>
-<span class="sd">        &gt;&gt;&gt; result = minimize(lambda x: bape_utility(x, y_train, gp, bounds), x0)</span>
-<span class="sd">        &gt;&gt;&gt; next_point = result.x</span>
-<span class="sd">    </span>
 <span class="sd">    **References**</span>
 <span class="sd">    </span>
 <span class="sd">    Kandasamy et al. (2015): &quot;Query efficient posterior estimation in scientific </span>
@@ -915,10 +1153,7 @@
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">lnprior_uniform</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)):</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
 
-    <span class="k">if</span> <span class="n">gp</span><span class="o">.</span><span class="n">computed</span><span class="p">:</span>
-        <span class="n">mu</span><span class="p">,</span> <span class="n">var</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">theta</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">return_var</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;ERROR: Need to compute GP before using it!&quot;</span><span class="p">)</span>
+    <span class="n">mu</span><span class="p">,</span> <span class="n">var</span> <span class="o">=</span> <span class="n">predict_gp</span><span class="p">(</span><span class="n">theta</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">util</span> <span class="o">=</span> <span class="o">-</span><span class="p">((</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">mu</span> <span class="o">+</span> <span class="n">var</span><span class="p">)</span> <span class="o">+</span> <span class="n">logsubexp</span><span class="p">(</span><span class="n">var</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
@@ -931,21 +1166,16 @@
 
 
 
-<div class="viewcode-block" id="grad_bape_utility">
-<a class="viewcode-back" href="../../alabi.html#alabi.utility.grad_bape_utility">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">grad_bape_utility</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">bounds</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">grad_bape_utility</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">bounds</span><span class="p">):</span>
     
     <span class="c1"># Ensure theta is properly shaped</span>
     <span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
     
     <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">lnprior_uniform</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)):</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">theta</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>  <span class="c1"># Return array of infs with correct shape</span>
-    
-    <span class="k">if</span> <span class="n">gp</span><span class="o">.</span><span class="n">computed</span><span class="p">:</span>
-        <span class="n">mu</span><span class="p">,</span> <span class="n">var</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">theta</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">return_var</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;ERROR: Need to compute GP before using it!&quot;</span><span class="p">)</span>
 
+    <span class="n">mu</span><span class="p">,</span> <span class="n">var</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">gp</span><span class="o">.</span><span class="n">_y</span><span class="p">,</span> <span class="n">theta</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">return_var</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    
     <span class="n">d_mu</span> <span class="o">=</span> <span class="n">grad_gp_mean_prediction</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">gp</span><span class="p">)</span>
     <span class="n">d_var</span> <span class="o">=</span> <span class="n">grad_gp_var_prediction</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">gp</span><span class="p">)</span>
     
@@ -973,13 +1203,12 @@
     <span class="c1"># Apply chain rule</span>
     <span class="n">d_bape</span> <span class="o">=</span> <span class="n">d_bape_d_mu</span> <span class="o">*</span> <span class="n">d_mu</span> <span class="o">+</span> <span class="n">d_bape_d_var</span> <span class="o">*</span> <span class="n">d_var</span>
     
-    <span class="k">return</span> <span class="n">d_bape</span></div>
-
+    <span class="k">return</span> <span class="n">d_bape</span>
 
 
 <div class="viewcode-block" id="jones_utility">
 <a class="viewcode-back" href="../../alabi.html#alabi.utility.jones_utility">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">jones_utility</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">gp</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">zeta</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">jones_utility</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">predict_gp</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">y_best</span><span class="p">,</span> <span class="n">zeta</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Compute the Expected Improvement (EI) acquisition function.</span>
 <span class="sd">    </span>
@@ -1041,30 +1270,7 @@
 <span class="sd">    </span>
 <span class="sd">    :raises ValueError: If the utility computation results in invalid values.</span>
 <span class="sd">    :raises RuntimeError: If the GP has not been computed before calling this function.</span>
-<span class="sd">    </span>
-<span class="sd">    **Examples**</span>
-<span class="sd">    </span>
-<span class="sd">    Evaluate Expected Improvement at a test point:</span>
-<span class="sd">    </span>
-<span class="sd">    .. code-block:: python</span>
-<span class="sd">        </span>
-<span class="sd">        &gt;&gt;&gt; theta_test = np.array([0.5, 1.2])</span>
-<span class="sd">        &gt;&gt;&gt; ei_value = jones_utility(theta_test, y_train, gp, bounds)</span>
-<span class="sd">    </span>
-<span class="sd">    Find next point for optimization:</span>
-<span class="sd">    </span>
-<span class="sd">    .. code-block:: python</span>
-<span class="sd">        </span>
-<span class="sd">        &gt;&gt;&gt; from scipy.optimize import minimize</span>
-<span class="sd">        &gt;&gt;&gt; result = minimize(lambda x: jones_utility(x, y_train, gp, bounds, zeta=0.01), x0)</span>
-<span class="sd">        &gt;&gt;&gt; next_point = result.x</span>
-<span class="sd">    </span>
-<span class="sd">    Use higher exploration parameter:</span>
-<span class="sd">    </span>
-<span class="sd">    .. code-block:: python</span>
-<span class="sd">        </span>
-<span class="sd">        &gt;&gt;&gt; ei_explore = jones_utility(theta_test, y_train, gp, bounds, zeta=0.1)</span>
-<span class="sd">    </span>
+
 <span class="sd">    **References**</span>
 <span class="sd">    </span>
 <span class="sd">    Jones et al. (1998): &quot;Efficient global optimization of expensive black-box </span>
@@ -1075,20 +1281,14 @@
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
 
     <span class="c1"># Only works if the GP object has been computed, otherwise you messed up</span>
-    <span class="k">if</span> <span class="n">gp</span><span class="o">.</span><span class="n">computed</span><span class="p">:</span>
-        <span class="n">mu</span><span class="p">,</span> <span class="n">var</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">theta</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">return_var</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;ERROR: Need to compute GP before using it!&quot;</span><span class="p">)</span>
+    <span class="n">mu</span><span class="p">,</span> <span class="n">var</span> <span class="o">=</span> <span class="n">predict_gp</span><span class="p">(</span><span class="n">theta</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
 
     <span class="k">try</span><span class="p">:</span>
         <span class="n">std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
 
-        <span class="c1"># Find best value</span>
-        <span class="n">yBest</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
-
         <span class="c1"># Intermediate quantity</span>
         <span class="k">if</span> <span class="n">std</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="n">mu</span> <span class="o">-</span> <span class="n">yBest</span> <span class="o">-</span> <span class="n">zeta</span><span class="p">)</span> <span class="o">/</span> <span class="n">std</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="n">mu</span> <span class="o">-</span> <span class="n">y_best</span> <span class="o">-</span> <span class="n">zeta</span><span class="p">)</span> <span class="o">/</span> <span class="n">std</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="mf">0.0</span>
 
@@ -1096,7 +1296,7 @@
         <span class="n">cdf</span> <span class="o">=</span> <span class="n">norm</span><span class="o">.</span><span class="n">cdf</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
         <span class="n">pdf</span> <span class="o">=</span> <span class="n">norm</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
 
-        <span class="n">util</span> <span class="o">=</span> <span class="o">-</span><span class="p">((</span><span class="n">mu</span> <span class="o">-</span> <span class="n">yBest</span> <span class="o">-</span> <span class="n">zeta</span><span class="p">)</span> <span class="o">*</span> <span class="n">cdf</span> <span class="o">+</span> <span class="n">std</span> <span class="o">*</span> <span class="n">pdf</span><span class="p">)</span>
+        <span class="n">util</span> <span class="o">=</span> <span class="o">-</span><span class="p">((</span><span class="n">mu</span> <span class="o">-</span> <span class="n">y_best</span> <span class="o">-</span> <span class="n">zeta</span><span class="p">)</span> <span class="o">*</span> <span class="n">cdf</span> <span class="o">+</span> <span class="n">std</span> <span class="o">*</span> <span class="n">pdf</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Invalid util value.  Negative variance or inf mu?&quot;</span><span class="p">)</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;util: </span><span class="si">%e</span><span class="s2">. mu: </span><span class="si">%e</span><span class="s2">. var: </span><span class="si">%e</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">util</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">var</span><span class="p">))</span>
@@ -1115,36 +1315,31 @@
         <span class="n">grad_utility</span> <span class="o">=</span> <span class="n">grad_bape_utility</span>
     <span class="k">elif</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s2">&quot;agp&quot;</span><span class="p">:</span>
         <span class="n">utility</span> <span class="o">=</span> <span class="n">agp_utility</span>
-        <span class="n">grad_utility</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">elif</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s2">&quot;alternate&quot;</span><span class="p">:</span>
-        <span class="c1"># If alternate, AGP on even, BAPE on odd</span>
-        <span class="n">utility</span> <span class="o">=</span> <span class="n">agp_utility</span>
-        <span class="n">grad_utility</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">grad_utility</span> <span class="o">=</span> <span class="n">grad_agp_utility</span>
     <span class="k">elif</span> <span class="n">algorithm</span> <span class="o">==</span> <span class="s2">&quot;jones&quot;</span><span class="p">:</span>
         <span class="n">utility</span> <span class="o">=</span> <span class="n">jones_utility</span>
         <span class="n">grad_utility</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">errMsg</span> <span class="o">=</span> <span class="s2">&quot;Unknown algorithm. Valid options: bape, agp, jones, or alternate.&quot;</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">errMsg</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ERROR: Unknown utility function: </span><span class="si">{</span><span class="n">algorithm</span><span class="si">}</span><span class="s2">. Defaulting to BAPE.&quot;</span><span class="p">)</span>
+        <span class="n">utility</span> <span class="o">=</span> <span class="n">bape_utility</span>
+        <span class="n">grad_utility</span> <span class="o">=</span> <span class="n">grad_bape_utility</span>
 
     <span class="k">return</span> <span class="n">utility</span><span class="p">,</span> <span class="n">grad_utility</span></div>
 
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">minimize_objective_single</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">obj_fn</span><span class="p">,</span> <span class="n">grad_obj_fn</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">set_bounds</span><span class="p">,</span> <span class="n">starting_points</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">n_attempts</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">minimize_objective_single</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">obj_fn</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">starting_point</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">grad_obj_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Single optimization run - used for parallelization.</span>
 <span class="sd">    </span>
 <span class="sd">    This is a helper function that performs one optimization attempt with a specific</span>
-<span class="sd">    starting point. It is designed to be called in parallel by the main</span>
-<span class="sd">    minimize_objective function to enable multi-core optimization.</span>
+<span class="sd">    starting point. It is called serially by the main minimize_objective function</span>
+<span class="sd">    to handle multiple optimization restarts.</span>
 <span class="sd">    </span>
 <span class="sd">    :param idx: Index of the optimization run.</span>
 <span class="sd">    :type idx: *int*</span>
 <span class="sd">    :param obj_fn: Objective function to minimize.</span>
 <span class="sd">    :type obj_fn: *callable*</span>
-<span class="sd">    :param grad_obj_fn: Gradient of objective function.</span>
-<span class="sd">    :type grad_obj_fn: *callable*</span>
 <span class="sd">    :param bounds: Parameter bounds.</span>
 <span class="sd">    :type bounds: *list*</span>
 <span class="sd">    :param set_bounds: Bounds for optimization method.</span>
@@ -1157,58 +1352,40 @@
 <span class="sd">    :type options: *dict*</span>
 <span class="sd">    :param n_attempts: Maximum number of attempts.</span>
 <span class="sd">    :type n_attempts: *int*</span>
+<span class="sd">    :param grad_obj_fn: Gradient function (optional).</span>
+<span class="sd">    :type grad_obj_fn: *callable or None*</span>
 <span class="sd">    </span>
-<span class="sd">    :returns: (x_opt, f_opt) - optimal point and function value.</span>
-<span class="sd">    :rtype: *tuple*</span>
+<span class="sd">    :returns: Optimization result object.</span>
+<span class="sd">    :rtype: *scipy.optimize.OptimizeResult*</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># Use pre-generated starting point to avoid clustering</span>
-    <span class="n">t0</span> <span class="o">=</span> <span class="n">starting_points</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
     
-    <span class="c1"># Keep minimizing until a valid solution is found</span>
-    <span class="n">test_iter</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">test_iter</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="c1"># Generate a new random starting point for retry</span>
-            <span class="n">t0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span>
-                <span class="n">low</span><span class="o">=</span><span class="p">[</span><span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bounds</span><span class="p">],</span> 
-                <span class="n">high</span><span class="o">=</span><span class="p">[</span><span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bounds</span><span class="p">]</span>
-            <span class="p">)</span>
-            
-        <span class="c1"># Too many iterations</span>
-        <span class="k">if</span> <span class="n">test_iter</span> <span class="o">&gt;=</span> <span class="n">n_attempts</span><span class="p">:</span>
-            <span class="n">err_msg</span> <span class="o">=</span> <span class="s2">&quot;ERROR: Cannot find a valid solution to objective function minimization.</span><span class="se">\n</span><span class="s2">&quot;</span> 
-            <span class="n">err_msg</span> <span class="o">+=</span> <span class="s2">&quot;Current iterations: </span><span class="si">%d</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">test_iter</span>
-            <span class="n">err_msg</span> <span class="o">+=</span> <span class="s2">&quot;Maximum iterations: </span><span class="si">%d</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">n_attempts</span>
-            <span class="n">err_msg</span> <span class="o">+=</span> <span class="s2">&quot;Try increasing the number of initial training samples.</span><span class="se">\n</span><span class="s2">&quot;</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">err_msg</span><span class="p">)</span>
-        
-        <span class="n">test_iter</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="c1"># Minimize the function</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">fun</span><span class="o">=</span><span class="n">obj_fn</span><span class="p">,</span> 
+                    <span class="n">x0</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">starting_point</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> 
+                    <span class="n">jac</span><span class="o">=</span><span class="n">grad_obj_fn</span><span class="p">,</span> 
+                    <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> 
+                    <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> 
+                    <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">)</span>
 
-        <span class="c1"># Minimize the function</span>
-        <span class="n">tmp</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span><span class="n">fun</span><span class="o">=</span><span class="n">obj_fn</span><span class="p">,</span> 
-                           <span class="n">x0</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">t0</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> 
-                           <span class="n">jac</span><span class="o">=</span><span class="n">grad_obj_fn</span><span class="p">,</span> 
-                           <span class="n">bounds</span><span class="o">=</span><span class="n">set_bounds</span><span class="p">,</span> 
-                           <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> 
-                           <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">)</span>
-
-        <span class="n">x_opt</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">x</span> 
-        <span class="n">f_opt</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">fun</span>
-
-        <span class="c1"># If solution is finite and allowed by the prior, save</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">x_opt</span><span class="p">))</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">f_opt</span><span class="p">)):</span>
-            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">lnprior_uniform</span><span class="p">(</span><span class="n">x_opt</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)):</span>
-                <span class="k">return</span> <span class="n">x_opt</span><span class="p">,</span> <span class="n">f_opt</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning: Utility function optimization prior fail&quot;</span><span class="p">,</span> <span class="n">x_opt</span><span class="p">)</span>
+    <span class="n">x_opt</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">x</span> 
+    <span class="n">f_opt</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">fun</span>
+    
+    <span class="c1"># If solution is finite and allowed by the prior, save</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">x_opt</span><span class="p">))</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">f_opt</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">lnprior_uniform</span><span class="p">(</span><span class="n">x_opt</span><span class="p">,</span> <span class="n">bounds</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="n">x_opt</span><span class="p">,</span> <span class="n">f_opt</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning: Utility function optimization infinite fail&quot;</span><span class="p">,</span> <span class="n">x_opt</span><span class="p">,</span> <span class="n">f_opt</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning: Utility function optimization prior fail&quot;</span><span class="p">,</span> <span class="n">x_opt</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning: Utility function optimization infinite fail&quot;</span><span class="p">,</span> <span class="n">x_opt</span><span class="p">,</span> <span class="n">f_opt</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
 
 
 <div class="viewcode-block" id="minimize_objective">
 <a class="viewcode-back" href="../../alabi.html#alabi.utility.minimize_objective">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">minimize_objective</span><span class="p">(</span><span class="n">obj_fn</span><span class="p">,</span> <span class="n">grad_obj_fn</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nopt</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;l-bfgs-b&quot;</span><span class="p">,</span>
-                       <span class="n">ps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ncore</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_attempts</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">minimize_objective</span><span class="p">(</span><span class="n">obj_fn</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nopt</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;l-bfgs-b&quot;</span><span class="p">,</span>
+                       <span class="n">ps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">grad_obj_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pool</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Find the global minimum of an acquisition function using multiple restarts.</span>
 <span class="sd">    </span>
@@ -1251,13 +1428,9 @@
 <span class="sd">        </span>
 <span class="sd">        Default is {&quot;max_iter&quot;: 50}.</span>
 <span class="sd">    :type options: *dict or None, optional*</span>
-<span class="sd">    :param ncore: Number of CPU cores to use for parallel optimization. If ncore &gt; 1,</span>
-<span class="sd">        runs multiple optimization restarts in parallel using multiprocessing.</span>
-<span class="sd">        Default is 1 (serial execution).</span>
-<span class="sd">    :type ncore: *int, optional*</span>
-<span class="sd">    :param n_attempts: Maximum number of retry attempts if an optimization fails (returns</span>
-<span class="sd">        infinite or out-of-bounds results). Default is 5.</span>
-<span class="sd">    :type n_attempts: *int, optional*</span>
+<span class="sd">    :param grad_obj_fn: Gradient of the objective function. If provided, can significantly</span>
+<span class="sd">        speed up optimization for methods like l-bfgs-b. Default is None (use finite differences).</span>
+<span class="sd">    :type grad_obj_fn: *callable or None, optional*</span>
 <span class="sd">    </span>
 <span class="sd">    :returns: </span>
 <span class="sd">        - **theta_best** (*ndarray of shape (ndim,)*) -- Parameter values that minimize the objective function.</span>
@@ -1265,128 +1438,184 @@
 <span class="sd">    :rtype: *tuple*</span>
 <span class="sd">    </span>
 <span class="sd">    :raises RuntimeError: If no valid solutions are found after all optimization attempts.</span>
-<span class="sd">    </span>
-<span class="sd">    .. note::</span>
-<span class="sd">        </span>
-<span class="sd">        This function is critical for acquisition function optimization in active learning.</span>
-<span class="sd">        The key challenges addressed are:</span>
-<span class="sd">        </span>
-<span class="sd">        1. **Multi-modality**: Acquisition functions often have many local minima</span>
-<span class="sd">        2. **Numerical stability**: Some points may yield infinite or invalid values</span>
-<span class="sd">        3. **Boundary constraints**: Solutions must respect parameter bounds</span>
-<span class="sd">        4. **Computational efficiency**: Parallel restarts when multiple cores available</span>
-<span class="sd">        </span>
-<span class="sd">        The function automatically retries failed optimizations with new initial points</span>
-<span class="sd">        and filters out invalid solutions (infinite values, out-of-bounds points).</span>
-<span class="sd">    </span>
-<span class="sd">    **Examples**</span>
-<span class="sd">    </span>
-<span class="sd">    Basic optimization of BAPE utility:</span>
-<span class="sd">    </span>
-<span class="sd">    .. code-block:: python</span>
-<span class="sd">        </span>
-<span class="sd">        &gt;&gt;&gt; bounds = [(-2, 2), (-1, 1)]</span>
-<span class="sd">        &gt;&gt;&gt; theta_next, obj_min = minimize_objective(</span>
-<span class="sd">        ...     obj_fn=lambda x: bape_utility(x, y_train, gp, bounds),</span>
-<span class="sd">        ...     grad_obj_fn=lambda x: grad_bape_utility(x, y_train, gp, bounds),</span>
-<span class="sd">        ...     bounds=bounds,</span>
-<span class="sd">        ...     nopt=5</span>
-<span class="sd">        ... )</span>
-<span class="sd">    </span>
-<span class="sd">    Parallel optimization with multiple restarts:</span>
-<span class="sd">    </span>
-<span class="sd">    .. code-block:: python</span>
-<span class="sd">        </span>
-<span class="sd">        &gt;&gt;&gt; theta_next, obj_min = minimize_objective(</span>
-<span class="sd">        ...     obj_fn=acquisition_fn,</span>
-<span class="sd">        ...     grad_obj_fn=None,  # Use finite differences</span>
-<span class="sd">        ...     bounds=bounds,</span>
-<span class="sd">        ...     nopt=10,</span>
-<span class="sd">        ...     ncore=4,</span>
-<span class="sd">        ...     method=&quot;nelder-mead&quot;</span>
-<span class="sd">        ... )</span>
-<span class="sd">    </span>
-<span class="sd">    Custom optimization settings:</span>
-<span class="sd">    </span>
-<span class="sd">    .. code-block:: python</span>
-<span class="sd">        </span>
-<span class="sd">        &gt;&gt;&gt; options = {&quot;max_iter&quot;: 100, &quot;ftol&quot;: 1e-8}</span>
-<span class="sd">        &gt;&gt;&gt; theta_next, obj_min = minimize_objective(</span>
-<span class="sd">        ...     obj_fn=acquisition_fn,</span>
-<span class="sd">        ...     grad_obj_fn=grad_fn,</span>
-<span class="sd">        ...     bounds=bounds,</span>
-<span class="sd">        ...     options=options,</span>
-<span class="sd">        ...     method=&quot;l-bfgs-b&quot;</span>
-<span class="sd">        ... )</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     
     <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">RuntimeWarning</span><span class="p">)</span>
 
-    <span class="c1"># Initialize options</span>
+    <span class="c1"># Initialize options with speed optimizations</span>
     <span class="k">if</span> <span class="n">options</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;max_iter&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">}</span>
+        <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;l-bfgs-b&quot;</span><span class="p">:</span>
+            <span class="c1"># More aggressive settings for L-BFGS-B</span>
+            <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;maxiter&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">&quot;ftol&quot;</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="s2">&quot;gtol&quot;</span><span class="p">:</span> <span class="mf">1e-5</span><span class="p">}</span>
+        <span class="k">elif</span> <span class="n">method</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;nelder-mead&quot;</span><span class="p">:</span>
+            <span class="c1"># Faster convergence for Nelder-Mead</span>
+            <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;maxiter&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">&quot;xatol&quot;</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">,</span> <span class="s2">&quot;fatol&quot;</span><span class="p">:</span> <span class="mf">1e-6</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;maxiter&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Make a copy to avoid modifying the original</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        
+        <span class="c1"># Normalize option names for different optimization methods</span>
+        <span class="c1"># Handle common user-friendly names vs scipy&#39;s internal parameter names</span>
+        <span class="k">if</span> <span class="s2">&quot;max_iter&quot;</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+            <span class="n">options</span><span class="p">[</span><span class="s2">&quot;maxiter&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;max_iter&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;max_eval&quot;</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+            <span class="n">options</span><span class="p">[</span><span class="s2">&quot;maxfev&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;max_eval&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;max_fun&quot;</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+            <span class="n">options</span><span class="p">[</span><span class="s2">&quot;maxfun&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;max_fun&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># Add method-specific optimizations for speed</span>
     <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;nelder-mead&quot;</span><span class="p">:</span>
         <span class="n">options</span><span class="p">[</span><span class="s2">&quot;adaptive&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">elif</span> <span class="nb">str</span><span class="p">(</span><span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;l-bfgs-b&quot;</span><span class="p">:</span>
+        <span class="c1"># Ensure we use limited memory for large problems</span>
+        <span class="k">if</span> <span class="s2">&quot;maxcor&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+            <span class="n">options</span><span class="p">[</span><span class="s2">&quot;maxcor&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
 
     <span class="c1"># Generate all starting points at once to ensure good space-filling distribution</span>
     <span class="c1"># This prevents clustering that can occur when generating points individually</span>
     <span class="k">if</span> <span class="n">ps</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="c1"># Use Sobol sequence for better space-filling</span>
-        <span class="n">starting_points</span> <span class="o">=</span> <span class="n">prior_sampler</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">nsample</span><span class="o">=</span><span class="n">nopt</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s1">&#39;sobol&#39;</span><span class="p">)</span>
+        <span class="n">starting_points</span> <span class="o">=</span> <span class="n">prior_sampler</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="n">nsample</span><span class="o">=</span><span class="n">nopt</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s2">&quot;lhs&quot;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># Use provided sampler to generate all points at once</span>
         <span class="n">starting_points</span> <span class="o">=</span> <span class="n">ps</span><span class="p">(</span><span class="n">nsample</span><span class="o">=</span><span class="n">nopt</span><span class="p">)</span>
-
-    <span class="n">bound_methods</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;nelder-mead&quot;</span><span class="p">,</span> <span class="s2">&quot;l-bfgs-b&quot;</span><span class="p">,</span> <span class="s2">&quot;tnc&quot;</span><span class="p">,</span> <span class="s2">&quot;slsqp&quot;</span><span class="p">,</span> <span class="s2">&quot;powell&quot;</span><span class="p">,</span> <span class="s2">&quot;trust-constr&quot;</span><span class="p">]</span>
-    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">method</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">bound_methods</span><span class="p">:</span>
-        <span class="n">set_bounds</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">set_bounds</span> <span class="o">=</span> <span class="n">bounds</span>
-
-    <span class="c1"># Serial execution </span>
-    <span class="k">if</span> <span class="n">ncore</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">objective</span> <span class="o">=</span> <span class="p">[]</span>
-        
-        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nopt</span><span class="p">):</span>
-            <span class="n">x_opt</span><span class="p">,</span> <span class="n">f_opt</span> <span class="o">=</span> <span class="n">minimize_objective_single</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span> <span class="n">obj_fn</span><span class="p">,</span> <span class="n">grad_obj_fn</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">set_bounds</span><span class="p">,</span> <span class="n">starting_points</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">n_attempts</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">x_opt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x_opt</span><span class="p">)</span>
-                <span class="n">objective</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f_opt</span><span class="p">)</span>
     
-    <span class="c1"># Parallel execution</span>
+    <span class="c1"># Pre-flatten starting points to avoid repeated operations</span>
+    <span class="n">starting_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">pt</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span> <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">starting_points</span><span class="p">])</span>
+    
+    <span class="k">if</span> <span class="n">pool</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">single_opt</span><span class="p">(</span><span class="n">ii</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">minimize_objective_single</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span> <span class="n">obj_fn</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">starting_points</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">method</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">grad_obj_fn</span><span class="p">)</span>
+
+        <span class="n">opt_results</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">single_opt</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">nopt</span><span class="p">))</span>
+        <span class="n">min_theta</span> <span class="o">=</span> <span class="p">[</span><span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">opt_results</span><span class="p">]</span>
+        <span class="n">min_obj</span> <span class="o">=</span> <span class="p">[</span><span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">opt_results</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="c1"># Create partial function for multiprocessing</span>
-        <span class="n">minimize_function</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">minimize_objective_single</span><span class="p">,</span> 
-                                    <span class="n">obj_fn</span><span class="o">=</span><span class="n">obj_fn</span><span class="p">,</span> 
-                                    <span class="n">grad_obj_fn</span><span class="o">=</span><span class="n">grad_obj_fn</span><span class="p">,</span> 
-                                    <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> 
-                                    <span class="n">set_bounds</span><span class="o">=</span><span class="n">set_bounds</span><span class="p">,</span> 
-                                    <span class="n">starting_points</span><span class="o">=</span><span class="n">starting_points</span><span class="p">,</span> 
-                                    <span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> 
-                                    <span class="n">options</span><span class="o">=</span><span class="n">options</span><span class="p">,</span> 
-                                    <span class="n">n_attempts</span><span class="o">=</span><span class="n">n_attempts</span><span class="p">)</span>
-
-        <span class="k">with</span> <span class="n">mp</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">ncore</span><span class="p">,</span> <span class="n">nopt</span><span class="p">))</span> <span class="k">as</span> <span class="n">pool</span><span class="p">:</span>
-            <span class="n">results</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">minimize_function</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">nopt</span><span class="p">))</span>
-        
-        <span class="c1"># Extract results</span>
-        <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">objective</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">x_opt</span><span class="p">,</span> <span class="n">f_opt</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">x_opt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x_opt</span><span class="p">)</span>
-                <span class="n">objective</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f_opt</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;ERROR: No valid solutions found in any optimization runs!&quot;</span><span class="p">)</span>
-
+        <span class="c1"># Serial execution </span>
+        <span class="n">min_theta</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">min_obj</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nopt</span><span class="p">):</span>
+            <span class="n">minx</span><span class="p">,</span> <span class="n">miny</span> <span class="o">=</span> <span class="n">minimize_objective_single</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span> <span class="n">obj_fn</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">starting_points</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">method</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">grad_obj_fn</span><span class="p">)</span>
+            <span class="n">min_theta</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">minx</span><span class="p">)</span>
+            <span class="n">min_obj</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">miny</span><span class="p">)</span>
+  
     <span class="c1"># Return value that minimizes objective function out of all minimizations</span>
-    <span class="n">best_ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">objective</span><span class="p">)</span>
-    <span class="n">theta_best</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="n">best_ind</span><span class="p">]</span>  
-    <span class="n">obj_best</span> <span class="o">=</span> <span class="n">objective</span><span class="p">[</span><span class="n">best_ind</span><span class="p">]</span>
+    <span class="n">best_ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">min_obj</span><span class="p">)</span>
+    <span class="n">theta_best</span> <span class="o">=</span> <span class="n">min_theta</span><span class="p">[</span><span class="n">best_ind</span><span class="p">]</span>  
+    <span class="n">obj_best</span> <span class="o">=</span> <span class="n">min_obj</span><span class="p">[</span><span class="n">best_ind</span><span class="p">]</span>
 
     <span class="k">return</span> <span class="n">theta_best</span><span class="p">,</span> <span class="n">obj_best</span></div>
+
+
+
+<div class="viewcode-block" id="BetaWarpingFunction">
+<a class="viewcode-back" href="../../alabi.html#alabi.utility.BetaWarpingFunction">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BetaWarpingFunction</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Swersky et al. 2017 Beta CDF warping function for sklearn FunctionTransformer.</span>
+<span class="sd">    </span>
+<span class="sd">    Note: This transformer must be refit when new data extends beyond the </span>
+<span class="sd">    original data range to update the internal MinMaxScaler bounds.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="BetaWarpingFunction.__init__">
+<a class="viewcode-back" href="../../alabi.html#alabi.utility.BetaWarpingFunction.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">2.0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alpha</span> <span class="o">=</span> <span class="n">alpha</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">beta</span> <span class="o">=</span> <span class="n">beta</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minmax_scaler</span> <span class="o">=</span> <span class="n">MinMaxScaler</span><span class="p">()</span></div>
+
+    
+<div class="viewcode-block" id="BetaWarpingFunction.fit">
+<a class="viewcode-back" href="../../alabi.html#alabi.utility.BetaWarpingFunction.fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Fit the MinMaxScaler to the data, establishing the data range bounds.</span>
+<span class="sd">        </span>
+<span class="sd">        This updates the internal min/max values used for scaling. Should be</span>
+<span class="sd">        called whenever new data extends beyond the previous range.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minmax_scaler</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+    
+<div class="viewcode-block" id="BetaWarpingFunction.transform">
+<a class="viewcode-back" href="../../alabi.html#alabi.utility.BetaWarpingFunction.transform">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+
+        <span class="n">X_scaled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">minmax_scaler</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        
+        <span class="c1"># Validate that scaled values are in valid range [0, 1]</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">X_scaled</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">X_scaled</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">invalid_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">X_scaled</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">X_scaled</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">invalid_values</span> <span class="o">=</span> <span class="n">X_scaled</span><span class="p">[</span><span class="n">invalid_mask</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Scaled values outside [0, 1] range detected: </span><span class="si">{</span><span class="n">invalid_values</span><span class="si">}</span><span class="s2">. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Min=</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">)</span><span class="si">}</span><span class="s2">, Max=</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">)</span><span class="si">}</span><span class="s2">. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;This indicates the transformer needs to be refit with the new data range. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Call fit() with data that includes both old and new samples.&quot;</span>
+            <span class="p">)</span>
+        
+        <span class="c1"># Apply Beta CDF warping per feature</span>
+        <span class="n">X_warped</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">X_scaled</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">X_warped</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">betainc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span> <span class="n">X_scaled</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
+        
+        <span class="k">return</span> <span class="n">X_warped</span></div>
+
+    
+<div class="viewcode-block" id="BetaWarpingFunction.fit_transform">
+<a class="viewcode-back" href="../../alabi.html#alabi.utility.BetaWarpingFunction.fit_transform">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit and transform in one step.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="BetaWarpingFunction.inverse_transform">
+<a class="viewcode-back" href="../../alabi.html#alabi.utility.BetaWarpingFunction.inverse_transform">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">inverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
+        
+        <span class="c1"># Validate input range</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">X</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">X</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Input to inverse_transform must be in [0, 1]. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Got min=</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="si">}</span><span class="s2">, max=</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        
+        <span class="c1"># Apply inverse Beta CDF per feature</span>
+        <span class="n">X_unwarped</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+            <span class="n">X_unwarped</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">betaincinv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span> <span class="n">X</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
+        
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">minmax_scaler</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">X_unwarped</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="beta_warping_transformer">
+<a class="viewcode-back" href="../../alabi.html#alabi.utility.beta_warping_transformer">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">beta_warping_transformer</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">2.0</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a scikit-learn FunctionTransformer for Beta CDF warping.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alpha : float or array-like</span>
+<span class="sd">        Shape parameter α for Beta distribution</span>
+<span class="sd">    beta : float or array-like</span>
+<span class="sd">        Shape parameter β for Beta distribution</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    transformer : FunctionTransformer</span>
+<span class="sd">        Scikit-learn transformer object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">warping_funcs</span> <span class="o">=</span> <span class="n">BetaWarpingFunction</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="n">beta</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">FunctionTransformer</span><span class="p">(</span>
+        <span class="n">func</span><span class="o">=</span><span class="n">warping_funcs</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span>
+        <span class="n">inverse_func</span><span class="o">=</span><span class="n">warping_funcs</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">,</span>
+        <span class="n">check_inverse</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span></div>
 
 </pre></div>
         </article>
@@ -1421,8 +1650,8 @@
     </aside>
   </div>
 </div><script src="../../_static/documentation_options.js?v=d45e8c67"></script>
-    <script src="../../_static/doctools.js?v=9a2dae69"></script>
-    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=f281be69"></script>
@@ -1430,10 +1659,9 @@
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script src="../../_static/togglebutton.js?v=1ae7504c"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script src="../../_static/notebook-outputs.js?v=9bb603c3"></script>
     </body>
 </html>
