@@ -1199,7 +1199,7 @@ class SurrogateModel(object):
             _y = self._y
         
         if multi_proc and self.ncore > 1:
-            pool = mp.Pool(processes=self.ncore)
+            pool = parallel_utils.safe_multiprocessing_pool(self.ncore)
         else:
             pool = None
         
@@ -1597,7 +1597,7 @@ class SurrogateModel(object):
                 grad_obj_fn = partial(self.grad_utility, gp=self.gp, bounds=self._bounds)
 
         if self.ncore > 1:
-            pool = mp.Pool(processes=self.ncore)
+            pool = parallel_utils.safe_multiprocessing_pool(self.ncore)
         # Always use serial execution for acquisition function optimization
         _thetaN, _ = ut.minimize_objective(obj_fn, 
                                         bounds=self._bounds,
@@ -1949,18 +1949,17 @@ class SurrogateModel(object):
                 if self.verbose:
                     print("Starting multiprocessing pool...")
                 
-                with mp.Pool(processes=max_processes) as pool:
-                    if show_progress:
-                        # Use imap for progress tracking
-                        import tqdm
-                        results = []
-                        with tqdm.tqdm(total=nchains, desc="Running parallel chains (MP)") as pbar:
-                            for result in pool.imap(_run_chain_worker_mp, chain_args):
-                                results.append(result)
-                                pbar.update(1)
-                    else:
-                        # Use map for simpler execution
-                        results = pool.map(_run_chain_worker_mp, chain_args)
+                pool = parallel_utils.safe_multiprocessing_pool(self.ncore)
+                
+                if show_progress:
+                    results = []
+                    with tqdm.tqdm(total=nchains, desc="Running parallel chains (MP)") as pbar:
+                        for result in pool.imap(_run_chain_worker_mp, chain_args):
+                            results.append(result)
+                            pbar.update(1)
+                else:
+                    # Use map for simpler execution
+                    results = pool.map(_run_chain_worker_mp, chain_args)
                 
                 # Process results
                 for i, result in enumerate(results):
@@ -1982,7 +1981,6 @@ class SurrogateModel(object):
                     print("Running chains sequentially...")
                 
                 if show_progress:
-                    import tqdm
                     sequential_progress = tqdm.tqdm(total=nchains, desc="Running chains sequentially")
                 
                 for i in range(nchains):

@@ -8,7 +8,7 @@ multiprocessing pools can cause conflicts, so this module provides safe alternat
 
 import os
 import warnings
-import multiprocessing as mp
+import multiprocess as mp
 
 
 def is_mpi_available():
