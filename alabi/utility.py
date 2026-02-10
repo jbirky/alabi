@@ -1188,9 +1188,20 @@ def minimize_objective(obj_fn, bounds=None, nopt=1, method="l-bfgs-b",
             min_obj.append(miny)
   
     # Return value that minimizes objective function out of all minimizations
-    best_ind = np.argmin(min_obj)
-    theta_best = min_theta[best_ind]  
-    obj_best = min_obj[best_ind]
+    # Filter out NaN results
+    valid_results = [(theta, obj) for theta, obj in zip(min_theta, min_obj) 
+                     if np.all(np.isfinite(theta)) and np.isfinite(obj)]
+    
+    if len(valid_results) == 0:
+        # All optimizations failed - return NaN to signal failure
+        print(f"Warning: All {nopt} optimization attempts failed. Returning NaN.")
+        return np.nan, np.nan
+    
+    # Find best among valid results
+    valid_theta, valid_obj = zip(*valid_results)
+    best_ind = np.argmin(valid_obj)
+    theta_best = valid_theta[best_ind]  
+    obj_best = valid_obj[best_ind]
 
     return theta_best, obj_best
 

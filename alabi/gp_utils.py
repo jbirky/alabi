@@ -1185,7 +1185,9 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
     except Exception as e:
         if verbose:
             print(f"Failed to set best hyperparameters: {str(e)}")
-        raise RuntimeError(f"Failed to set best hyperparameters: {str(e)}")
+        # raise RuntimeError(f"Failed to set best hyperparameters: {str(e)}")
+        # If optimization fails, return original GP without changes
+        return gp
     
     # Compile detailed results
     cv_results = {
@@ -1222,8 +1224,11 @@ def optimize_gp_kfold_cv(gp, _theta, _y, hyperparameter_candidates, y_scaler,
                 "cv_scores_matrix": cv_scores_s3,
                 "candidates": stage3_hyperparam_candidates
             }
+            
+    if verbose:
+        print(f"CV optimization completed. Best {scoring}: {cv_results['best_score']:.4f} ± {cv_results['best_score_std']:.4f}")
     
-    return gp, best_hyperparams, cv_results
+    return gp
 
 
 def _generate_stage2_candidates(best_params, n_candidates, width_factor, gp=None):
