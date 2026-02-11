@@ -12,16 +12,11 @@ import scipy
 from scipy.optimize import minimize
 from scipy.stats import norm, truncnorm
 from skopt.space import Space
-from skopt.space.space import Real, Categorical
+from skopt.space.space import Real
 from skopt.sampler import Sobol, Lhs, Halton, Hammersly, Grid
-import multiprocessing as mp
-from functools import partial
 import warnings
-import time
 from scipy.special import betainc, betaincinv
 from sklearn.preprocessing import FunctionTransformer, MinMaxScaler
-from alabi import parallel_utils
-import tqdm
 
 __all__ = ["agp_utility", 
            "bape_utility", 
