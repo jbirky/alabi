@@ -350,6 +350,11 @@ class SurrogateModel(object):
             self.ncore = 1
         else:
             self.ncore = min(ncore, mp.cpu_count())
+            
+        # Check if MPI is active
+        self.mpi_is_active = parallel_utils.is_mpi_active()
+        if self.mpi_is_active:
+            from mpi4py.futures import MPIPoolExecutor
 
         # false if emcee, dynesty, and ultranest have not been run for this object
         self.emcee_run = False
@@ -396,12 +401,21 @@ class SurrogateModel(object):
     def _get_pool(self, ncore=None):
         if (ncore is None) or (ncore <= 1):
             return None
+
+        if self.mpi_is_active:
+            pool = MPIPoolExecutor(max_workers=ncore)
+            return pool
         else:
             pool = mp.get_context(self.pool_method).Pool(processes=ncore)
             return pool
 
     def _close_pool(self, pool):
-        if pool is not None:
+        if pool is None:
+            pool = None
+        elif self.mpi_is_active:
+            pool.shutdown(wait=True)
+            pool = None
+        else:
             pool.close()
             pool.join()
             pool = None
@@ -409,55 +423,37 @@ class SurrogateModel(object):
     def save(self):
         """
         Pickle ``SurrogateModel`` object and write summary to a text file.
-        MPI-safe: Only rank 0 writes to avoid file corruption.
         """
 
-        # Check if we're using MPI and only let rank 0 save
-        if parallel_utils.is_mpi_active():
-            try:
-                from mpi4py import MPI
-                comm = MPI.COMM_WORLD
-                rank = comm.Get_rank()
-            except ImportError:
-                rank = 0
-        else:
-            rank = 0
+        file = os.path.join(self.savedir, self.model_name)
+
+        # pickle surrogate model object
+        print(f"Caching model to {file}...")
         
-        if rank == 0:
-            file = os.path.join(self.savedir, self.model_name)
+        # Create a temporary file first, then rename (atomic operation)
+        temp_file = file + ".pkl.tmp"
+        try:
+            with open(temp_file, "wb") as f:        
+                pickle.dump(self, f)
+            # Atomic rename to prevent corruption
+            os.rename(temp_file, file + ".pkl")
+        except Exception as e:
+            # Clean up temp file if something went wrong
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+            raise e
 
-            # pickle surrogate model object
-            print(f"Rank {rank}: Caching model to {file}...")
-            
-            # Create a temporary file first, then rename (atomic operation)
-            temp_file = file + ".pkl.tmp"
+        if hasattr(self, "gp"):
             try:
-                with open(temp_file, "wb") as f:        
-                    pickle.dump(self, f)
-                # Atomic rename to prevent corruption
-                os.rename(temp_file, file + ".pkl")
+                cache_utils.write_report_gp(self, file)
             except Exception as e:
-                # Clean up temp file if something went wrong
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
-                raise e
+                print(f"Error writing GP report: {e}")
 
-            if hasattr(self, "gp"):
-                try:
-                    cache_utils.write_report_gp(self, file)
-                except Exception as e:
-                    print(f"Error writing GP report: {e}")
-
-            if self.emcee_run == True:
-                cache_utils.write_report_emcee(self, file)
-                
-            if self.dynesty_run == True:
-                cache_utils.write_report_dynesty(self, file)
-                
-        else:
-            # Non-rank-0 processes just print a message
-            if parallel_utils.is_mpi_active():
-                print(f"Rank {rank}: Skipping save (only rank 0 saves to prevent conflicts)")
+        if self.emcee_run == True:
+            cache_utils.write_report_emcee(self, file)
+            
+        if self.dynesty_run == True:
+            cache_utils.write_report_dynesty(self, file)
 
             
     def _lnlike_fn(self, _theta):
@@ -719,17 +715,17 @@ class SurrogateModel(object):
             
         if self.fit_amp:
             amp_bounds = [np.var(self._y) * 10**self.gp_amp_rng[0], np.var(self._y) * 10**self.gp_amp_rng[1]] 
-            hp_bounds[pnames.index("kernel:k1:log_constant")] = amp_bounds
+            hp_bounds[pnames.index(f"{self.kernel_amp_key}:log_constant")] = amp_bounds
 
         if self.fit_white_noise:
             wn_bounds = [self.white_noise - 3, self.white_noise + 3]
             hp_bounds[pnames.index("white_noise:value")] = wn_bounds
             
         if self.uniform_scales == True:
-            hp_bounds[pnames.index("kernel:k2:metric:log_M")] = self.gp_scale_rng
+            hp_bounds[pnames.index(f"{self.kernel_scale_key}:metric:log_M")] = self.gp_scale_rng
         else:
             for ii in range(self.ndim):
-                hp_bounds[pnames.index(f"kernel:k2:metric:log_M_{ii}_{ii}")] = self.gp_scale_rng
+                hp_bounds[pnames.index(f"{self.kernel_scale_key}:metric:log_M_{ii}_{ii}")] = self.gp_scale_rng
 
         self.hp_bounds = np.array(hp_bounds)
         self.gp_hyper_prior = partial(ut.lnprior_uniform, bounds=self.hp_bounds)
@@ -748,13 +744,13 @@ class SurrogateModel(object):
         if self.fit_mean:
             full_params[self.param_names_full.index("mean:value")] = optimized_params[self.param_names_optimized.index("mean:value")]
         if self.fit_amp:
-            full_params[self.param_names_full.index("kernel:k1:log_constant")] = optimized_params[self.param_names_optimized.index("kernel:k1:log_constant")]
+            full_params[self.param_names_full.index(f"{self.kernel_amp_key}:log_constant")] = optimized_params[self.param_names_optimized.index(f"{self.kernel_amp_key}:log_constant")]
         if self.fit_white_noise:
             full_params[self.param_names_full.index("white_noise:value")] = optimized_params[self.param_names_optimized.index("white_noise:value")]
         
         # if self.uniform_scales == True:  use same scale length for all dimensions
         for ii in range(self.ndim):
-            full_params[self.param_names_full.index(f"kernel:k2:metric:log_M_{ii}_{ii}")] = optimized_params[self.param_names_optimized.index("kernel:k2:metric:log_M")]
+            full_params[self.param_names_full.index(f"{self.kernel_scale_key}:metric:log_M_{ii}_{ii}")] = optimized_params[self.param_names_optimized.index(f"{self.kernel_scale_key}:metric:log_M")]
    
         return np.array(full_params)
         
@@ -785,9 +781,9 @@ class SurrogateModel(object):
         hp_dict = gp.get_parameter_dict()
         
         if self.uniform_scales == True:
-            hp_dict["kernel:k2:metric:log_M"] = hp_dict.pop("kernel:k2:metric:log_M_0_0")
+            hp_dict[f"{self.kernel_scale_key}:metric:log_M"] = hp_dict.pop(f"{self.kernel_scale_key}:metric:log_M_0_0")
             for ii in range(1, self.ndim):
-                del hp_dict[f"kernel:k2:metric:log_M_{ii}_{ii}"]
+                del hp_dict[f"{self.kernel_scale_key}:metric:log_M_{ii}_{ii}"]
         
         return hp_dict
     
@@ -1065,17 +1061,21 @@ class SurrogateModel(object):
                 
         self.param_names_full = self.gp.get_parameter_names(include_frozen=False)
         self.param_names_optimized = []
+        
+        self.kernel_scale_key = list(filter(lambda x: "metric:log_M" in x, self.param_names_full))[0].split(":metric:log_M")[0]
+        
         if fit_mean:
             self.param_names_optimized.append("mean:value")
         if fit_amp:
-            self.param_names_optimized.append("kernel:k1:log_constant")
+            self.kernel_amp_key = list(filter(lambda x: "log_constant" in x, self.param_names_full))[0].split(":log_constant")[0]
+            self.param_names_optimized.append(f"{self.kernel_amp_key}:log_constant")
         if fit_white_noise:
             self.param_names_optimized.append("white_noise:value")
         if self.uniform_scales:
-            self.param_names_optimized.append("kernel:k2:metric:log_M")
+            self.param_names_optimized.append(f"{self.kernel_scale_key}:metric:log_M")
         else:
             for ii in range(self.ndim):
-                self.param_names_optimized.append(f"kernel:k2:metric:log_M_{ii}_{ii}")
+                self.param_names_optimized.append(f"{self.kernel_scale_key}:metric:log_M_{ii}_{ii}")
                 
         # Infer lengthscale indices (used if regularization is enabled)
         self.hp_length_indices = []
@@ -1088,7 +1088,7 @@ class SurrogateModel(object):
                 self.hp_other_indices.append(ii)
         if self.uniform_scales:
             # Only one lengthscale parameter when uniform scales are used
-            self.hp_length_index = [self.param_names_optimized.index("kernel:k2:metric:log_M")]
+            self.hp_length_index = [self.param_names_optimized.index(f"{self.kernel_scale_key}:metric:log_M")]
             
         # record initial hyperparameters
         self.initial_gp_hyperparameters = self.get_hyperparameter_vector(self.gp)
@@ -1867,12 +1867,7 @@ class SurrogateModel(object):
                                    use_grad_opt=True, optimizer_kwargs={}, 
                                    show_progress=True):
         """
-        Run multiple active learning chains in parallel using multiprocessing instead of threading.
-        
-        This is an alternative to active_train_parallel() that uses multiprocessing.Pool
-        for parallelization. This approach can be more robust for CPU-intensive tasks and
-        avoids Python's Global Interpreter Lock (GIL) limitations, but requires that all
-        data be pickleable.
+        Run multiple active learning chains in parallel.
         
         :param niter: (*int, optional*) 
             Number of iterations per chain. Default 100.
@@ -4047,30 +4042,6 @@ class SurrogateModel(object):
         except Exception as e:
             print(f"Chain {chain_id} failed with error: {e}")
             return None
-    
-    
-    def _restore_threading_environment(self):
-        """
-        Restore original threading environment variables to allow parallel operations
-        to work normally after active_train_parallel completes.
-        """
-        import os
-        
-        if hasattr(self, '_original_threading_env'):
-            if self.verbose:
-                print("Restoring original threading environment variables for future parallel operations")
-            
-            for var, original_value in self._original_threading_env.items():
-                if original_value is None:
-                    # Variable wasn't set originally, remove it
-                    if var in os.environ:
-                        del os.environ[var]
-                else:
-                    # Restore original value
-                    os.environ[var] = original_value
-            
-            # Clean up the stored values
-            delattr(self, '_original_threading_env')
             
     
     def _create_chain_copy(self, chain_id):
@@ -4103,21 +4074,6 @@ class SurrogateModel(object):
         if hasattr(chain, 'opt_gp_kwargs'):
             chain.opt_gp_kwargs = chain.opt_gp_kwargs.copy()
             chain.opt_gp_kwargs["multi_proc"] = False
-            
-        # # Additional aggressive threading control for this chain
-        # threading_env_vars = {
-        #     "OMP_NUM_THREADS": "1",
-        #     "OPENBLAS_NUM_THREADS": "1", 
-        #     "MKL_NUM_THREADS": "1",
-        #     "NUMEXPR_NUM_THREADS": "1",
-        #     "VECLIB_MAXIMUM_THREADS": "1",
-        #     "NUMBA_NUM_THREADS": "1",
-        #     "BLIS_NUM_THREADS": "1",
-        #     "GOTO_NUM_THREADS": "1"
-        # }
-        
-        # for var, value in threading_env_vars.items():
-        #     os.environ[var] = value
             
         # Try to control threading at the library level
         try:
