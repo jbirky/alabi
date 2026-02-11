@@ -30,7 +30,6 @@ __all__ = ["agp_utility",
            "minimize_objective", 
            "prior_sampler", 
            "prior_sampler_normal",
-           "eval_fn", 
            "lnprior_uniform",
            "prior_transform_uniform",
            "lnprior_normal",
@@ -181,89 +180,6 @@ def prior_sampler_normal(prior_data, bounds, nsample=1):
             rvs[ii] = np.random.uniform(low=bounds[ii][0], high=bounds[ii][1], size=nsample)
     
     return rvs.T
-
-    
-def eval_fn(fn, theta, ncore=mp.cpu_count()):
-    """
-    Evaluate a function at multiple parameter points with optional parallelization.
-    
-    This utility function provides a convenient interface for evaluating expensive
-    functions (like likelihood functions or forward models) at multiple parameter
-    values, with automatic parallelization when multiple cores are available.
-    
-    :param fn: (*callable*)
-        Function to evaluate at each parameter point. Should have signature
-        fn(theta_i) where theta_i is array of shape (ndim,) and return a scalar.
-        
-    :param theta: (*array-like of shape (npoints, ndim)*)
-        Array of parameter points at which to evaluate the function. Each row
-        represents one parameter vector.
-        
-    :param ncore: (*int, optional*)
-        Number of CPU cores to use for parallel evaluation. If ncore <= 1,
-        uses serial evaluation with progress bar. If ncore > 1, uses
-        multiprocessing.Pool for parallel evaluation. Default is all available cores.
-        
-    :returns: *ndarray of shape (npoints,)*
-        Function values evaluated at each parameter point. Order matches the
-        input theta array.
-        
-    **Notes**
-    
-    This function is particularly useful for:
-    - Initial sampling of expensive functions for surrogate model training
-    - Batch evaluation of likelihood functions
-    - Testing surrogate model accuracy on validation sets
-    
-    The function automatically prints timing information and handles both serial
-    and parallel execution modes. For serial execution, a progress bar is shown
-    using tqdm.
-    
-    **Examples**
-    
-    Evaluate a simple function at multiple points:
-    
-    .. code-block:: python
-    
-        def quadratic(x):
-            return np.sum(x**2)
-        theta = np.random.rand(100, 2)
-        y = eval_fn(quadratic, theta, ncore=1)
-    
-    Parallel evaluation of expensive function:
-    
-    .. code-block:: python
-    
-        def expensive_fn(x):
-            # Simulate expensive computation
-            time.sleep(0.1)
-            return np.sum(x**2)
-        y = eval_fn(expensive_fn, theta, ncore=4)
-    """
-
-    t0 = time.time()
-
-    if ncore <= 1:
-        y = np.zeros(theta.shape[0])
-        for ii, tt in tqdm.tqdm(enumerate(theta)):
-            y[ii] = fn(tt)
-    else:
-        # # Use MPI-safe multiprocessing
-        # if parallel_utils is not None:
-        #     y = parallel_utils.safe_pool_map(fn, theta, ncore)
-        # else:
-        #     # Fallback to original implementation with progress bar
-        with mp.Pool(ncore) as p:
-            y = np.array(list(tqdm.tqdm(p.imap(fn, theta), total=len(theta))))
-    y = np.array(y)
-
-    tf = time.time()
-    print(f"Computed {len(theta)} function evaluations: {np.round(tf - t0)}s \n")
-
-    try:
-        return y.squeeze()
-    except:
-        return y
 
 
 def lnprior_uniform(x, bounds):
@@ -749,7 +665,7 @@ def agp_utility(theta, predict_gp, bounds):
         print("Invalid util value.  Negative variance or inf mu?")
         raise ValueError("util: %e. mu: %e. var: %e" % (util, mu, var))
 
-    return float(util)
+    return util.item()
 
 
 def grad_agp_utility(theta, gp, bounds):
@@ -858,7 +774,7 @@ def bape_utility(theta, predict_gp, bounds):
         print("Invalid util value.  Negative variance or inf mu?")
         raise ValueError("util: %e. mu: %e. var: %e" % (util, mu, var))
 
-    return float(util)
+    return util.item()
 
 
 def grad_bape_utility(theta, gp, bounds):
@@ -994,7 +910,7 @@ def jones_utility(theta, predict_gp, bounds, y_best, zeta=0.01):
         print("Invalid util value.  Negative variance or inf mu?")
         raise ValueError("util: %e. mu: %e. var: %e" % (util, mu, var))
 
-    return float(util)
+    return util.item()
 
 
 def assign_utility(algorithm):
@@ -1175,7 +1091,7 @@ def minimize_objective(obj_fn, bounds=None, nopt=1, method="l-bfgs-b",
         def single_opt(ii):
             return minimize_objective_single(ii, obj_fn, bounds, starting_points[ii], method, options, grad_obj_fn)
 
-        opt_results = pool.map(single_opt, np.arange(nopt))
+        opt_results = pool.imap(single_opt, np.arange(nopt))
         min_theta = [res[0] for res in opt_results]
         min_obj = [res[1] for res in opt_results]
     else:

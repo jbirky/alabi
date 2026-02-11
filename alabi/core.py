@@ -274,7 +274,7 @@ class SurrogateModel(object):
     def __init__(self, lnlike_fn=None, bounds=None, param_names=None, 
                  theta_scaler=preprocessing.MinMaxScaler(), y_scaler=no_scaler,
                  cache=True, savedir="results/", model_name="surrogate_model",
-                 verbose=True, ncore=mp.cpu_count(), ignore_warnings=True,
+                 verbose=True, ncore=1, pool_method="fork", ignore_warnings=True,
                  random_state=None):
 
         # Check all required inputs are specified
@@ -345,6 +345,7 @@ class SurrogateModel(object):
             warnings.filterwarnings("ignore", category=FutureWarning)
 
         # Number of cores alabi is allowed to use
+        self.pool_method = pool_method
         if ncore <= 0:
             self.ncore = 1
         else:
@@ -372,6 +373,7 @@ class SurrogateModel(object):
     
     def __getstate__(self):
         state = self.__dict__.copy()
+        state["pool"] = None
         
         # If self.gp is the problematic object, we need to handle it
         if hasattr(self, 'gp') and hasattr(self.gp, '__dict__'):
@@ -390,8 +392,20 @@ class SurrogateModel(object):
 
     def __setstate__(self, state):
         self.__dict__.update(state)
+            
+    def _get_pool(self, ncore=None):
+        if (ncore is None) or (ncore <= 1):
+            return None
+        else:
+            pool = mp.get_context(self.pool_method).Pool(processes=ncore)
+            return pool
 
-    
+    def _close_pool(self, pool):
+        if pool is not None:
+            pool.close()
+            pool.join()
+            pool = None
+
     def save(self):
         """
         Pickle ``SurrogateModel`` object and write summary to a text file.
@@ -519,9 +533,23 @@ class SurrogateModel(object):
         # if theta_scaler is a non-linear transform, then samples in real space will be non-uniform
         _theta = self._prior_sampler(nsample=nsample, sampler=sampler, random_state=None)
         theta = self.theta_scaler.inverse_transform(_theta)
+        # theta = self.prior_sampler(nsample=nsample, sampler=sampler, random_state=None) 
         
-        # theta = self.prior_sampler(nsample=nsample, sampler=sampler, random_state=None)   
-        y = ut.eval_fn(self.true_log_likelihood, theta, ncore=self.ncore).reshape(-1, 1)
+        # create pool for parallel evaluation of likelihood function
+        pool = self._get_pool(ncore=self.ncore)  
+        
+        # evaluate initial samples in parallel or sequential
+        if self.ncore > 1:
+            results = list(tqdm.tqdm(
+                pool.imap(self.true_log_likelihood, theta),
+                total=len(theta)
+            ))
+            y = np.array(results).reshape(-1, 1)
+        else:
+            y = np.array([self.true_log_likelihood(tt) for tt in theta]).reshape(-1,1)
+            
+        # close init_train pool
+        self._close_pool(pool)
         
         # replace any nan or inf values 
         for ii in range(len(y)):
@@ -628,7 +656,8 @@ class SurrogateModel(object):
             self.y_test = y_test
             
             # Fit scalers
-            _theta, _y = self.refit_scalers(np.append(theta, theta_test, axis=0), np.append(y, y_test, axis=0))
+            _theta, _y = self.refit_scalers(theta, y)
+            # _theta, _y = self.refit_scalers(np.append(theta, theta_test, axis=0), np.append(y, y_test, axis=0))
             
             # Test dataset scaled
             self._theta_test = self.theta_scaler.transform(self.theta_test)
@@ -781,7 +810,7 @@ class SurrogateModel(object):
                 gp_amp_rng=[-1,1],
                 uniform_scales=False,
                 overwrite=False,
-                gp_opt_method="newton-cg", 
+                gp_opt_method="l-bfgs-b", 
                 gp_nopt=3,
                 optimizer_kwargs={"maxiter": 100, "xatol": 1e-4, "fatol": 1e-3, "adaptive": True},
                 hyperopt_method="cv",
@@ -850,7 +879,7 @@ class SurrogateModel(object):
 
         :param gp_opt_method: (*str, optional*) 
             Optimization method for GP hyperparameter optimization. Passed to scipy.optimize.minimize.
-            Common options: 'newton-cg', 'l-bfgs-b', 'bfgs', 'cg'. Default is 'newton-cg'.
+            Common options: 'l-bfgs-b', 'newton-cg', 'bfgs', 'cg'. Default is 'l-bfgs-b'.
 
         :param gp_nopt: (*int, optional*) 
             Number of optimization restarts for GP hyperparameter optimization. Multiple restarts
@@ -1198,11 +1227,6 @@ class SurrogateModel(object):
         if _y is None:
             _y = self._y
         
-        if multi_proc and self.ncore > 1:
-            pool = parallel_utils.safe_multiprocessing_pool(self.ncore)
-        else:
-            pool = None
-        
         if hyperopt_method.lower() not in ["ml", "cv"]:
             hyperopt_method = "ml"
             print(f"Invalid method '{hyperopt_method}'. Must be 'ml' or 'cv'. Defaulting to 'ml'.")
@@ -1260,27 +1284,29 @@ class SurrogateModel(object):
             else:
                 jac = None
             
-            def optimize_fn(x0):
+            def _optimize_fn(x0):
                 return op.minimize(fun=nll, x0=x0, jac=jac, method=self.gp_opt_method, bounds=self.hp_bounds, options=optimizer_kwargs)
 
             current_hp = self.get_hyperparameter_vector(current_gp)
             
             if self.gp_nopt <= 1:
-                results = optimize_fn(current_hp)
+                results = _optimize_fn(current_hp)
             else:
                 p0 = ut.prior_sampler(bounds=self.hp_bounds, nsample=self.gp_nopt, sampler="lhs", random_state=None)
                 p0[0] = current_hp
                 
-                if pool is None:
+                if self.ncore <= 1:
                     # Sequential with progress bar
-                    opt_results = [optimize_fn(p) for p in tqdm.tqdm(p0, desc="Optimizing GP")]
+                    opt_results = [_optimize_fn(p) for p in tqdm.tqdm(p0, desc="Optimizing GP")]
                 else:
+                    pool = self._get_pool(ncore=self.ncore)
                     # Parallel with progress bar using imap
                     opt_results = list(tqdm.tqdm(
-                        pool.imap(optimize_fn, p0),
+                        pool.imap(_optimize_fn, p0),
                         total=len(p0),
                         desc=f"Optimizing GP ({self.ncore} cores)"
                     ))
+                    self._close_pool(pool)
 
                 def get_fun_value(res):
                     return res.fun
@@ -1328,6 +1354,7 @@ class SurrogateModel(object):
                     verbose_cv = True  # Always show CV diagnostics
                 
                 # Optimize using cross-validation
+                pool = self._get_pool(ncore=self.ncore) if multi_proc else None
                 op_gp = gp_utils.optimize_gp_kfold_cv(
                     self.gp, _theta, _y,
                     candidates_expanded,
@@ -1343,6 +1370,7 @@ class SurrogateModel(object):
                     weighted_mse_factor=cv_weighted_factor,
                     verbose=verbose_cv
                 )
+                self._close_pool(pool)
                 
             except Exception as e:
                 import traceback
@@ -1373,11 +1401,6 @@ class SurrogateModel(object):
         tf = time.time()
         timing = tf - t0
         self.training_results["gp_hyperparam_opt_time"].append(timing)
-        
-        # Ensure pool cleanup
-        if pool is not None:
-            pool.close()
-            pool.join()
 
         return op_gp, timing
         
@@ -1596,9 +1619,8 @@ class SurrogateModel(object):
             else:
                 grad_obj_fn = partial(self.grad_utility, gp=self.gp, bounds=self._bounds)
 
-        if self.ncore > 1:
-            pool = parallel_utils.safe_multiprocessing_pool(self.ncore)
         # Always use serial execution for acquisition function optimization
+        pool = self._get_pool(ncore=min(nopt, self.ncore)) if self.ncore > 1 else None
         _thetaN, _ = ut.minimize_objective(obj_fn, 
                                         bounds=self._bounds,
                                         nopt=nopt,
@@ -1607,8 +1629,7 @@ class SurrogateModel(object):
                                         options=optimizer_kwargs,
                                         grad_obj_fn=grad_obj_fn,
                                         pool=pool)
-        if self.ncore > 1:
-            pool.close()
+        self._close_pool(pool)
 
         opt_timing = time.time() - opt_timing_0
         # self.training_results["acquisition_optimizer_niter"].append(opt_result.nit)
@@ -1619,14 +1640,16 @@ class SurrogateModel(object):
             # Fall back to random sampling from prior
             _thetaN = self._prior_sampler(nsample=1).flatten()
         
-        thetaN = self.theta_scaler.inverse_transform(_thetaN.reshape(1, -1)).reshape(1,-1)
-        yN = self.true_log_likelihood(thetaN)
+        thetaN = self.theta_scaler.inverse_transform(_thetaN.reshape(1, -1))
+        yN = self.true_log_likelihood(thetaN.reshape(-1,1))
         
         # Validate new training point
         if not np.any(np.isfinite(thetaN.flatten())):
-            raise ValueError(f"New theta contains NaN or Inf: {thetaN}")
+            print(f"New theta contains NaN or Inf: {thetaN}")
+            return None, None, opt_timing
         if not np.any(np.isfinite(yN.flatten())):
-            raise ValueError(f"New y value is NaN or Inf: {yN}. Check your likelihood function at theta={thetaN}") 
+            print(f"New y value is NaN or Inf: {yN}. Check your likelihood function at theta={thetaN}") 
+            return None, None, opt_timing
         
         # add theta and y to training samples
         theta_prop = np.append(self.theta(), thetaN, axis=0)
@@ -1634,13 +1657,16 @@ class SurrogateModel(object):
         
         # refit scaling functions including new point
         _theta_prop, _y_prop = self.refit_scalers(theta_prop, y_prop)
+                
+        if _theta_prop.shape[0] != _y_prop.shape[0]:
+            return None, None, opt_timing
         
         if not np.all(np.isfinite(_theta_prop)):
             print("_theta_prop contains NaN or Inf after scaling. Check training data and scalers.")
-            breakpoint()
+            return None, None, opt_timing
         if not np.all(np.isfinite(_y_prop)):
             print("_y_prop contains NaN or Inf after scaling. Check training data and scalers.")
-            breakpoint()
+            return None, None, opt_timing
 
         return _theta_prop, _y_prop, opt_timing
 
@@ -1747,15 +1773,20 @@ class SurrogateModel(object):
             attempts = 0
             success = False
             while not success and attempts < max_attempts:
-                try:
-                    # Find next training point! (always single-threaded)
-                    _theta_prop, _y_prop, opt_timing = self.find_next_point(nopt=nopt, optimizer_kwargs=optimizer_kwargs)
 
+                # Find next training point! (always single-threaded)
+                _theta_prop, _y_prop, opt_timing = self.find_next_point(nopt=nopt, optimizer_kwargs=optimizer_kwargs)
+                
+                if _theta_prop is None or _y_prop is None:
+                    attempts += 1
+                else:
                     # Fit GP with new training point
                     self.gp, fit_gp_timing = self._fit_gp(_theta=_theta_prop, _y=_y_prop, hyperparameters=self.gp.get_parameter_vector())
                     success = True
-                except Exception as e:
-                    attempts += 1
+
+                if attempts >= max_attempts:
+                    raise RuntimeError(f"Failed to find a valid training point after {max_attempts} attempts. \
+                                        Check your likelihood function and training data for issues or increase max_attempts.")
                     
             # If proposed (theta, y) did not cause fitting issues, save to surrogate model obj
             self._theta = _theta_prop
@@ -1769,18 +1800,20 @@ class SurrogateModel(object):
                 training_scaled_mse = training_mse / np.var(self.y())
             except Exception as e:
                 print(f"Warning: Error evaluating GP training error at iteration {ii + first_iter}: {e}")
+                breakpoint()
                 training_mse = np.nan
                 training_scaled_mse = np.nan
 
             # evaluate gp test error (scaled)
             if hasattr(self, '_theta_test') and hasattr(self, '_y_test'):
-                if (len(self._theta_test) > 0):
+                try:
                     _ytest = self.gp.predict(self._y, self._theta_test, return_cov=False, return_var=False)
                     ytest = self.y_scaler.inverse_transform(_ytest.reshape(-1, 1)).flatten()
                     ytest_true = self.y_scaler.inverse_transform(self._y_test.reshape(-1, 1)).flatten()
                     test_mse = np.mean((ytest_true - ytest)**2)
                     test_scaled_mse = test_mse / np.var(self.y())
-                else:
+                except Exception as e:
+                    print(f"Warning: Error evaluating GP test error at iteration {ii + first_iter}: {e}")
                     test_mse = np.nan
                     test_scaled_mse = np.nan
             else:
@@ -1945,11 +1978,7 @@ class SurrogateModel(object):
                     )
                     chain_args.append(args)
                 
-                # Run chains using multiprocessing pool
-                if self.verbose:
-                    print("Starting multiprocessing pool...")
-                
-                pool = parallel_utils.safe_multiprocessing_pool(self.ncore)
+                pool = self._get_pool(ncore=max_processes)
                 
                 if show_progress:
                     results = []
@@ -1960,6 +1989,8 @@ class SurrogateModel(object):
                 else:
                     # Use map for simpler execution
                     results = pool.map(_run_chain_worker_mp, chain_args)
+                    
+                self._close_pool(pool)
                 
                 # Process results
                 for i, result in enumerate(results):
@@ -2019,10 +2050,6 @@ class SurrogateModel(object):
             exc_type, exc_value, exc_traceback = sys.exc_info()
             tb_line = traceback.extract_tb(exc_traceback)[-1]
             print(f"Multiprocessing execution failed ({e}) line {tb_line}.")
-            # Clean up any resources before falling back
-            self._force_cleanup_multiprocessing()
-            # Restore threading environment even if we fail
-            self._restore_threading_environment()
             raise e
         
         # Combine all new training samples
@@ -2043,10 +2070,6 @@ class SurrogateModel(object):
         
         if self.cache:
             self.save()
-        
-        # Force cleanup and restore environment
-        self._force_cleanup_multiprocessing()
-        self._restore_threading_environment()
 
 
     def lnprob(self, theta):
@@ -2276,15 +2299,8 @@ class SurrogateModel(object):
             p0 = ut.prior_sampler(nsample=self.nwalkers, bounds=self.bounds, sampler="uniform", random_state=None)
 
         # set up multiprocessing pool with MPI safety
-        if multi_proc == True:
-            pool = parallel_utils.safe_multiprocessing_pool(self.ncore)
-            if pool is not None:
-                emcee_ncore = self.ncore
-            else:
-                emcee_ncore = 1
-        else:
-            pool = None
-            emcee_ncore = 1
+        emcee_pool = self._get_pool(ncore=self.ncore) if multi_proc and self.ncore > 1 else None
+        emcee_ncore = self.ncore if (multi_proc and self.ncore > 1) else 1
             
         if self.verbose:
             print(f"Running emcee with {self.nwalkers} walkers for {self.nsteps} steps on {emcee_ncore} cores...")
@@ -2305,10 +2321,13 @@ class SurrogateModel(object):
             self.emcee_sampler = emcee.EnsembleSampler(self.nwalkers, 
                                                  self.ndim, 
                                                  self.lnprob, 
-                                                 pool=pool,
+                                                 pool=emcee_pool,
                                                  **sampler_kwargs)
 
             self.emcee_sampler.run_mcmc(p0, self.nsteps, progress=True, **run_kwargs)
+            
+            # close pool 
+            self._close_pool(emcee_pool)
 
             # record emcee runtime
             current_runtime = time.time() - emcee_t0
@@ -2375,10 +2394,6 @@ class SurrogateModel(object):
 
         # record that emcee has been run
         self.emcee_run = True
-
-        # close pool
-        if pool is not None:
-            pool.close()
 
         if self.cache:
             try:
@@ -2604,23 +2619,12 @@ class SurrogateModel(object):
             if key not in sampler_kwargs:
                 sampler_kwargs[key] = default_sampler_kwargs[key]
         
-        # set up multiprocessing pool with MPI safety
+        # set up multiprocessing pool 
         # default to false. multiprocessing usually slower for some reason
-        if multi_proc == True:
-            pool = parallel_utils.safe_multiprocessing_pool(self.ncore)
-            if pool is not None:
-                pool.size = self.ncore
-                sampler_kwargs["pool"] = pool
-                sampler_kwargs["queue_size"] = self.ncore
-                dynesty_ncore = self.ncore
-            else:
-                sampler_kwargs["pool"] = None
-                sampler_kwargs["queue_size"] = 1
-                dynesty_ncore = 1
-        else:
-            sampler_kwargs["pool"] = None
-            sampler_kwargs["queue_size"] = 1
-            dynesty_ncore = 1
+        dynesty_pool = self._get_pool(ncore=self.ncore) if multi_proc and self.ncore > 1 else None
+        sampler_kwargs["pool"] = dynesty_pool
+        sampler_kwargs["queue_size"] = self.ncore if (multi_proc and self.ncore > 1) else 1
+        dynesty_ncore = sampler_kwargs["queue_size"]
 
         # initialize our nested sampler
         if mode == "dynamic":
@@ -2763,10 +2767,6 @@ class SurrogateModel(object):
         
         # record dynesty runtime
         self.dynesty_runtime = time.time() - dynesty_t0
-
-        # close pool
-        if sampler_kwargs["pool"] is not None:
-            sampler_kwargs["pool"].close()
 
         if self.cache:
             try:
@@ -2916,7 +2916,7 @@ class SurrogateModel(object):
             
             PyMultiNest uses MPI for parallelization across multiple nodes/cores.
             When MPI is active, alabi automatically disables Python multiprocessing
-            in other functions (run_emcee, run_dynesty, eval_fn) to prevent conflicts.
+            in other functions (run_emcee, run_dynesty) to prevent conflicts.
             This ensures that:
             
             - PyMultiNest can run efficiently with MPI
@@ -4071,112 +4071,7 @@ class SurrogateModel(object):
             
             # Clean up the stored values
             delattr(self, '_original_threading_env')
-    
-    
-    def _force_cleanup_multiprocessing(self):
-        """
-        Force cleanup of any open multiprocessing pools or MPI resources
-        to prevent resource leaks and ensure clean shutdown. Also disables
-        multithreading in underlying numerical libraries.
-        """
-        import multiprocessing as mp
-        import threading
-        import gc
-        import os
-        
-        # Note: Environment variables are now managed by active_train_parallel 
-        # and _restore_threading_environment methods to ensure proper restoration
-        
-        try:
-            # Force close any active multiprocessing pools
-            # Check for any Pool objects in current process
-            for obj in gc.get_objects():
-                if hasattr(obj, '__class__') and 'Pool' in str(obj.__class__):
-                    try:
-                        if hasattr(obj, 'close'):
-                            obj.close()
-                        if hasattr(obj, 'join'):
-                            obj.join()
-                        if hasattr(obj, 'terminate'):
-                            obj.terminate()
-                    except:
-                        pass  # Ignore errors if pool already closed
             
-            # Clean up any zombie processes
-            try:
-                mp.active_children()  # This cleans up finished child processes
-            except:
-                pass
-            
-            # Force garbage collection to clean up any remaining references
-            gc.collect()
-            
-            # Try to disable threading in specific numerical libraries
-            try:
-                # NumPy threading control
-                try:
-                    import numpy as np
-                    if hasattr(np, 'seterrobj'):
-                        # Some NumPy builds expose threading controls
-                        pass
-                except:
-                    pass
-                
-                # SciPy/BLAS threading control  
-                try:
-                    from scipy import linalg
-                    if hasattr(linalg, 'lapack'):
-                        # Try to set BLAS threading to 1 if available
-                        pass
-                except:
-                    pass
-                
-                # scikit-learn threading control
-                try:
-                    import sklearn
-                    if hasattr(sklearn, 'set_config'):
-                        # Disable sklearn parallel backend
-                        sklearn.set_config(assume_finite=True)
-                except:
-                    pass
-                    
-                # OpenMP threading control if available
-                try:
-                    import ctypes
-                    import ctypes.util
-                    
-                    # Try to find and control OpenMP library
-                    openmp_lib = ctypes.util.find_library('gomp')  # GNU OpenMP
-                    if openmp_lib:
-                        lib = ctypes.CDLL(openmp_lib)
-                        if hasattr(lib, 'omp_set_num_threads'):
-                            lib.omp_set_num_threads(1)
-                except:
-                    pass
-                    
-            except Exception as e:
-                if hasattr(self, 'verbose') and self.verbose:
-                    print(f"Warning: Could not disable all numerical library threading: {e}")
-            
-            # Try to clean up MPI resources if available
-            try:
-                # Check if MPI is available and initialized
-                try:
-                    from mpi4py import MPI
-                    if MPI.Is_initialized() and not MPI.Is_finalized():
-                        # Don't finalize MPI here as it might be used by other parts
-                        # Just ensure any pending operations are completed
-                        MPI.COMM_WORLD.Barrier()
-                except ImportError:
-                    pass  # MPI not available
-            except:
-                pass  # Ignore MPI cleanup errors
-                
-        except Exception as e:
-            # If cleanup fails, just log a warning but don't crash
-            if hasattr(self, 'verbose') and self.verbose:
-                print(f"Warning: Multiprocessing cleanup encountered an issue: {e}")
-    
     
     def _create_chain_copy(self, chain_id):
         """Create a copy of the current SurrogateModel for a parallel chain."""
