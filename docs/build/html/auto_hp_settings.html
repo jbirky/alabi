@@ -1,0 +1,2246 @@
+<!doctype html>
+<html class="no-js" lang="en" data-content_root="./">
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Visualize Active Learning" href="plot_demo_1d.html"><link rel="prev" title="Bayesian Optimization" href="plot_bayesian_optimization.html">
+        <link rel="canonical" href="https://alabi.jessicabirky.com/auto_hp_settings.html">
+
+    <!-- Generated with Sphinx 8.2.3 and Furo 2025.12.19 -->
+        <title>Automated Hyperparameter Selection - alabi</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/tabs.css?v=4c969af8" />
+    <link rel="stylesheet" type="text/css" href="_static/togglebutton.css?v=9c3e77be" />
+    <link rel="stylesheet" type="text/css" href="_static/nbsphinx-code-cells.css?v=2aa19091" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=0cf789f7" />
+    
+    
+
+
+<style>
+  body {
+    --color-code-background: #f2f2f2;
+  --color-code-foreground: #1e1e1e;
+  --font-stack: Roboto Light, sans-serif;
+  --font-stack--monospace: Courier, monospace;
+  --color-background-secondary: #eff1f6;
+  --color-inline-code-background: #eff1f6;
+  --color-sidebar-item-background--hover: white;
+  --color-brand-primary: #004080;
+  --color-brand-content: #0059b3;
+  --font-size--small: 0.875rem;
+  --font-size--normal: 1rem;
+  --font-size--large: 1.125rem;
+  --font-size-h1: 2.2rem;
+  --font-size-h2: 1.8rem;
+  --font-size-h3: 1.5rem;
+  --font-size-h4: 1.3rem;
+  --font-size-h5: 1.1rem;
+  --font-size-h6: 1rem;
+  
+  }
+  @media not print {
+    body[data-theme="dark"] {
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+    }
+    @media (prefers-color-scheme: dark) {
+      body:not([data-theme="light"]) {
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
+  
+      }
+    }
+  }
+</style></head>
+  <body>
+    
+    <script>
+      document.body.dataset.theme = localStorage.getItem("theme") || "auto";
+    </script>
+    
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="svg-toc" viewBox="0 0 24 24">
+    <title>Contents</title>
+    <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024">
+      <path d="M408 442h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8zm-8 204c0 4.4 3.6 8 8 8h480c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H408c-4.4 0-8 3.6-8 8v56zm504-486H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 632H120c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM115.4 518.9L271.7 642c5.8 4.6 14.4.5 14.4-6.9V388.9c0-7.4-8.5-11.5-14.4-6.9L115.4 505.1a8.74 8.74 0 0 0 0 13.8z"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-menu" viewBox="0 0 24 24">
+    <title>Menu</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-menu">
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-arrow-right" viewBox="0 0 24 24">
+    <title>Expand</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather-chevron-right">
+      <polyline points="9 18 15 12 9 6"></polyline>
+    </svg>
+  </symbol>
+  <symbol id="svg-sun" viewBox="0 0 24 24">
+    <title>Light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather-sun">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon" viewBox="0 0 24 24">
+    <title>Dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-moon">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z" />
+    </svg>
+  </symbol>
+  <symbol id="svg-sun-with-moon" viewBox="0 0 24 24">
+    <title>Auto light/dark, in light mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path style="opacity: 50%" d="M 5.411 14.504 C 5.471 14.504 5.532 14.504 5.591 14.504 C 3.639 16.319 4.383 19.569 6.931 20.352 C 7.693 20.586 8.512 20.551 9.25 20.252 C 8.023 23.207 4.056 23.725 2.11 21.184 C 0.166 18.642 1.702 14.949 4.874 14.536 C 5.051 14.512 5.231 14.5 5.411 14.5 L 5.411 14.504 Z"/>
+      <line x1="14.5" y1="3.25" x2="14.5" y2="1.25"/>
+      <line x1="14.5" y1="15.85" x2="14.5" y2="17.85"/>
+      <line x1="10.044" y1="5.094" x2="8.63" y2="3.68"/>
+      <line x1="19" y1="14.05" x2="20.414" y2="15.464"/>
+      <line x1="8.2" y1="9.55" x2="6.2" y2="9.55"/>
+      <line x1="20.8" y1="9.55" x2="22.8" y2="9.55"/>
+      <line x1="10.044" y1="14.006" x2="8.63" y2="15.42"/>
+      <line x1="19" y1="5.05" x2="20.414" y2="3.636"/>
+      <circle cx="14.5" cy="9.55" r="3.6"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-moon-with-sun" viewBox="0 0 24 24">
+    <title>Auto light/dark, in dark mode</title>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+      class="icon-custom-derived-from-feather-sun-and-tabler-moon">
+      <path d="M 8.282 7.007 C 8.385 7.007 8.494 7.007 8.595 7.007 C 5.18 10.184 6.481 15.869 10.942 17.24 C 12.275 17.648 13.706 17.589 15 17.066 C 12.851 22.236 5.91 23.143 2.505 18.696 C -0.897 14.249 1.791 7.786 7.342 7.063 C 7.652 7.021 7.965 7 8.282 7 L 8.282 7.007 Z"/>
+      <line style="opacity: 50%" x1="18" y1="3.705" x2="18" y2="2.5"/>
+      <line style="opacity: 50%" x1="18" y1="11.295" x2="18" y2="12.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="4.816" x2="14.464" y2="3.964"/>
+      <line style="opacity: 50%" x1="20.711" y1="10.212" x2="21.563" y2="11.063"/>
+      <line style="opacity: 50%" x1="14.205" y1="7.5" x2="13.001" y2="7.5"/>
+      <line style="opacity: 50%" x1="21.795" y1="7.5" x2="23" y2="7.5"/>
+      <line style="opacity: 50%" x1="15.316" y1="10.184" x2="14.464" y2="11.036"/>
+      <line style="opacity: 50%" x1="20.711" y1="4.789" x2="21.563" y2="3.937"/>
+      <circle style="opacity: 50%" cx="18" cy="7.5" r="2.169"/>
+    </svg>
+  </symbol>
+  <symbol id="svg-pencil" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-pencil-code">
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+  <symbol id="svg-eye" viewBox="0 0 24 24">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon-tabler-eye-code">
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path
+        d="M11.11 17.958c-3.209 -.307 -5.91 -2.293 -8.11 -5.958c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6c-.21 .352 -.427 .688 -.647 1.008" />
+      <path d="M20 21l2 -2l-2 -2" />
+      <path d="M17 17l-2 2l2 2" />
+    </svg>
+  </symbol>
+</svg>
+
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
+
+<a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
+
+
+
+<div class="page">
+  <header class="mobile-header">
+    <div class="header-left">
+      <label class="nav-overlay-icon" for="__navigation">
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
+      </label>
+    </div>
+    <div class="header-center">
+      <a href="index.html"><div class="brand">alabi</div></a>
+    </div>
+    <div class="header-right">
+      <div class="theme-toggle-container theme-toggle-header">
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+          <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+          <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+          <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+          <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+        </button>
+      </div>
+      <label class="toc-overlay-icon toc-header-icon" for="__toc">
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+      </label>
+    </div>
+  </header>
+  <aside class="sidebar-drawer">
+    <div class="sidebar-container">
+      
+      <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
+  
+  <span class="sidebar-brand-text">alabi</span>
+  
+</a><form class="sidebar-search-container" method="get" action="search.html" role="search">
+  <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
+  <input type="hidden" name="check_keywords" value="yes">
+  <input type="hidden" name="area" value="default">
+</form>
+<div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
+  <p class="caption" role="heading"><span class="caption-text">Intro</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html#quickstart-example">Quickstart Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="save_reload.html">Saving and Reloading</a></li>
+<li class="toctree-l1"><a class="reference internal" href="gp_tutorial.html">GP Training</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mcmc_tutorial.html">MCMC sampling</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot_bayesian_optimization.html">Bayesian Optimization</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Automated Hyperparameter Selection</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Benchmark Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="plot_demo_1d.html">Visualize Active Learning</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot_demo_2d.html">Test 2D Benchmarks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot_line_fit.html">Fit a line to data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot_kl_divergence.html">KL Divergence: Gaussian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plot_gaussian_nd.html">Test computational scaling</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Applications</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="trappist_stellar_evolution.html">Stellar Evolution</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="modules.html">alabi</a><input aria-label="Toggle navigation of alabi" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="alabi.html">alabi package</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Development</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi">GitHub Repository</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi/LICENSE">License</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/jbirky/alabi/issues">Issues</a></li>
+</ul>
+
+</div>
+</div>
+
+      </div>
+      
+    </div>
+  </aside>
+  <div class="main">
+    <div class="content">
+      <div class="article-container">
+        <a href="#" class="back-to-top muted-link">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+          </svg>
+          <span>Back to top</span>
+        </a>
+        <div class="content-icon-container">
+          <div class="view-this-page">
+  <a class="muted-link" href="_sources/auto_hp_settings.ipynb.txt" title="View this page">
+    <svg><use href="#svg-eye"></use></svg>
+    <span class="visually-hidden">View this page</span>
+  </a>
+</div>
+<div class="theme-toggle-container theme-toggle-content">
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
+              <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
+              <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
+              <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
+              <svg class="theme-icon-when-light"><use href="#svg-sun"></use></svg>
+            </button>
+          </div>
+          <label class="toc-overlay-icon toc-content-icon" for="__toc">
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
+          </label>
+        </div>
+        <article role="main" id="furo-main-content">
+          <div class="admonition note">
+<p>This notebook is available on <a class="reference external" href="https://github.com/jbirky/alabi/blob/main/docs/source/auto_hp_settings.ipynb">GitHub</a>.
+Interactive online version:
+<span class="raw-html"><a href="https://mybinder.org/v2/gh/jbirky/alabi/HEAD?filepath=docs/source/auto_hp_settings.ipynb"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg" style="vertical-align:text-bottom"></a></span></p>
+</div>
+<section id="Automated-Hyperparameter-Selection">
+<h1>Automated Hyperparameter Selection<a class="headerlink" href="#Automated-Hyperparameter-Selection" title="Link to this heading">¶</a></h1>
+<p>This tutorial demonstrates how to automatically select optimal Gaussian Process hyperparameters for your surrogate model by testing multiple configurations and choosing the one with the best test set performance.</p>
+<section id="Why-This-Matters">
+<h2>Why This Matters<a class="headerlink" href="#Why-This-Matters" title="Link to this heading">¶</a></h2>
+<p>GP surrogate model performance is highly sensitive to:</p>
+<ul class="simple">
+<li><p><strong>Kernel choice</strong> (ExpSquared, Matern32, Matern52, etc.)</p></li>
+<li><p><strong>Data scaling</strong> (no scaling, MinMax, StandardScaler)</p></li>
+<li><p><strong>Other hyperparameters</strong> (white noise, amplitude, length scales)</p></li>
+</ul>
+<p>Rather than manually tuning these, we can systematically test combinations and select the best configuration based on test set mean squared error (MSE).</p>
+</section>
+<section id="Step-1:-Import-Required-Libraries">
+<h2>Step 1: Import Required Libraries<a class="headerlink" href="#Step-1:-Import-Required-Libraries" title="Link to this heading">¶</a></h2>
+<p>Import <code class="docutils literal notranslate"><span class="pre">alabi</span></code> and its submodules along with standard scientific computing libraries.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;/Users/m1/research/alabi&quot;</span><span class="p">)</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">alabi</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">alabi.utility</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ut</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">alabi.metrics</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">metrics</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">alabi.benchmarks</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">bm</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">alabi.visualization</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">vis</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">alabi.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">SurrogateModel</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sklearn</span><span class="w"> </span><span class="kn">import</span> <span class="n">preprocessing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">itertools</span><span class="w"> </span><span class="kn">import</span> <span class="n">product</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Step-2:-Define-Problem-and-Base-Configuration">
+<h2>Step 2: Define Problem and Base Configuration<a class="headerlink" href="#Step-2:-Define-Problem-and-Base-Configuration" title="Link to this heading">¶</a></h2>
+<p>Set up the benchmark problem (eggbox function) and define a base configuration for GP hyperparameters. These settings will be partially overridden when we test different combinations.</p>
+<p><strong>Key parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">ninit</span></code>: Number of initial training points</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">niter</span></code>: Number of active learning iterations</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ncore</span></code>: Number of CPU cores for parallel evaluation (use 1 if experiencing multiprocessing issues)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">white_noise</span></code>: Log-scale white noise parameter (increase if you see positive definiteness errors)</p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ninit</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="n">niter</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">basedir</span> <span class="o">=</span> <span class="s2">&quot;demo&quot;</span>
+<span class="n">kernel</span> <span class="o">=</span> <span class="s2">&quot;ExpSquaredKernel&quot;</span>
+<span class="n">benchmark</span> <span class="o">=</span> <span class="s2">&quot;rosenbrock&quot;</span>
+<span class="n">savedir</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">basedir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">benchmark</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">kernel</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">ninit</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">niter</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<span class="n">gp_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;kernel&quot;</span><span class="p">:</span> <span class="n">kernel</span><span class="p">,</span>
+             <span class="s2">&quot;fit_amp&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+             <span class="s2">&quot;fit_mean&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+             <span class="s2">&quot;fit_white_noise&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+             <span class="s2">&quot;white_noise&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">12</span><span class="p">,</span>
+             <span class="s2">&quot;gp_opt_method&quot;</span><span class="p">:</span> <span class="s2">&quot;l-bfgs-b&quot;</span><span class="p">,</span>
+             <span class="s2">&quot;hyperopt_method&quot;</span><span class="p">:</span> <span class="s2">&quot;cv&quot;</span><span class="p">,</span>
+             <span class="s2">&quot;cv_folds&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+             <span class="s2">&quot;gp_amp_rng&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+             <span class="s2">&quot;gp_scale_rng&quot;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span>
+             <span class="s2">&quot;theta_scaler&quot;</span><span class="p">:</span> <span class="n">alabi</span><span class="o">.</span><span class="n">no_scaler</span><span class="p">,</span>
+             <span class="s2">&quot;y_scaler&quot;</span><span class="p">:</span> <span class="n">alabi</span><span class="o">.</span><span class="n">no_scaler</span><span class="p">}</span>
+
+<span class="n">sm</span> <span class="o">=</span> <span class="n">SurrogateModel</span><span class="p">(</span><span class="n">lnlike_fn</span><span class="o">=</span><span class="n">bm</span><span class="o">.</span><span class="n">eggbox</span><span class="p">[</span><span class="s2">&quot;fn&quot;</span><span class="p">],</span>
+                    <span class="n">bounds</span><span class="o">=</span><span class="n">bm</span><span class="o">.</span><span class="n">eggbox</span><span class="p">[</span><span class="s2">&quot;bounds&quot;</span><span class="p">],</span>
+                    <span class="n">savedir</span><span class="o">=</span><span class="n">savedir</span><span class="p">,</span>
+                    <span class="n">ncore</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+                    <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="n">sm</span><span class="o">.</span><span class="n">init_samples</span><span class="p">(</span><span class="n">ntrain</span><span class="o">=</span><span class="n">ninit</span><span class="p">,</span> <span class="n">ntest</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s2">&quot;sobol&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|██████████| 50/50 [00:00&lt;00:00, 641330.89it/s]
+100%|██████████| 1000/1000 [00:00&lt;00:00, 41473.56it/s]
+</pre></div></div>
+</div>
+</section>
+<section id="Step-3:-Create-Hyperparameter-Grid">
+<h2>Step 3: Create Hyperparameter Grid<a class="headerlink" href="#Step-3:-Create-Hyperparameter-Grid" title="Link to this heading">¶</a></h2>
+<p>Generate all combinations of the hyperparameters we want to test:</p>
+<ul class="simple">
+<li><p><strong>Kernels</strong>: Different covariance functions capture different smoothness assumptions</p></li>
+<li><p><strong>Theta scaler</strong>: How to scale input parameters</p></li>
+<li><p><strong>Y scaler</strong>: How to scale output values</p></li>
+</ul>
+<p>The <code class="docutils literal notranslate"><span class="pre">dict_to_combinations</span></code> function creates a Cartesian product of all options.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">dict_to_combinations</span><span class="p">(</span><span class="n">options_dict</span><span class="p">):</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">options_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">options_dict</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">combo</span><span class="p">))</span> <span class="k">for</span> <span class="n">combo</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">values</span><span class="p">)]</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">combinations_to_dict</span><span class="p">(</span><span class="n">combinations</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">combinations</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+    <span class="k">for</span> <span class="n">combo</span> <span class="ow">in</span> <span class="n">combinations</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">combo</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">result</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+<span class="n">gp_kwarg_options</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;kernel&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;ExpSquaredKernel&quot;</span><span class="p">,</span> <span class="s2">&quot;Matern32Kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;Matern52Kernel&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;theta_scaler&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">no_scaler</span><span class="p">,</span> <span class="n">preprocessing</span><span class="o">.</span><span class="n">MinMaxScaler</span><span class="p">(),</span> <span class="n">preprocessing</span><span class="o">.</span><span class="n">StandardScaler</span><span class="p">()],</span>
+                    <span class="s2">&quot;y_scaler&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">ut</span><span class="o">.</span><span class="n">no_scaler</span><span class="p">,</span> <span class="n">preprocessing</span><span class="o">.</span><span class="n">MinMaxScaler</span><span class="p">(),</span> <span class="n">preprocessing</span><span class="o">.</span><span class="n">StandardScaler</span><span class="p">()]}</span>
+
+<span class="n">variable_settings</span> <span class="o">=</span> <span class="n">dict_to_combinations</span><span class="p">(</span><span class="n">gp_kwarg_options</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">variable_settings</span><span class="p">),</span> <span class="s2">&quot;combinations to test&quot;</span><span class="p">)</span>
+
+<span class="c1"># get a list of dictionaries with all combinations of settings, where each dictionary is a copy of the original gp_kwargs with the variable settings updated</span>
+<span class="n">setting_combos</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">settings</span> <span class="ow">in</span> <span class="n">variable_settings</span><span class="p">:</span>
+    <span class="n">new_settings</span> <span class="o">=</span> <span class="n">gp_kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">settings</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">new_settings</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">settings</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="n">setting_combos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_settings</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+27 combinations to test
+</pre></div></div>
+</div>
+</section>
+<section id="Step-4:-Test-All-Hyperparameter-Combinations">
+<h2>Step 4: Test All Hyperparameter Combinations<a class="headerlink" href="#Step-4:-Test-All-Hyperparameter-Combinations" title="Link to this heading">¶</a></h2>
+<p>Loop through all combinations and fit a GP for each. The <code class="docutils literal notranslate"><span class="pre">init_gp</span></code> method returns the test set MSE, which we use to evaluate performance.</p>
+<p><strong>Note:</strong> This can take several minutes depending on the number of combinations and problem dimensionality. Use <code class="docutils literal notranslate"><span class="pre">try/except</span></code> to handle configurations that fail to converge.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">setting_combos</span><span class="p">)):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">test_mse</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">init_gp</span><span class="p">(</span><span class="o">**</span><span class="n">setting_combos</span><span class="p">[</span><span class="n">ii</span><span class="p">],</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">test_mse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">setting_combos</span><span class="p">[</span><span class="n">ii</span><span class="p">][</span><span class="s2">&quot;test_mse&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">test_mse</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with squared exponential kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 1469.06candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 1053.89candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 1026.44candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with squared exponential kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 973.89candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 934.49candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 948.11candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with squared exponential kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 929.28candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 999.38candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 935.66candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with squared exponential kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 1476.50candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 1143.75candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 969.58candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with squared exponential kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 892.39candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 989.38candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 908.24candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with squared exponential kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 880.52candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 1004.09candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 978.82candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with squared exponential kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 1557.78candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 1054.76candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 1019.16candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with squared exponential kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 893.53candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 992.04candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 967.45candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with squared exponential kernel.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 943.60candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 990.00candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 934.05candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-3/2 kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 1509.16candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 1048.51candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 1024.88candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-3/2 kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 922.45candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 1028.87candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 903.71candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-3/2 kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 932.82candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 994.94candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 935.87candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-3/2 kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 1456.66candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 1105.36candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 1061.26candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-3/2 kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 965.77candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 1021.76candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 957.41candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-3/2 kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 962.18candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 940.05candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 944.60candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-3/2 kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 1480.78candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 1085.38candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 1044.52candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-3/2 kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 867.66candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 1025.50candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 961.43candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-3/2 kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 923.79candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 941.07candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 963.72candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-5/2 kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 1496.92candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 1088.02candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 1037.77candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-5/2 kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 939.55candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 935.77candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 909.88candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-5/2 kernel.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 957.23candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 988.65candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 959.25candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-5/2 kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 1201.29candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 976.33candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 1068.61candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-5/2 kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 942.77candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 978.34candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 963.29candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-5/2 kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 971.18candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 980.80candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 918.71candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-5/2 kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 1486.09candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 1023.23candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 1074.90candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-5/2 kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 916.51candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 1058.09candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 982.97candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-5/2 kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 967.11candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 1033.60candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 971.67candidate/s]
+</pre></div></div>
+</div>
+</section>
+<section id="Step-5:-Analyze-Results">
+<h2>Step 5: Analyze Results<a class="headerlink" href="#Step-5:-Analyze-Results" title="Link to this heading">¶</a></h2>
+<p>Convert results to a pandas DataFrame and inspect the top-performing configurations. Lower test MSE indicates better generalization performance.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">results</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">combinations_to_dict</span><span class="p">(</span><span class="n">setting_combos</span><span class="p">))</span>
+<span class="n">results</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;test_mse&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>kernel</th>
+      <th>fit_amp</th>
+      <th>fit_mean</th>
+      <th>fit_white_noise</th>
+      <th>white_noise</th>
+      <th>gp_opt_method</th>
+      <th>hyperopt_method</th>
+      <th>cv_folds</th>
+      <th>gp_amp_rng</th>
+      <th>gp_scale_rng</th>
+      <th>theta_scaler</th>
+      <th>y_scaler</th>
+      <th>test_mse</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>16</th>
+      <td>Matern32Kernel</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>-12</td>
+      <td>l-bfgs-b</td>
+      <td>cv</td>
+      <td>8</td>
+      <td>[-1, 1]</td>
+      <td>[-2, 2]</td>
+      <td>StandardScaler()</td>
+      <td>minmax_scaler()</td>
+      <td>2647.813534</td>
+    </tr>
+    <tr>
+      <th>17</th>
+      <td>Matern32Kernel</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>-12</td>
+      <td>l-bfgs-b</td>
+      <td>cv</td>
+      <td>8</td>
+      <td>[-1, 1]</td>
+      <td>[-2, 2]</td>
+      <td>StandardScaler()</td>
+      <td>StandardScaler()</td>
+      <td>2972.363325</td>
+    </tr>
+    <tr>
+      <th>26</th>
+      <td>Matern52Kernel</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>-12</td>
+      <td>l-bfgs-b</td>
+      <td>cv</td>
+      <td>8</td>
+      <td>[-1, 1]</td>
+      <td>[-2, 2]</td>
+      <td>StandardScaler()</td>
+      <td>StandardScaler()</td>
+      <td>3057.813987</td>
+    </tr>
+    <tr>
+      <th>14</th>
+      <td>Matern32Kernel</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>-12</td>
+      <td>l-bfgs-b</td>
+      <td>cv</td>
+      <td>8</td>
+      <td>[-1, 1]</td>
+      <td>[-2, 2]</td>
+      <td>minmax_scaler()</td>
+      <td>StandardScaler()</td>
+      <td>3136.230493</td>
+    </tr>
+    <tr>
+      <th>15</th>
+      <td>Matern32Kernel</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>-12</td>
+      <td>l-bfgs-b</td>
+      <td>cv</td>
+      <td>8</td>
+      <td>[-1, 1]</td>
+      <td>[-2, 2]</td>
+      <td>StandardScaler()</td>
+      <td>no_scaler(func=&lt;function no_scale at 0x124f6d2...</td>
+      <td>3237.019364</td>
+    </tr>
+    <tr>
+      <th>24</th>
+      <td>Matern52Kernel</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>-12</td>
+      <td>l-bfgs-b</td>
+      <td>cv</td>
+      <td>8</td>
+      <td>[-1, 1]</td>
+      <td>[-2, 2]</td>
+      <td>StandardScaler()</td>
+      <td>no_scaler(func=&lt;function no_scale at 0x124f6d2...</td>
+      <td>3280.164115</td>
+    </tr>
+    <tr>
+      <th>13</th>
+      <td>Matern32Kernel</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>-12</td>
+      <td>l-bfgs-b</td>
+      <td>cv</td>
+      <td>8</td>
+      <td>[-1, 1]</td>
+      <td>[-2, 2]</td>
+      <td>minmax_scaler()</td>
+      <td>minmax_scaler()</td>
+      <td>3363.125716</td>
+    </tr>
+    <tr>
+      <th>11</th>
+      <td>Matern32Kernel</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>-12</td>
+      <td>l-bfgs-b</td>
+      <td>cv</td>
+      <td>8</td>
+      <td>[-1, 1]</td>
+      <td>[-2, 2]</td>
+      <td>no_scaler(func=&lt;function no_scale at 0x124f6d2...</td>
+      <td>StandardScaler()</td>
+      <td>3371.818740</td>
+    </tr>
+    <tr>
+      <th>12</th>
+      <td>Matern32Kernel</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>-12</td>
+      <td>l-bfgs-b</td>
+      <td>cv</td>
+      <td>8</td>
+      <td>[-1, 1]</td>
+      <td>[-2, 2]</td>
+      <td>minmax_scaler()</td>
+      <td>no_scaler(func=&lt;function no_scale at 0x124f6d2...</td>
+      <td>3458.169750</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>ExpSquaredKernel</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>-12</td>
+      <td>l-bfgs-b</td>
+      <td>cv</td>
+      <td>8</td>
+      <td>[-1, 1]</td>
+      <td>[-2, 2]</td>
+      <td>no_scaler(func=&lt;function no_scale at 0x124f6d2...</td>
+      <td>StandardScaler()</td>
+      <td>3519.166898</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+</section>
+<section id="Step-6:-Extract-Best-Configuration">
+<h2>Step 6: Extract Best Configuration<a class="headerlink" href="#Step-6:-Extract-Best-Configuration" title="Link to this heading">¶</a></h2>
+<p>Identify the hyperparameter configuration with the lowest test MSE. This will be used for active learning.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">best_gp_results</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;test_mse&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;test_mse&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()]</span>
+<span class="n">best_gp_results</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>kernel</th>
+      <th>fit_amp</th>
+      <th>fit_mean</th>
+      <th>fit_white_noise</th>
+      <th>white_noise</th>
+      <th>gp_opt_method</th>
+      <th>hyperopt_method</th>
+      <th>cv_folds</th>
+      <th>gp_amp_rng</th>
+      <th>gp_scale_rng</th>
+      <th>theta_scaler</th>
+      <th>y_scaler</th>
+      <th>test_mse</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>16</th>
+      <td>Matern32Kernel</td>
+      <td>True</td>
+      <td>True</td>
+      <td>False</td>
+      <td>-12</td>
+      <td>l-bfgs-b</td>
+      <td>cv</td>
+      <td>8</td>
+      <td>[-1, 1]</td>
+      <td>[-2, 2]</td>
+      <td>StandardScaler()</td>
+      <td>minmax_scaler()</td>
+      <td>2647.813534</td>
+    </tr>
+  </tbody>
+</table>
+</div></div>
+</div>
+</section>
+<section id="Step-7:-Run-Active-Learning">
+<h2>Step 7: Run Active Learning<a class="headerlink" href="#Step-7:-Run-Active-Learning" title="Link to this heading">¶</a></h2>
+<p>Use the optimal GP configuration for active learning. The BAPE (Bayesian Active Posterior Estimation) algorithm iteratively selects new training points to improve the surrogate model.</p>
+<p><strong>Key active learning parameters:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">algorithm</span></code>: Acquisition function (“bape”, “agp”, or “jones”)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gp_opt_freq</span></code>: How often to reoptimize GP hyperparameters during training</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">obj_opt_method</span></code>: Optimization method for acquisition function</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nopt</span></code>: Number of optimization restarts for acquisition function</p></li>
+</ul>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">best_gp_kwargs</span> <span class="o">=</span> <span class="n">best_gp_results</span><span class="p">[</span><span class="n">gp_kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;records&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="n">al_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="s2">&quot;bape&quot;</span><span class="p">,</span>
+             <span class="s2">&quot;gp_opt_freq&quot;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
+             <span class="s2">&quot;obj_opt_method&quot;</span><span class="p">:</span> <span class="s2">&quot;nelder-mead&quot;</span><span class="p">,</span>
+             <span class="s2">&quot;nopt&quot;</span><span class="p">:</span> <span class="mi">6</span><span class="p">}</span>
+
+<span class="n">sm</span><span class="o">.</span><span class="n">init_gp</span><span class="p">(</span><span class="o">**</span><span class="n">best_gp_kwargs</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">sm</span><span class="o">.</span><span class="n">active_train</span><span class="p">(</span><span class="n">niter</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="o">**</span><span class="n">al_kwargs</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Initialized GP with Matérn-3/2 kernel.
+Successfully initialized GP on attempt 1
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 744.45candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 902.82candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 831.06candidate/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Running 200 active learning iterations using bape...
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+  8%|▊         | 16/200 [00:00&lt;00:04, 42.65it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 906.57candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 875.58candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 859.16candidate/s]
+ 13%|█▎        | 26/200 [00:00&lt;00:05, 29.63it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Train MSE: 6.958237388561455e-07
+Test MSE: 1986.0560682479377
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 18%|█▊        | 36/200 [00:01&lt;00:04, 36.21it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 693.54candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 720.29candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 702.86candidate/s]
+ 23%|██▎       | 46/200 [00:01&lt;00:05, 26.42it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Train MSE: 6.544658124625106e-07
+Test MSE: 1883.5143303035568
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 28%|██▊       | 56/200 [00:01&lt;00:04, 32.99it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 671.52candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 715.45candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 690.79candidate/s]
+ 32%|███▎      | 65/200 [00:02&lt;00:05, 25.15it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Train MSE: 1.4052526397587378e-06
+Test MSE: 1783.7549644811004
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 38%|███▊      | 75/200 [00:02&lt;00:03, 31.67it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 624.38candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 669.20candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 652.15candidate/s]
+ 42%|████▎     | 85/200 [00:03&lt;00:04, 24.55it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Train MSE: 1.0784851709731925e-06
+Test MSE: 1331.7794225058467
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 50%|████▉     | 99/200 [00:03&lt;00:02, 33.68it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 599.44candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 653.03candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 609.68candidate/s]
+ 54%|█████▍    | 108/200 [00:03&lt;00:03, 24.35it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Train MSE: 3.9558561093120164e-05
+Test MSE: 1107.4925944720299
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 59%|█████▉    | 118/200 [00:04&lt;00:02, 31.85it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 568.54candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 615.70candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 574.94candidate/s]
+ 64%|██████▎   | 127/200 [00:04&lt;00:03, 23.35it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Train MSE: 0.012676157255503093
+Test MSE: 947.6210955282729
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 68%|██████▊   | 137/200 [00:04&lt;00:02, 30.61it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 531.97candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 563.31candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 548.64candidate/s]
+ 73%|███████▎  | 146/200 [00:05&lt;00:02, 22.46it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Train MSE: 1.1055398089607343e-05
+Test MSE: 860.45992976821
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 80%|███████▉  | 159/200 [00:05&lt;00:01, 30.90it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 503.63candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 530.89candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 496.99candidate/s]
+ 82%|████████▏ | 163/200 [00:06&lt;00:02, 17.50it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Train MSE: 1.8978104730017837e-05
+Test MSE: 774.0483198850717
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 88%|████████▊ | 176/200 [00:06&lt;00:00, 26.84it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 467.44candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 499.58candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 463.86candidate/s]
+ 92%|█████████▏| 184/200 [00:07&lt;00:00, 18.76it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Train MSE: 0.0005468073975669188
+Test MSE: 729.1889453099124
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+ 98%|█████████▊| 196/200 [00:07&lt;00:00, 27.41it/s]
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+
+Optimizing GP hyperparameters using 8-fold cross-validation...
+Evaluating 100 hyperparameter candidates using 8-fold CV...
+Using multiprocessing pool with 8 processes
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+Evaluating candidates: 100%|██████████| 100/100 [00:00&lt;00:00, 433.39candidate/s]
+Stage 2 candidates: 100%|██████████| 50/50 [00:00&lt;00:00, 467.24candidate/s]
+Stage 3 candidates: 100%|██████████| 25/25 [00:00&lt;00:00, 447.48candidate/s]
+100%|██████████| 200/200 [00:08&lt;00:00, 24.33it/s]
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Train MSE: 5.5923109676687816e-05
+Test MSE: 701.243545289366
+Caching model to demo/rosenbrock/ExpSquaredKernel/50_100/surrogate_model...
+</pre></div></div>
+</div>
+</section>
+<section id="Step-8:-Visualize-Training-Progress">
+<h2>Step 8: Visualize Training Progress<a class="headerlink" href="#Step-8:-Visualize-Training-Progress" title="Link to this heading">¶</a></h2>
+<p>Plot the test set MSE over active learning iterations. A decreasing trend indicates the surrogate model is improving.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">sm</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s2">&quot;iteration&quot;</span><span class="p">],</span> <span class="n">sm</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s2">&quot;test_scaled_mse&quot;</span><span class="p">])</span>
+<span class="c1"># plt.yscale(&quot;log&quot;)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="_images/auto_hp_settings_16_0.png" src="_images/auto_hp_settings_16_0.png" />
+</div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Next-Steps">
+<h2>Next Steps<a class="headerlink" href="#Next-Steps" title="Link to this heading">¶</a></h2>
+<p>Now that you have an optimized surrogate model, you can:</p>
+<ol class="arabic simple">
+<li><p><strong>Run posterior sampling</strong> with <code class="docutils literal notranslate"><span class="pre">sm.run_emcee()</span></code> or <code class="docutils literal notranslate"><span class="pre">sm.run_dynesty()</span></code></p></li>
+<li><p><strong>Visualize the surrogate</strong> using <code class="docutils literal notranslate"><span class="pre">alabi.visualization</span></code> tools</p></li>
+<li><p><strong>Test on new problems</strong> by changing the benchmark function</p></li>
+<li><p><strong>Expand the hyperparameter grid</strong> to include more options like:</p>
+<ul class="simple">
+<li><p>Different <code class="docutils literal notranslate"><span class="pre">white_noise</span></code> values</p></li>
+<li><p>Different <code class="docutils literal notranslate"><span class="pre">cv_folds</span></code> settings</p></li>
+<li><p>Different data scaling functions for <code class="docutils literal notranslate"><span class="pre">theta_scaler</span></code> or <code class="docutils literal notranslate"><span class="pre">y_scaler</span></code></p></li>
+</ul>
+</li>
+</ol>
+</section>
+</section>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="_downloads/ce4ab6540292f1cb3a84ab3920e368d5/auto_hp_settings.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">auto_hp_settings.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="_downloads/590a264ca6be684cb00e19dfdba856f9/auto_hp_settings.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">auto_hp_settings.ipynb</span></code></a></p>
+</div>
+
+        </article>
+      </div>
+      <footer>
+        
+        <div class="related-pages">
+          <a class="next-page" href="plot_demo_1d.html">
+              <div class="page-info">
+                <div class="context">
+                  <span>Next</span>
+                </div>
+                <div class="title">Visualize Active Learning</div>
+              </div>
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+            </a>
+          <a class="prev-page" href="plot_bayesian_optimization.html">
+              <svg class="furo-related-icon"><use href="#svg-arrow-right"></use></svg>
+              <div class="page-info">
+                <div class="context">
+                  <span>Previous</span>
+                </div>
+                
+                <div class="title">Bayesian Optimization</div>
+                
+              </div>
+            </a>
+        </div>
+        <div class="bottom-of-page">
+          <div class="left-details">
+            <div class="copyright">
+                Copyright &#169; 2021, Jess Birky
+            </div>
+            Made with <a href="https://www.sphinx-doc.org/">Sphinx</a> and <a class="muted-link" href="https://pradyunsg.me">@pradyunsg</a>'s
+            
+            <a href="https://github.com/pradyunsg/furo">Furo</a>
+            
+          </div>
+          <div class="right-details">
+            
+          </div>
+        </div>
+        
+      </footer>
+    </div>
+    <aside class="toc-drawer">
+      
+      
+      <div class="toc-sticky toc-scroll">
+        <div class="toc-title-container">
+          <span class="toc-title">
+            On this page
+          </span>
+        </div>
+        <div class="toc-tree-container">
+          <div class="toc-tree">
+            <ul>
+<li><a class="reference internal" href="#">Automated Hyperparameter Selection</a><ul>
+<li><a class="reference internal" href="#Why-This-Matters">Why This Matters</a></li>
+<li><a class="reference internal" href="#Step-1:-Import-Required-Libraries">Step 1: Import Required Libraries</a></li>
+<li><a class="reference internal" href="#Step-2:-Define-Problem-and-Base-Configuration">Step 2: Define Problem and Base Configuration</a></li>
+<li><a class="reference internal" href="#Step-3:-Create-Hyperparameter-Grid">Step 3: Create Hyperparameter Grid</a></li>
+<li><a class="reference internal" href="#Step-4:-Test-All-Hyperparameter-Combinations">Step 4: Test All Hyperparameter Combinations</a></li>
+<li><a class="reference internal" href="#Step-5:-Analyze-Results">Step 5: Analyze Results</a></li>
+<li><a class="reference internal" href="#Step-6:-Extract-Best-Configuration">Step 6: Extract Best Configuration</a></li>
+<li><a class="reference internal" href="#Step-7:-Run-Active-Learning">Step 7: Run Active Learning</a></li>
+<li><a class="reference internal" href="#Step-8:-Visualize-Training-Progress">Step 8: Visualize Training Progress</a></li>
+<li><a class="reference internal" href="#Next-Steps">Next Steps</a></li>
+</ul>
+</li>
+</ul>
+
+          </div>
+        </div>
+      </div>
+      
+      
+    </aside>
+  </div>
+</div><script src="_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/scripts/furo.js?v=46bd48cc"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/tabs.js?v=3ee01567"></script>
+    <script>let toggleHintShow = 'Click to show';</script>
+    <script>let toggleHintHide = 'Click to hide';</script>
+    <script>let toggleOpenOnPrint = 'true';</script>
+    <script src="_static/togglebutton.js?v=1ae7504c"></script>
+    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="_static/notebook-outputs.js?v=9bb603c3"></script>
+    </body>
+</html>

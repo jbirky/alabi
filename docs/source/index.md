@@ -7,6 +7,7 @@ save_reload
 gp_tutorial
 mcmc_tutorial
 plot_bayesian_optimization
+auto_hp_settings
 ```
 
 ```{toctree}
