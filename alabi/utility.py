@@ -16,6 +16,7 @@ from skopt.space.space import Real
 from skopt.sampler import Sobol, Lhs, Halton, Hammersly, Grid
 import warnings
 from scipy.special import betainc, betaincinv
+from sklearn import preprocessing
 from sklearn.preprocessing import FunctionTransformer, MinMaxScaler
 
 __all__ = ["agp_utility", 
@@ -30,8 +31,25 @@ __all__ = ["agp_utility",
            "lnprior_normal",
            "prior_transform_normal",
            "BetaWarpingFunction",
-           "beta_warping_transformer"
+           "beta_warping_transformer",
+           "nlog_scaler", "log_scaler", "minmax_scaler", "no_scaler"
            ]
+
+# Define scaling functions 
+def nlog(x): return np.log10(-x)
+def nlog_inv(x): return -10**x
+def log_scale(x): return np.log10(x)
+def log_scale_inv(logx): return 10**logx
+def no_scale(x): return x
+
+nlog_scaler = preprocessing.FunctionTransformer(func=nlog, inverse_func=nlog_inv)
+nlog_scaler.__class__.__name__ = "nlog_scaler"
+log_scaler = preprocessing.FunctionTransformer(func=log_scale, inverse_func=log_scale_inv)
+log_scaler.__class__.__name__ = "log_scaler"
+minmax_scaler = preprocessing.MinMaxScaler()
+minmax_scaler.__class__.__name__ = "minmax_scaler"
+no_scaler = preprocessing.FunctionTransformer(func=no_scale, inverse_func=no_scale)
+no_scaler.__class__.__name__ = "no_scaler"
 
 
 #===========================================================
@@ -973,12 +991,19 @@ def minimize_objective_single(idx, obj_fn, bounds, starting_point, method, optio
     # If solution is finite and allowed by the prior, save
     if np.all(np.isfinite(x_opt)) and np.all(np.isfinite(f_opt)):
         if np.isfinite(lnprior_uniform(x_opt, bounds)):
-            return x_opt, f_opt
+            if tmp.nit > 5:
+                return x_opt, f_opt
+            else:
+                print(f"Warning: Aquisition function ran for {tmp.nit} iterations. Optimizer success: {tmp.success}")
+                if tmp.nit <= 1:
+                    return np.nan, np.nan
+                else:
+                    return x_opt, f_opt
         else:
-            print("Warning: Utility function optimization prior fail", x_opt)
+            print("Warning: Acquisition function optimization prior fail", x_opt)
             return np.nan, np.nan
     else:
-        print("Warning: Utility function optimization infinite fail", x_opt, f_opt)
+        print("Warning: Acquisition function optimization infinite fail", x_opt, f_opt)
         return np.nan, np.nan
 
 
@@ -1066,6 +1091,7 @@ def minimize_objective(obj_fn, bounds=None, nopt=1, method="l-bfgs-b",
     # Add method-specific optimizations for speed
     if str(method).lower() == "nelder-mead":
         options["adaptive"] = True
+        grad_obj_fn = None  # Nelder-Mead does not use gradients
     elif str(method).lower() == "l-bfgs-b":
         # Ensure we use limited memory for large problems
         if "maxcor" not in options:
