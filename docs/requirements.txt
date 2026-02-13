@@ -13,6 +13,7 @@ matplotlib>=2.0.0
 scipy
 scikit-learn
 scikit-optimize
+multiprocess
 
 # Additional dependencies for documentation
 ipykernel
