@@ -247,7 +247,7 @@ class SurrogateModel(object):
 
     def __init__(self, lnlike_fn=None, bounds=None, param_names=None, 
                  cache=True, savedir="results/", model_name="surrogate_model",
-                 verbose=True, ncore=1, pool_method="fork", ignore_warnings=True,
+                 verbose=True, ncore=1, pool_method="forkserver", ignore_warnings=True,
                  random_state=None):
 
         # Check all required inputs are specified
@@ -322,20 +322,6 @@ class SurrogateModel(object):
         self.emcee_run = False
         self.dynesty_run = False
         self.ultranest_run = False
-        
-        self.training_results = {"iteration" : [], 
-                                 "gp_hyperparameters" : [],  
-                                 "gp_hyperparameter_opt_iteration" : [],
-                                 "gp_hyperparam_opt_time" : [],
-                                 "training_mse" : [],
-                                 "test_mse" : [], 
-                                 "training_scaled_mse" : [],
-                                 "test_scaled_mse" : [],
-                                 "gp_kl_divergence" : [],
-                                 "gp_train_time" : [],
-                                 "obj_fn_opt_time" : [],
-                                 "acquisition_optimizer_niter" : []
-                                 }
         
     
     def __getstate__(self):
@@ -968,6 +954,20 @@ class SurrogateModel(object):
         self._theta_train = self._theta
         self._y_train = self._y
 
+        self.training_results = {"iteration" : [], 
+                                 "gp_hyperparameters" : [],  
+                                 "gp_hyperparameter_opt_iteration" : [],
+                                 "gp_hyperparam_opt_time" : [],
+                                 "training_mse" : [],
+                                 "test_mse" : [], 
+                                 "training_scaled_mse" : [],
+                                 "test_scaled_mse" : [],
+                                 "gp_kl_divergence" : [],
+                                 "gp_train_time" : [],
+                                 "obj_fn_opt_time" : [],
+                                 "acquisition_optimizer_niter" : []
+                                 }
+        
         # -------------------------------------------------------------------------
         # set the bounds for scale length parameters
         self.gp_scale_rng = gp_scale_rng
@@ -1791,7 +1791,7 @@ class SurrogateModel(object):
             # Optimize GP?
             if (ii + first_iter) % self.gp_opt_freq == 0:
 
-                reopt_kwargs = self.opt_gp_kwargs
+                reopt_kwargs = self.opt_gp_kwargs.copy()
                 reopt_kwargs["multi_proc"] = allow_opt_multiproc
                 # re-optimize hyperparamters
                 self.gp, _ = self._opt_gp(**reopt_kwargs)
