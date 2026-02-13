@@ -1,19 +1,19 @@
 <!doctype html>
 <html class="no-js" lang="en" data-content_root="../../">
-  <head><meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1"/>
-    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
-        <link rel="canonical" href="https://alabi.jessicabirky.com/_modules/alabi/cache_utils.html" />
+  <head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
+        <link rel="canonical" href="https://alabi.jessicabirky.com/_modules/alabi/cache_utils.html">
 
-    <!-- Generated with Sphinx 7.3.7 and Furo 2025.07.19 -->
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
         <title>alabi.cache_utils - alabi</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
-    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=25af2a20" />
+    <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
     <link rel="stylesheet" type="text/css" href="../../_static/tabs.css?v=4c969af8" />
-    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=13237357" />
+    <link rel="stylesheet" type="text/css" href="../../_static/togglebutton.css?v=9c3e77be" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=8dab3a3b" />
-    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=a7f7f5d3" />
+    <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=0cf789f7" />
     
     
 
@@ -29,18 +29,27 @@
   --color-sidebar-item-background--hover: white;
   --color-brand-primary: #004080;
   --color-brand-content: #0059b3;
+  --font-size--small: 0.875rem;
+  --font-size--normal: 1rem;
+  --font-size--large: 1.125rem;
+  --font-size-h1: 2.2rem;
+  --font-size-h2: 1.8rem;
+  --font-size-h3: 1.5rem;
+  --font-size-h4: 1.3rem;
+  --font-size-h5: 1.1rem;
+  --font-size-h6: 1rem;
   
   }
   @media not print {
     body[data-theme="dark"] {
-      --color-code-background: #2b2b2b;
-  --color-code-foreground: #f8f8f2;
+      --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
   
     }
     @media (prefers-color-scheme: dark) {
       body:not([data-theme="light"]) {
-        --color-code-background: #2b2b2b;
-  --color-code-foreground: #f8f8f2;
+        --color-code-background: #202020;
+  --color-code-foreground: #d0d0d0;
   
       }
     }
@@ -155,14 +164,10 @@
   </symbol>
 </svg>
 
-<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation">
-<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc">
-<label class="overlay sidebar-overlay" for="__navigation">
-  <div class="visually-hidden">Hide navigation sidebar</div>
-</label>
-<label class="overlay toc-overlay" for="__toc">
-  <div class="visually-hidden">Hide table of contents sidebar</div>
-</label>
+<input type="checkbox" class="sidebar-toggle" name="__navigation" id="__navigation" aria-label="Toggle site navigation sidebar">
+<input type="checkbox" class="sidebar-toggle" name="__toc" id="__toc" aria-label="Toggle table of contents sidebar">
+<label class="overlay sidebar-overlay" for="__navigation"></label>
+<label class="overlay toc-overlay" for="__toc"></label>
 
 <a class="skip-to-content muted-link" href="#furo-main-content">Skip to content</a>
 
@@ -172,8 +177,7 @@
   <header class="mobile-header">
     <div class="header-left">
       <label class="nav-overlay-icon" for="__navigation">
-        <div class="visually-hidden">Toggle site navigation sidebar</div>
-        <i class="icon"><svg><use href="#svg-menu"></use></svg></i>
+        <span class="icon"><svg><use href="#svg-menu"></use></svg></span>
       </label>
     </div>
     <div class="header-center">
@@ -181,8 +185,7 @@
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
-        <button class="theme-toggle">
-          <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+        <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
           <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
           <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
           <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
@@ -190,8 +193,7 @@
         </button>
       </div>
       <label class="toc-overlay-icon toc-header-icon no-toc" for="__toc">
-        <div class="visually-hidden">Toggle table of contents sidebar</div>
-        <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+        <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
       </label>
     </div>
   </header>
@@ -216,18 +218,23 @@
 <li class="toctree-l1"><a class="reference internal" href="../../gp_tutorial.html">GP Training</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../mcmc_tutorial.html">MCMC sampling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_bayesian_optimization.html">Bayesian Optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_hp_settings.html">Automated Hyperparameter Selection</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Examples</span></p>
+<p class="caption" role="heading"><span class="caption-text">Benchmark Examples</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_demo_1d.html">Visualize Active Learning</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../plot_demo_2d.html">2D Benchmarks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plot_demo_2d.html">Test 2D Benchmarks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_line_fit.html">Fit a line to data</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../plot_kl_divergence.html">KL Divergence</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../plot_kl_divergence.html">KL Divergence: Gaussian</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_gaussian_nd.html">Test computational scaling</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Applications</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../trappist_stellar_evolution.html">Stellar Evolution</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">API</span></p>
 <ul>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../../modules.html">alabi</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><div class="visually-hidden">Toggle navigation of alabi</div><i class="icon"><svg><use href="#svg-arrow-right"></use></svg></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../modules.html">alabi</a><input aria-label="Toggle navigation of alabi" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="../../alabi.html">alabi package</a></li>
 </ul>
 </li>
@@ -257,8 +264,7 @@
         </a>
         <div class="content-icon-container">
           <div class="theme-toggle-container theme-toggle-content">
-            <button class="theme-toggle">
-              <div class="visually-hidden">Toggle Light / Dark / Auto color theme</div>
+            <button class="theme-toggle" aria-label="Toggle Light / Dark / Auto color theme">
               <svg class="theme-icon-when-auto-light"><use href="#svg-sun-with-moon"></use></svg>
               <svg class="theme-icon-when-auto-dark"><use href="#svg-moon-with-sun"></use></svg>
               <svg class="theme-icon-when-dark"><use href="#svg-moon"></use></svg>
@@ -266,8 +272,7 @@
             </button>
           </div>
           <label class="toc-overlay-icon toc-content-icon no-toc" for="__toc">
-            <div class="visually-hidden">Toggle table of contents sidebar</div>
-            <i class="icon"><svg><use href="#svg-toc"></use></svg></i>
+            <span class="icon"><svg><use href="#svg-toc"></use></svg></span>
           </label>
         </div>
         <article role="main" id="furo-main-content">
@@ -280,21 +285,70 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">parallel_utils</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;load_model_cache&quot;</span><span class="p">,</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;load_pickle&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;load_model_cache&quot;</span><span class="p">,</span>
            <span class="s2">&quot;write_report_gp&quot;</span><span class="p">,</span>
            <span class="s2">&quot;write_report_emcee&quot;</span><span class="p">,</span>
            <span class="s2">&quot;write_report_dynesty&quot;</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="load_model_cache">
-<a class="viewcode-back" href="../../alabi.html#alabi.cache_utils.load_model_cache">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">load_model_cache</span><span class="p">(</span><span class="n">savedir</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="s2">&quot;surrogate_model.pkl&quot;</span><span class="p">):</span>
+<div class="viewcode-block" id="load_pickle">
+<a class="viewcode-back" href="../../alabi.html#alabi.cache_utils.load_pickle">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_pickle</span><span class="p">(</span><span class="n">savedir</span><span class="p">,</span> <span class="n">fname</span><span class="o">=</span><span class="s2">&quot;surrogate_model.pkl&quot;</span><span class="p">):</span>
 
     <span class="n">file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">savedir</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">sm</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
 
+    <span class="k">return</span> <span class="n">sm</span></div>
+
+
+
+<div class="viewcode-block" id="load_model_cache">
+<a class="viewcode-back" href="../../alabi.html#alabi.cache_utils.load_model_cache">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_model_cache</span><span class="p">(</span><span class="n">savedir</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    MPI-safe model loading that prevents file corruption.</span>
+<span class="sd">    </span>
+<span class="sd">    :param savedir: Directory containing the model cache</span>
+<span class="sd">    :returns: Loaded surrogate model</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="c1"># Check if we&#39;re in an MPI environment</span>
+    <span class="k">if</span> <span class="n">parallel_utils</span><span class="o">.</span><span class="n">is_mpi_active</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">mpi4py</span><span class="w"> </span><span class="kn">import</span> <span class="n">MPI</span>
+            <span class="n">comm</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
+            <span class="n">rank</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">Get_rank</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="n">rank</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">rank</span> <span class="o">=</span> <span class="mi">0</span>
+    
+    <span class="c1"># Only rank 0 loads the model</span>
+    <span class="k">if</span> <span class="n">rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sm</span> <span class="o">=</span> <span class="n">load_pickle</span><span class="p">(</span><span class="n">savedir</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Rank </span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2">: Failed to load model cache: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">raise</span>  <span class="c1"># Re-raise the exception to properly handle the error</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">sm</span> <span class="o">=</span> <span class="n">load_pickle</span><span class="p">(</span><span class="n">savedir</span><span class="p">)</span>
+    
+    <span class="c1"># Broadcast the model to all ranks if using MPI</span>
+    <span class="k">if</span> <span class="n">parallel_utils</span><span class="o">.</span><span class="n">is_mpi_active</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">mpi4py</span><span class="w"> </span><span class="kn">import</span> <span class="n">MPI</span>
+            <span class="n">comm</span> <span class="o">=</span> <span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span>
+            <span class="n">sm</span> <span class="o">=</span> <span class="n">comm</span><span class="o">.</span><span class="n">bcast</span><span class="p">(</span><span class="n">sm</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">rank</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Rank </span><span class="si">{</span><span class="n">rank</span><span class="si">}</span><span class="s2">: Received model from rank 0&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="k">pass</span>
+    
     <span class="k">return</span> <span class="n">sm</span></div>
 
 
@@ -311,22 +365,27 @@
     <span class="n">lines</span> <span class="o">=</span>  <span class="sa">f</span><span class="s2">&quot;==================================================================</span><span class="se">\n</span><span class="s2">&quot;</span>
     <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;GP summary </span><span class="se">\n</span><span class="s2">&quot;</span>
     <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;==================================================================</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-
+    
+    <span class="n">report_vars</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Kernel&quot;</span><span class="p">:</span> <span class="s2">&quot;kernel_name&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;Function bounds&quot;</span><span class="p">:</span> <span class="s2">&quot;bounds&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;fit mean&quot;</span><span class="p">:</span> <span class="s2">&quot;fit_mean&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;fit amplitude&quot;</span><span class="p">:</span> <span class="s2">&quot;fit_amp&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;fit white_noise&quot;</span><span class="p">:</span> <span class="s2">&quot;fit_white_noise&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;GP white noise&quot;</span><span class="p">:</span> <span class="s2">&quot;white_noise&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;Hyperparameter bounds&quot;</span><span class="p">:</span> <span class="s2">&quot;hp_bounds&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;Active learning algorithm&quot;</span><span class="p">:</span> <span class="s2">&quot;algorithm&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;Number of total training samples&quot;</span><span class="p">:</span> <span class="s2">&quot;ntrain&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;Number of initial training samples&quot;</span><span class="p">:</span> <span class="s2">&quot;ninit_train&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;Number of active training samples&quot;</span><span class="p">:</span> <span class="s2">&quot;nactive&quot;</span><span class="p">,</span>
+                   <span class="s2">&quot;Number of test samples&quot;</span><span class="p">:</span> <span class="s2">&quot;ntest&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+    
     <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Configuration: </span><span class="se">\n</span><span class="s2">&quot;</span>
     <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;-------------- </span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Kernel: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_name</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Function bounds: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;fit mean: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_mean</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;fit amplitude: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_amp</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;fit white_noise: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">fit_white_noise</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;GP white noise: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">white_noise</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Hyperparameter bounds: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">hp_bounds</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Active learning algorithm : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">algorithm</span><span class="si">}</span><span class="s2"> </span><span class="se">\n\n</span><span class="s2">&quot;</span> 
-
-    <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Number of total training samples: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ntrain</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Number of initial training samples: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ninit_train</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Number of active training samples: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">nactive</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Number of test samples: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ntest</span><span class="si">}</span><span class="s2"> </span><span class="se">\n\n</span><span class="s2">&quot;</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">report_vars</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">report_vars</span><span class="p">[</span><span class="n">key</span><span class="p">]):</span>
+            <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">report_vars</span><span class="p">[</span><span class="n">key</span><span class="p">])</span><span class="si">}</span><span class="s2"> </span><span class="se">\n</span><span class="s2">&quot;</span>
+    <span class="n">lines</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
 
     <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Results: </span><span class="se">\n</span><span class="s2">&quot;</span>
     <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;-------- </span><span class="se">\n</span><span class="s2">&quot;</span>
@@ -338,7 +397,8 @@
     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;train_runtime&#39;</span><span class="p">):</span>
         <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Active learning train runtime (s): </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_runtime</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="se">\n\n</span><span class="s2">&quot;</span>
 
-    <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Final test error (MSE): </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s1">&#39;test_mse&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="se">\n\n</span><span class="s2">&quot;</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;training_results&#39;</span><span class="p">):</span>
+        <span class="n">lines</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Final test error (MSE): </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">training_results</span><span class="p">[</span><span class="s1">&#39;test_mse&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="se">\n\n</span><span class="s2">&quot;</span>
 
     <span class="n">summary</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">file</span><span class="o">+</span><span class="s2">&quot;.txt&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
     <span class="n">summary</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
@@ -448,8 +508,8 @@
     </aside>
   </div>
 </div><script src="../../_static/documentation_options.js?v=d45e8c67"></script>
-    <script src="../../_static/doctools.js?v=9a2dae69"></script>
-    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=f281be69"></script>
@@ -457,10 +517,9 @@
     <script>let toggleHintShow = 'Click to show';</script>
     <script>let toggleHintHide = 'Click to hide';</script>
     <script>let toggleOpenOnPrint = 'true';</script>
-    <script src="../../_static/togglebutton.js?v=4a39c7ea"></script>
+    <script src="../../_static/togglebutton.js?v=1ae7504c"></script>
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-    <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script src="../../_static/notebook-outputs.js?v=9bb603c3"></script>
     </body>
 </html>
