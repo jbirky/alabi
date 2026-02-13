@@ -7,6 +7,7 @@ Utility functions in terms of usefulness, e.g. minimizing GP utility functions
 or computing KL divergences, and the GP utility functions, e.g. the bape utility.
 """
 
+from curses import nl
 import numpy as np
 import scipy
 from scipy.optimize import minimize
@@ -32,8 +33,32 @@ __all__ = ["agp_utility",
            "prior_transform_normal",
            "BetaWarpingFunction",
            "beta_warping_transformer",
-           "nlog_scaler", "log_scaler", "minmax_scaler", "no_scaler"
+           "NewFunctionTransformer",
+           "nlog_scaler", "log_scaler", "no_scaler"
            ]
+
+
+#===========================================================
+# Define data transformation functions
+#===========================================================
+
+class NewFunctionTransformer(preprocessing.FunctionTransformer):
+    def __init__(self, name, func=None, inverse_func=None, *, validate=False,
+                 accept_sparse=False, check_inverse=True, feature_names_out=None,
+                 kw_args=None, inv_kw_args=None):
+        super().__init__(
+            func=func, inverse_func=inverse_func, validate=validate,
+            accept_sparse=accept_sparse, check_inverse=check_inverse,
+            feature_names_out=feature_names_out, kw_args=kw_args,
+            inv_kw_args=inv_kw_args,
+        )
+        self.name = name
+    
+    def __str__(self):
+        return self.name
+    
+    def __repr__(self):
+        return self.name
 
 # Define scaling functions 
 def nlog(x): return np.log10(-x)
@@ -42,14 +67,9 @@ def log_scale(x): return np.log10(x)
 def log_scale_inv(logx): return 10**logx
 def no_scale(x): return x
 
-nlog_scaler = preprocessing.FunctionTransformer(func=nlog, inverse_func=nlog_inv)
-nlog_scaler.__class__.__name__ = "nlog_scaler"
-log_scaler = preprocessing.FunctionTransformer(func=log_scale, inverse_func=log_scale_inv)
-log_scaler.__class__.__name__ = "log_scaler"
-minmax_scaler = preprocessing.MinMaxScaler()
-minmax_scaler.__class__.__name__ = "minmax_scaler"
-no_scaler = preprocessing.FunctionTransformer(func=no_scale, inverse_func=no_scale)
-no_scaler.__class__.__name__ = "no_scaler"
+nlog_scaler = NewFunctionTransformer(name="nlog_scaler", func=nlog, inverse_func=nlog_inv)
+log_scaler = NewFunctionTransformer(name="log_scaler", func=log_scale, inverse_func=log_scale_inv)
+no_scaler = NewFunctionTransformer(name="no_scaler", func=no_scale, inverse_func=no_scale)
 
 
 #===========================================================
