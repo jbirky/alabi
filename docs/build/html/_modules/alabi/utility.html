@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
         <link rel="canonical" href="https://alabi.jessicabirky.com/_modules/alabi/utility.html">
 
-    <!-- Generated with Sphinx 8.2.3 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
         <title>alabi.utility - alabi</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
@@ -286,6 +286,7 @@
 <span class="sd">or computing KL divergences, and the GP utility functions, e.g. the bape utility.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">curses</span><span class="w"> </span><span class="kn">import</span> <span class="n">nl</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">scipy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">scipy.optimize</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize</span>
@@ -311,8 +312,38 @@
            <span class="s2">&quot;prior_transform_normal&quot;</span><span class="p">,</span>
            <span class="s2">&quot;BetaWarpingFunction&quot;</span><span class="p">,</span>
            <span class="s2">&quot;beta_warping_transformer&quot;</span><span class="p">,</span>
-           <span class="s2">&quot;nlog_scaler&quot;</span><span class="p">,</span> <span class="s2">&quot;log_scaler&quot;</span><span class="p">,</span> <span class="s2">&quot;minmax_scaler&quot;</span><span class="p">,</span> <span class="s2">&quot;no_scaler&quot;</span>
+           <span class="s2">&quot;NewFunctionTransformer&quot;</span><span class="p">,</span>
+           <span class="s2">&quot;nlog_scaler&quot;</span><span class="p">,</span> <span class="s2">&quot;log_scaler&quot;</span><span class="p">,</span> <span class="s2">&quot;no_scaler&quot;</span>
            <span class="p">]</span>
+
+
+<span class="c1">#===========================================================</span>
+<span class="c1"># Define data transformation functions</span>
+<span class="c1">#===========================================================</span>
+
+<div class="viewcode-block" id="NewFunctionTransformer">
+<a class="viewcode-back" href="../../alabi.html#alabi.utility.NewFunctionTransformer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NewFunctionTransformer</span><span class="p">(</span><span class="n">preprocessing</span><span class="o">.</span><span class="n">FunctionTransformer</span><span class="p">):</span>
+<div class="viewcode-block" id="NewFunctionTransformer.__init__">
+<a class="viewcode-back" href="../../alabi.html#alabi.utility.NewFunctionTransformer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inverse_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">accept_sparse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">check_inverse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">feature_names_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">kw_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">inv_kw_args</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">func</span><span class="o">=</span><span class="n">func</span><span class="p">,</span> <span class="n">inverse_func</span><span class="o">=</span><span class="n">inverse_func</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="n">validate</span><span class="p">,</span>
+            <span class="n">accept_sparse</span><span class="o">=</span><span class="n">accept_sparse</span><span class="p">,</span> <span class="n">check_inverse</span><span class="o">=</span><span class="n">check_inverse</span><span class="p">,</span>
+            <span class="n">feature_names_out</span><span class="o">=</span><span class="n">feature_names_out</span><span class="p">,</span> <span class="n">kw_args</span><span class="o">=</span><span class="n">kw_args</span><span class="p">,</span>
+            <span class="n">inv_kw_args</span><span class="o">=</span><span class="n">inv_kw_args</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span></div>
+
 
 <span class="c1"># Define scaling functions </span>
 <span class="k">def</span><span class="w"> </span><span class="nf">nlog</span><span class="p">(</span><span class="n">x</span><span class="p">):</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">)</span>
@@ -321,14 +352,9 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">log_scale_inv</span><span class="p">(</span><span class="n">logx</span><span class="p">):</span> <span class="k">return</span> <span class="mi">10</span><span class="o">**</span><span class="n">logx</span>
 <span class="k">def</span><span class="w"> </span><span class="nf">no_scale</span><span class="p">(</span><span class="n">x</span><span class="p">):</span> <span class="k">return</span> <span class="n">x</span>
 
-<span class="n">nlog_scaler</span> <span class="o">=</span> <span class="n">preprocessing</span><span class="o">.</span><span class="n">FunctionTransformer</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">nlog</span><span class="p">,</span> <span class="n">inverse_func</span><span class="o">=</span><span class="n">nlog_inv</span><span class="p">)</span>
-<span class="n">nlog_scaler</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="s2">&quot;nlog_scaler&quot;</span>
-<span class="n">log_scaler</span> <span class="o">=</span> <span class="n">preprocessing</span><span class="o">.</span><span class="n">FunctionTransformer</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">log_scale</span><span class="p">,</span> <span class="n">inverse_func</span><span class="o">=</span><span class="n">log_scale_inv</span><span class="p">)</span>
-<span class="n">log_scaler</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="s2">&quot;log_scaler&quot;</span>
-<span class="n">minmax_scaler</span> <span class="o">=</span> <span class="n">preprocessing</span><span class="o">.</span><span class="n">MinMaxScaler</span><span class="p">()</span>
-<span class="n">minmax_scaler</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="s2">&quot;minmax_scaler&quot;</span>
-<span class="n">no_scaler</span> <span class="o">=</span> <span class="n">preprocessing</span><span class="o">.</span><span class="n">FunctionTransformer</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">no_scale</span><span class="p">,</span> <span class="n">inverse_func</span><span class="o">=</span><span class="n">no_scale</span><span class="p">)</span>
-<span class="n">no_scaler</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="s2">&quot;no_scaler&quot;</span>
+<span class="n">nlog_scaler</span> <span class="o">=</span> <span class="n">NewFunctionTransformer</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;nlog_scaler&quot;</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">nlog</span><span class="p">,</span> <span class="n">inverse_func</span><span class="o">=</span><span class="n">nlog_inv</span><span class="p">)</span>
+<span class="n">log_scaler</span> <span class="o">=</span> <span class="n">NewFunctionTransformer</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;log_scaler&quot;</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">log_scale</span><span class="p">,</span> <span class="n">inverse_func</span><span class="o">=</span><span class="n">log_scale_inv</span><span class="p">)</span>
+<span class="n">no_scaler</span> <span class="o">=</span> <span class="n">NewFunctionTransformer</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;no_scaler&quot;</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="n">no_scale</span><span class="p">,</span> <span class="n">inverse_func</span><span class="o">=</span><span class="n">no_scale</span><span class="p">)</span>
 
 
 <span class="c1">#===========================================================</span>
@@ -1596,8 +1622,8 @@
     </aside>
   </div>
 </div><script src="../../_static/documentation_options.js?v=d45e8c67"></script>
-    <script src="../../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=f281be69"></script>

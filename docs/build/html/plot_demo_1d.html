@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Test 2D Benchmarks" href="plot_demo_2d.html"><link rel="prev" title="Automated Hyperparameter Selection" href="auto_hp_settings.html">
         <link rel="canonical" href="https://alabi.jessicabirky.com/plot_demo_1d.html">
 
-    <!-- Generated with Sphinx 8.2.3 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
         <title>Visualize Active Learning - alabi</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
@@ -319,19 +319,23 @@ Interactive online version:
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>
 
 <span class="n">sm</span> <span class="o">=</span> <span class="n">SurrogateModel</span><span class="p">(</span><span class="n">lnlike_fn</span><span class="o">=</span><span class="n">test1d_fn</span><span class="p">,</span>
                     <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
-                    <span class="n">savedir</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;results/test1d&quot;</span><span class="p">,</span>
-                    <span class="n">theta_scaler</span><span class="o">=</span><span class="n">alabi</span><span class="o">.</span><span class="n">no_scaler</span><span class="p">,</span>
-                    <span class="n">y_scaler</span><span class="o">=</span><span class="n">alabi</span><span class="o">.</span><span class="n">no_scaler</span><span class="p">)</span>
+                    <span class="n">savedir</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;results/test1d&quot;</span><span class="p">)</span>
 
 <span class="n">sm</span><span class="o">.</span><span class="n">init_samples</span><span class="p">(</span><span class="n">ntrain</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">sampler</span><span class="o">=</span><span class="s2">&quot;sobol&quot;</span><span class="p">)</span>
-<span class="n">sm</span><span class="o">.</span><span class="n">init_gp</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="s2">&quot;ExpSquaredKernel&quot;</span><span class="p">,</span> <span class="n">fit_amp</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">fit_mean</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">white_noise</span><span class="o">=-</span><span class="mi">12</span><span class="p">,</span> <span class="n">gp_scale_rng</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">sm</span><span class="o">.</span><span class="n">init_gp</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="s2">&quot;ExpSquaredKernel&quot;</span><span class="p">,</span>
+           <span class="n">fit_amp</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+           <span class="n">fit_mean</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+           <span class="n">white_noise</span><span class="o">=-</span><span class="mi">12</span><span class="p">,</span>
+           <span class="n">gp_scale_rng</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+           <span class="n">theta_scaler</span><span class="o">=</span><span class="n">alabi</span><span class="o">.</span><span class="n">no_scaler</span><span class="p">,</span>
+           <span class="n">y_scaler</span><span class="o">=</span><span class="n">alabi</span><span class="o">.</span><span class="n">no_scaler</span><span class="p">)</span>
 
 <span class="k">def</span><span class="w"> </span><span class="nf">bape</span><span class="p">(</span><span class="n">xgrid</span><span class="p">):</span>
     <span class="k">return</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">ut</span><span class="o">.</span><span class="n">bape_utility</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">]),</span> <span class="n">sm</span><span class="o">.</span><span class="n">_y</span><span class="p">,</span> <span class="n">sm</span><span class="o">.</span><span class="n">gp</span><span class="p">,</span> <span class="n">sm</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xgrid</span><span class="p">])</span>
@@ -346,11 +350,31 @@ Interactive online version:
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-Computed 6 function evaluations: 3.0s
+<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">AttributeError</span>                            Traceback (most recent call last)
+<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[4]</span><span class="ansi-green-fg">, line 8</span>
+<span class="ansi-green-fg">      3</span> sm = SurrogateModel(lnlike_fn=test1d_fn,
+<span class="ansi-green-fg">      4</span>                     bounds=bounds,
+<span class="ansi-green-fg">      5</span>                     savedir=<span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">results/test1d</span><span class="ansi-yellow-fg">&#34;</span>)
+<span class="ansi-green-fg">      7</span> sm.init_samples(ntrain=<span class="ansi-green-fg">6</span>, sampler=<span class="ansi-yellow-fg">&#34;</span><span class="ansi-yellow-fg">sobol</span><span class="ansi-yellow-fg">&#34;</span>)
+<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">8</span> <span class="ansi-yellow-bg">sm</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">init_gp</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">kernel</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-fg ansi-yellow-bg">&#34;</span><span class="ansi-yellow-fg ansi-yellow-bg">ExpSquaredKernel</span><span class="ansi-yellow-fg ansi-yellow-bg">&#34;</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span>
+<span class="ansi-green-fg">      9</span> <span class="ansi-yellow-bg">           </span><span class="ansi-yellow-bg">fit_amp</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">True</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span>
+<span class="ansi-green-fg">     10</span> <span class="ansi-yellow-bg">           </span><span class="ansi-yellow-bg">fit_mean</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg ansi-bold" style="color: rgb(0,135,0)">True</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span>
+<span class="ansi-green-fg">     11</span> <span class="ansi-yellow-bg">           </span><span class="ansi-yellow-bg">white_noise</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">-</span><span class="ansi-green-fg ansi-yellow-bg">12</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span>
+<span class="ansi-green-fg">     12</span> <span class="ansi-yellow-bg">           </span><span class="ansi-yellow-bg">gp_scale_rng</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">[</span><span class="ansi-yellow-bg">-</span><span class="ansi-green-fg ansi-yellow-bg">1</span><span class="ansi-yellow-bg">,</span><span class="ansi-green-fg ansi-yellow-bg">1</span><span class="ansi-yellow-bg">]</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">     13</span> <span class="ansi-yellow-bg">           </span><span class="ansi-yellow-bg">theta_scaler</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">alabi</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">no_scaler</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg">     14</span> <span class="ansi-yellow-bg">           </span><span class="ansi-yellow-bg">y_scaler</span><span class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">alabi</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">no_scaler</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg">     16</span> <span class="ansi-bold" style="color: rgb(0,135,0)">def</span><span style="color: rgb(188,188,188)"> </span><span class="ansi-blue-fg">bape</span>(xgrid):
+<span class="ansi-green-fg">     17</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">return</span> -np.array([ut.bape_utility(np.array([x]), sm._y, sm.gp, sm.bounds) <span class="ansi-bold" style="color: rgb(0,135,0)">for</span> x <span class="ansi-bold" style="color: rgb(175,0,255)">in</span> xgrid])
 
-Initialized GP with squared exponential kernel.
-Successfully initialized GP on attempt 1
-Optimized 4 hyperparameters: (0.016s)
+<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/Tresorit/packages/alabi/alabi/core.py:967</span>, in <span class="ansi-cyan-fg">SurrogateModel.init_gp</span><span class="ansi-blue-fg">(self, kernel, fit_amp, fit_mean, fit_white_noise, white_noise, gp_scale_rng, gp_amp_rng, uniform_scales, overwrite, theta_scaler, y_scaler, gp_opt_method, gp_nopt, optimizer_kwargs, hyperopt_method, regularize, amp_0, mu_0, sigma_0, cv_folds, cv_scoring, cv_n_candidates, cv_stage2_candidates, cv_stage2_width, cv_stage3_candidates, cv_stage3_width, cv_weighted_factor, multi_proc)</span>
+<span class="ansi-green-fg">    965</span> <span style="color: rgb(95,135,135)"># Save scaled training data for GP fitting</span>
+<span class="ansi-green-fg">    966</span> <span style="color: rgb(0,135,0)">self</span>._theta_test = <span style="color: rgb(0,135,0)">self</span>.theta_scaler.transform(<span style="color: rgb(0,135,0)">self</span>.theta_test)
+<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">967</span> <span style="color: rgb(0,135,0)">self</span>._y_test = <span style="color: rgb(0,135,0)">self</span>.y_scaler.transform(<span class="ansi-yellow-bg" style="color: rgb(0,135,0)">self</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">y_test</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">reshape</span>(-<span class="ansi-green-fg">1</span>, <span class="ansi-green-fg">1</span>)).flatten()
+<span class="ansi-green-fg">    968</span> <span style="color: rgb(0,135,0)">self</span>._theta_train = <span style="color: rgb(0,135,0)">self</span>._theta
+<span class="ansi-green-fg">    969</span> <span style="color: rgb(0,135,0)">self</span>._y_train = <span style="color: rgb(0,135,0)">self</span>._y
+
+<span class="ansi-red-fg">AttributeError</span>: &#39;list&#39; object has no attribute &#39;reshape&#39;
 </pre></div></div>
 </div>
 <p>Define a plot function for inspecting the current GP fit so that we can compare the fit before and after active learning training.</p>
@@ -646,8 +670,8 @@ Caching model to results/test1d/surrogate_model...
     </aside>
   </div>
 </div><script src="_static/documentation_options.js?v=d45e8c67"></script>
-    <script src="_static/doctools.js?v=9bcbadda"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="_static/copybutton.js?v=f281be69"></script>
@@ -659,7 +683,7 @@ Caching model to results/test1d/surrogate_model...
     <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
     <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
-    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script src="_static/notebook-outputs.js?v=9bb603c3"></script>
     </body>
 </html>

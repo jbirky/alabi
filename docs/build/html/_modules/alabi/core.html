@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html"><link rel="search" title="Search" href="../../search.html">
         <link rel="canonical" href="https://alabi.jessicabirky.com/_modules/alabi/core.html">
 
-    <!-- Generated with Sphinx 8.2.3 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.0.4 and Furo 2025.12.19 -->
         <title>alabi.core - alabi</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=7bdb33bb" />
@@ -536,7 +536,7 @@
 <a class="viewcode-back" href="../../alabi.html#alabi.core.SurrogateModel.__init__">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lnlike_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">param_names</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> 
                  <span class="n">cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">savedir</span><span class="o">=</span><span class="s2">&quot;results/&quot;</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;surrogate_model&quot;</span><span class="p">,</span>
-                 <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ncore</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">pool_method</span><span class="o">=</span><span class="s2">&quot;fork&quot;</span><span class="p">,</span> <span class="n">ignore_warnings</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ncore</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">pool_method</span><span class="o">=</span><span class="s2">&quot;forkserver&quot;</span><span class="p">,</span> <span class="n">ignore_warnings</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                  <span class="n">random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 
         <span class="c1"># Check all required inputs are specified</span>
@@ -610,21 +610,7 @@
         <span class="c1"># false if emcee, dynesty, and ultranest have not been run for this object</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">emcee_run</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dynesty_run</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ultranest_run</span> <span class="o">=</span> <span class="kc">False</span>
-        
-        <span class="bp">self</span><span class="o">.</span><span class="n">training_results</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;iteration&quot;</span> <span class="p">:</span> <span class="p">[],</span> 
-                                 <span class="s2">&quot;gp_hyperparameters&quot;</span> <span class="p">:</span> <span class="p">[],</span>  
-                                 <span class="s2">&quot;gp_hyperparameter_opt_iteration&quot;</span> <span class="p">:</span> <span class="p">[],</span>
-                                 <span class="s2">&quot;gp_hyperparam_opt_time&quot;</span> <span class="p">:</span> <span class="p">[],</span>
-                                 <span class="s2">&quot;training_mse&quot;</span> <span class="p">:</span> <span class="p">[],</span>
-                                 <span class="s2">&quot;test_mse&quot;</span> <span class="p">:</span> <span class="p">[],</span> 
-                                 <span class="s2">&quot;training_scaled_mse&quot;</span> <span class="p">:</span> <span class="p">[],</span>
-                                 <span class="s2">&quot;test_scaled_mse&quot;</span> <span class="p">:</span> <span class="p">[],</span>
-                                 <span class="s2">&quot;gp_kl_divergence&quot;</span> <span class="p">:</span> <span class="p">[],</span>
-                                 <span class="s2">&quot;gp_train_time&quot;</span> <span class="p">:</span> <span class="p">[],</span>
-                                 <span class="s2">&quot;obj_fn_opt_time&quot;</span> <span class="p">:</span> <span class="p">[],</span>
-                                 <span class="s2">&quot;acquisition_optimizer_niter&quot;</span> <span class="p">:</span> <span class="p">[]</span>
-                                 <span class="p">}</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ultranest_run</span> <span class="o">=</span> <span class="kc">False</span></div>
 
         
     
@@ -1296,6 +1282,20 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_theta_train</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_theta</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_y_train</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_y</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">training_results</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;iteration&quot;</span> <span class="p">:</span> <span class="p">[],</span> 
+                                 <span class="s2">&quot;gp_hyperparameters&quot;</span> <span class="p">:</span> <span class="p">[],</span>  
+                                 <span class="s2">&quot;gp_hyperparameter_opt_iteration&quot;</span> <span class="p">:</span> <span class="p">[],</span>
+                                 <span class="s2">&quot;gp_hyperparam_opt_time&quot;</span> <span class="p">:</span> <span class="p">[],</span>
+                                 <span class="s2">&quot;training_mse&quot;</span> <span class="p">:</span> <span class="p">[],</span>
+                                 <span class="s2">&quot;test_mse&quot;</span> <span class="p">:</span> <span class="p">[],</span> 
+                                 <span class="s2">&quot;training_scaled_mse&quot;</span> <span class="p">:</span> <span class="p">[],</span>
+                                 <span class="s2">&quot;test_scaled_mse&quot;</span> <span class="p">:</span> <span class="p">[],</span>
+                                 <span class="s2">&quot;gp_kl_divergence&quot;</span> <span class="p">:</span> <span class="p">[],</span>
+                                 <span class="s2">&quot;gp_train_time&quot;</span> <span class="p">:</span> <span class="p">[],</span>
+                                 <span class="s2">&quot;obj_fn_opt_time&quot;</span> <span class="p">:</span> <span class="p">[],</span>
+                                 <span class="s2">&quot;acquisition_optimizer_niter&quot;</span> <span class="p">:</span> <span class="p">[]</span>
+                                 <span class="p">}</span>
+        
         <span class="c1"># -------------------------------------------------------------------------</span>
         <span class="c1"># set the bounds for scale length parameters</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">gp_scale_rng</span> <span class="o">=</span> <span class="n">gp_scale_rng</span>
@@ -2137,7 +2137,7 @@
             <span class="c1"># Optimize GP?</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">ii</span> <span class="o">+</span> <span class="n">first_iter</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">gp_opt_freq</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
 
-                <span class="n">reopt_kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_gp_kwargs</span>
+                <span class="n">reopt_kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_gp_kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
                 <span class="n">reopt_kwargs</span><span class="p">[</span><span class="s2">&quot;multi_proc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">allow_opt_multiproc</span>
                 <span class="c1"># re-optimize hyperparamters</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">gp</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_opt_gp</span><span class="p">(</span><span class="o">**</span><span class="n">reopt_kwargs</span><span class="p">)</span>
@@ -4882,8 +4882,8 @@
     </aside>
   </div>
 </div><script src="../../_static/documentation_options.js?v=d45e8c67"></script>
-    <script src="../../_static/doctools.js?v=9bcbadda"></script>
-    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../../_static/copybutton.js?v=f281be69"></script>

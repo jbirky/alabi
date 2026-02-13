@@ -218,6 +218,7 @@
 <li class="toctree-l1"><a class="reference internal" href="../../gp_tutorial.html">GP Training</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../mcmc_tutorial.html">MCMC sampling</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../plot_bayesian_optimization.html">Bayesian Optimization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_hp_settings.html">Automated Hyperparameter Selection</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Benchmark Examples</span></p>
 <ul>
@@ -1477,7 +1478,9 @@
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
             <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to set best hyperparameters: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to set best hyperparameters: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1"># raise RuntimeError(f&quot;Failed to set best hyperparameters: {str(e)}&quot;)</span>
+        <span class="c1"># If optimization fails, return original GP without changes</span>
+        <span class="k">return</span> <span class="n">gp</span>
     
     <span class="c1"># Compile detailed results</span>
     <span class="n">cv_results</span> <span class="o">=</span> <span class="p">{</span>
@@ -1514,8 +1517,11 @@
                 <span class="s2">&quot;cv_scores_matrix&quot;</span><span class="p">:</span> <span class="n">cv_scores_s3</span><span class="p">,</span>
                 <span class="s2">&quot;candidates&quot;</span><span class="p">:</span> <span class="n">stage3_hyperparam_candidates</span>
             <span class="p">}</span>
+            
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;CV optimization completed. Best </span><span class="si">{</span><span class="n">scoring</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">cv_results</span><span class="p">[</span><span class="s1">&#39;best_score&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> ± </span><span class="si">{</span><span class="n">cv_results</span><span class="p">[</span><span class="s1">&#39;best_score_std&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     
-    <span class="k">return</span> <span class="n">gp</span><span class="p">,</span> <span class="n">best_hyperparams</span><span class="p">,</span> <span class="n">cv_results</span></div>
+    <span class="k">return</span> <span class="n">gp</span></div>
 
 
 

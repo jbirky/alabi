@@ -28,19 +28,11 @@ You can run this script directly or copy sections into your own code.
 # Import `alabi` and its submodules along with standard scientific computing libraries.
 
 # %%
-import sys 
-
-sys.path.append("/Users/m1/research/alabi")
-
 import alabi
 
 import alabi.utility as ut
 
-import alabi.metrics as metrics
-
 import alabi.benchmarks as bm
-
-import alabi.visualization as vis
 
 from alabi.core import SurrogateModel
 
@@ -52,11 +44,13 @@ import pandas as pd
 
 import matplotlib.pyplot as plt
 
-from functools import partial
-
 from sklearn import preprocessing
 
 from itertools import product
+
+
+
+np.random.seed(101)
 
 # %% [markdown]
 # ## Step 2: Define Problem and Base Configuration
@@ -117,6 +111,8 @@ sm = SurrogateModel(lnlike_fn=bm.eggbox["fn"],
                     savedir=savedir,
 
                     ncore=8, 
+
+                    pool_method="forkserver",
 
                     verbose=True)
 
@@ -215,7 +211,9 @@ for ii in range(len(setting_combos)):
 # %%
 results = pd.DataFrame(data=combinations_to_dict(setting_combos))
 
-results.sort_values("test_mse").head(10)
+top_fits = results.sort_values("test_mse").head(5)
+
+top_fits
 
 # %% [markdown]
 # ## Step 6: Extract Best Configuration
@@ -260,14 +258,73 @@ sm.active_train(niter=200, **al_kwargs)
 # %% [markdown]
 # ## Step 8: Visualize Training Progress
 # 
-# Plot the test set MSE over active learning iterations. A decreasing trend indicates the surrogate model is improving.
+# Plot the test set MSE over active learning iterations. A decreasing trend indicates the surrogate model is improving. We can also highlight which iterations the GP hyperparameters are re-optimized (vertical gray lines).
 
 # %%
-plt.plot(sm.training_results["iteration"], sm.training_results["test_scaled_mse"])
+plt.plot(sm.training_results["iteration"], sm.training_results["test_mse"])
 
-# plt.yscale("log")
+for ii in range(0, sm.nactive, sm.gp_opt_freq+1):
+
+    plt.axvline(ii, color="gray", linestyle="--", alpha=0.5)
+
+plt.xlabel("Iteration", fontsize=18)
+
+plt.ylabel("Test MSE", fontsize=18)
+
+plt.xlim(0, sm.nactive)
 
 plt.show()
+
+# %% [markdown]
+# How do the other top initial fits perform during active learning?
+
+# %%
+al_kwargs = {"algorithm": "bape", 
+
+             "gp_opt_freq": 20, 
+
+             "obj_opt_method": "nelder-mead", 
+
+             "nopt": 6}
+
+
+
+mse_results = {}
+
+for idx in top_fits.index:
+
+    gp_kwargs_idx = top_fits[top_fits.index == idx][gp_kwargs.keys()].to_dict(orient="records")[0]
+
+    sm.init_gp(**gp_kwargs_idx, overwrite=True)
+
+    sm.active_train(niter=200, **al_kwargs)
+
+    mse_results[idx] = sm.training_results["test_mse"]
+
+# %%
+plt.figure(figsize=(10,6))
+
+for idx in top_fits.index:
+
+    plt.plot(sm.training_results["iteration"], mse_results[idx], label=f"config {idx}")
+
+for ii in range(0, sm.nactive, sm.gp_opt_freq+1):
+
+    plt.axvline(ii, color="gray", linestyle="--", alpha=0.5)
+
+plt.legend(loc="upper right", fontsize=16)
+
+plt.xlabel("Iteration", fontsize=18)
+
+plt.ylabel("Test MSE", fontsize=18)
+
+plt.xlim(0, sm.nactive)
+
+plt.show()
+
+
+
+top_fits
 
 # %% [markdown]
 # ## Next Steps

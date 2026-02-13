@@ -48,17 +48,25 @@ sm = SurrogateModel(lnlike_fn=test1d_fn,
 
                     bounds=bounds, 
 
-                    savedir=f"results/test1d",
-
-                    theta_scaler=alabi.no_scaler,
-
-                    y_scaler=alabi.no_scaler)
+                    savedir=f"results/test1d")
 
 
 
 sm.init_samples(ntrain=6, sampler="sobol")
 
-sm.init_gp(kernel="ExpSquaredKernel", fit_amp=True, fit_mean=True, white_noise=-12, gp_scale_rng=[-1,1])
+sm.init_gp(kernel="ExpSquaredKernel", 
+
+           fit_amp=True, 
+
+           fit_mean=True, 
+
+           white_noise=-12, 
+
+           gp_scale_rng=[-1,1],
+
+           theta_scaler=alabi.no_scaler,
+
+           y_scaler=alabi.no_scaler)
 
 
 
