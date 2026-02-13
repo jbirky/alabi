@@ -9,11 +9,11 @@ You can run this script directly or copy sections into your own code.
 """
 
 # %% [markdown]
-# # Automated Hyperparameter Selection
+# ## Automated Hyperparameter Selection
 # 
 # This tutorial demonstrates how to automatically select optimal Gaussian Process hyperparameters for your surrogate model by testing multiple configurations and choosing the one with the best test set performance.
 # 
-# ## Why This Matters
+# ### Why This Matters
 # 
 # GP surrogate model performance is highly sensitive to:
 # - **Kernel choice** (ExpSquared, Matern32, Matern52, etc.)
@@ -23,7 +23,7 @@ You can run this script directly or copy sections into your own code.
 # Rather than manually tuning these, we can systematically test combinations and select the best configuration based on test set mean squared error (MSE).
 
 # %% [markdown]
-# ## Step 1: Import Required Libraries
+# ### Step 1: Import Required Libraries
 # 
 # Import `alabi` and its submodules along with standard scientific computing libraries.
 
@@ -53,7 +53,7 @@ from itertools import product
 np.random.seed(101)
 
 # %% [markdown]
-# ## Step 2: Define Problem and Base Configuration
+# ### Step 2: Define Problem and Base Configuration
 # 
 # Set up the benchmark problem (eggbox function) and define a base configuration for GP hyperparameters. These settings will be partially overridden when we test different combinations.
 # 
@@ -121,7 +121,7 @@ sm = SurrogateModel(lnlike_fn=bm.eggbox["fn"],
 sm.init_samples(ntrain=ninit, ntest=1000, sampler="sobol")
 
 # %% [markdown]
-# ## Step 3: Create Hyperparameter Grid
+# ### Step 3: Create Hyperparameter Grid
 # 
 # Generate all combinations of the hyperparameters we want to test:
 # - **Kernels**: Different covariance functions capture different smoothness assumptions
@@ -184,7 +184,7 @@ for settings in variable_settings:
     setting_combos.append(new_settings)
 
 # %% [markdown]
-# ## Step 4: Test All Hyperparameter Combinations
+# ### Step 4: Test All Hyperparameter Combinations
 # 
 # Loop through all combinations and fit a GP for each. The `init_gp` method returns the test set MSE, which we use to evaluate performance.
 # 
@@ -204,7 +204,7 @@ for ii in range(len(setting_combos)):
     setting_combos[ii]["test_mse"] = test_mse
 
 # %% [markdown]
-# ## Step 5: Analyze Results
+# ### Step 5: Analyze Results
 # 
 # Convert results to a pandas DataFrame and inspect the top-performing configurations. Lower test MSE indicates better generalization performance.
 
@@ -216,7 +216,7 @@ top_fits = results.sort_values("test_mse").head(5)
 top_fits
 
 # %% [markdown]
-# ## Step 6: Extract Best Configuration
+# ### Step 6: Extract Best Configuration
 # 
 # Identify the hyperparameter configuration with the lowest test MSE. This will be used for active learning.
 
@@ -226,7 +226,7 @@ best_gp_results = results[results["test_mse"] == results["test_mse"].min()]
 best_gp_results
 
 # %% [markdown]
-# ## Step 7: Run Active Learning
+# ### Step 7: Run Active Learning
 # 
 # Use the optimal GP configuration for active learning. The BAPE (Bayesian Active Posterior Estimation) algorithm iteratively selects new training points to improve the surrogate model.
 # 
@@ -256,7 +256,7 @@ sm.init_gp(**best_gp_kwargs, overwrite=True)
 sm.active_train(niter=200, **al_kwargs)
 
 # %% [markdown]
-# ## Step 8: Visualize Training Progress
+# ### Step 8: Visualize Training Progress
 # 
 # Plot the test set MSE over active learning iterations. A decreasing trend indicates the surrogate model is improving. We can also highlight which iterations the GP hyperparameters are re-optimized (vertical gray lines).
 
@@ -327,7 +327,7 @@ plt.show()
 top_fits
 
 # %% [markdown]
-# ## Next Steps
+# ### Next Steps
 # 
 # Now that you have an optimized surrogate model, you can:
 # 
