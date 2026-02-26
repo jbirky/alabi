@@ -13,7 +13,9 @@ from functools import partial
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib import rc
-rc('text', usetex=True)
+import shutil
+if shutil.which("latex"):
+    rc('text', usetex=True)
 rc('xtick', labelsize=16)
 rc('ytick', labelsize=16)
 font = {'family' : 'normal',

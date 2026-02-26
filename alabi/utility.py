@@ -1011,14 +1011,7 @@ def minimize_objective_single(idx, obj_fn, bounds, starting_point, method, optio
     # If solution is finite and allowed by the prior, save
     if np.all(np.isfinite(x_opt)) and np.all(np.isfinite(f_opt)):
         if np.isfinite(lnprior_uniform(x_opt, bounds)):
-            if tmp.nit > 5:
-                return x_opt, f_opt
-            else:
-                print(f"Warning: Aquisition function ran for {tmp.nit} iterations. Optimizer success: {tmp.success}")
-                if tmp.nit <= 1:
-                    return np.nan, np.nan
-                else:
-                    return x_opt, f_opt
+            return x_opt, f_opt
         else:
             print("Warning: Acquisition function optimization prior fail", x_opt)
             return np.nan, np.nan

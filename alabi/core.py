@@ -500,14 +500,14 @@ class SurrogateModel(object):
         # close init_train pool
         self._close_pool(pool)
         
-        # replace any nan or inf values 
+        # replace any nan or inf values
         for ii in range(len(y)):
             if np.isnan(y[ii]) or np.isinf(y[ii]):
                 ynan = True
                 while ynan == True:
                     # resample theta
-                    new_theta = self.prior_sampler(nsample=1, sampler="uniform", random_state=None)
-                    y[ii] = self.true_log_likelihood(new_theta).reshape(-1, 1)
+                    new_theta = self.prior_sampler(nsample=1, sampler="uniform", random_state=None).flatten()
+                    y[ii, 0] = float(self.true_log_likelihood(new_theta))
                     theta[ii] = new_theta
                     if not (np.isnan(y[ii]) or np.isinf(y[ii])):
                         ynan = False
@@ -611,8 +611,8 @@ class SurrogateModel(object):
             self.ntest = len(theta_test)
         
         else:
-            self.theta_test = []
-            self.y_test = []
+            self.theta_test = np.empty((0, self.ndim))
+            self.y_test = np.empty(0)
             self.ntest = 0
 
         # Save initial training sample
@@ -867,11 +867,13 @@ class SurrogateModel(object):
             Should be smaller than cv_stage2_width for finer refinement.
             Only used when cv_three_stage=True.
 
-        :raises AssertionError: 
+        :raises RuntimeError:
+            If init_samples() has not been called before init_gp().
+        :raises AssertionError:
             If a GP already exists and overwrite=False.
-        :raises ValueError: 
+        :raises ValueError:
             If an invalid kernel name is provided.
-        :raises Exception: 
+        :raises Exception:
             If GP initialization fails after multiple attempts with different scale lengths.
 
         .. note:: 
@@ -897,6 +899,10 @@ class SurrogateModel(object):
             ...            optimizer_kwargs={"maxiter": 100, "ftol": 1e-9})
         """
         
+        if not hasattr(self, 'theta_train'):
+            raise RuntimeError(
+                "No training data found. Call init_samples() before init_gp().")
+
         if hasattr(self, 'gp') and (overwrite == False):
             raise AssertionError(
                 "GP kernel already assigned. Use overwrite=True to re-assign the kernel.")
@@ -904,6 +910,11 @@ class SurrogateModel(object):
         # optional hyperparameter choices
         self.fit_amp = fit_amp
         self.fit_mean = fit_mean
+        if white_noise is None and fit_white_noise:
+            raise ValueError(
+                "white_noise cannot be None when fit_white_noise=True. "
+                "Either set fit_white_noise=False or provide a numeric "
+                "white_noise value (default is -12).")
         self.fit_white_noise = fit_white_noise
         self.white_noise = white_noise
         self.uniform_scales = uniform_scales
@@ -1084,7 +1095,7 @@ class SurrogateModel(object):
         # Optimize GP hyperparameters
         self.gp, _ = self._opt_gp(**self.opt_gp_kwargs)
         
-        if hasattr(self, "_theta_test") & hasattr(self, "_y_test"):
+        if hasattr(self, "_theta_test") and hasattr(self, "_y_test") and len(self._y_test) > 0:
             _ytest = self.gp.predict(self._y, self._theta_test, return_cov=False, return_var=False)
             ytest = self.y_scaler.inverse_transform(_ytest.reshape(-1, 1)).flatten()
             ytest_true = self.y_scaler.inverse_transform(self._y_test.reshape(-1, 1)).flatten()
@@ -1148,10 +1159,14 @@ class SurrogateModel(object):
                 print(f"Warning: Hyperparameters contain NaN or Inf: {hyperparameters_array}")
                 print("Reoptimizing hyperparameters from scratch...")
                 gp, _ = self._opt_gp(**self.opt_gp_kwargs, _theta=_theta, _y=_y)
-                # Validate the reoptimized GP
+                # Validate the reoptimized GP — clip if still invalid
                 reopt_params = gp.get_parameter_vector()
                 if not np.all(np.isfinite(reopt_params)):
-                    raise ValueError(f"Reoptimized GP still has invalid parameters: {reopt_params}")
+                    print(f"Warning: Reoptimized GP still has invalid parameters: {reopt_params}")
+                    reopt_params = np.where(np.isfinite(reopt_params), reopt_params, 0.0)
+                    print(f"Clipped to: {reopt_params}")
+                    gp.set_parameter_vector(reopt_params)
+                    gp.compute(_theta)
                 return gp, time.time() - t0
         
         gp = self.set_hyperparameter_vector(gp, hyperparameters)
@@ -1309,7 +1324,15 @@ class SurrogateModel(object):
                 def get_fun_value(res):
                     return res.fun
                 results = min(opt_results, key=get_fun_value)
-            
+
+            # Clip optimized parameters to bounds and validate
+            if self.hp_bounds is not None:
+                results.x = np.clip(results.x, self.hp_bounds[:, 0], self.hp_bounds[:, 1])
+            if not np.all(np.isfinite(results.x)):
+                print(f"Warning: GP optimization produced non-finite parameters: {results.x}")
+                print("Falling back to current hyperparameters.")
+                results.x = current_hp
+
             op_gp = self.set_hyperparameter_vector(current_gp, results.x)
             op_gp.compute(_theta)
             
@@ -1637,14 +1660,14 @@ class SurrogateModel(object):
             _thetaN = self._prior_sampler(nsample=1).flatten()
         
         thetaN = self.theta_scaler.inverse_transform(_thetaN.reshape(1, -1))
-        yN = self.true_log_likelihood(thetaN.reshape(-1,1))
-        
+        yN = self.true_log_likelihood(thetaN.flatten())
+
         # Validate new training point
         if not np.any(np.isfinite(thetaN.flatten())):
             print(f"New theta contains NaN or Inf: {thetaN}")
             return None, None, opt_timing
-        if not np.any(np.isfinite(yN.flatten())):
-            print(f"New y value is NaN or Inf: {yN}. Check your likelihood function at theta={thetaN}") 
+        if not np.isfinite(float(yN)):
+            print(f"New y value is NaN or Inf: {yN}. Check your likelihood function at theta={thetaN}")
             return None, None, opt_timing
         
         # add theta and y to training samples
@@ -1823,7 +1846,7 @@ class SurrogateModel(object):
                 training_scaled_mse = np.nan
 
             # evaluate gp test error (scaled)
-            if hasattr(self, '_theta_test') and hasattr(self, '_y_test'):
+            if hasattr(self, '_theta_test') and hasattr(self, '_y_test') and len(self._y_test) > 0:
                 try:
                     _ytest = self.gp.predict(self._y, self._theta_test, return_cov=False, return_var=False)
                     ytest = self.y_scaler.inverse_transform(_ytest.reshape(-1, 1)).flatten()
@@ -2105,7 +2128,7 @@ class SurrogateModel(object):
         raise NotImplementedError("Not implemented.")
 
 
-    def run_emcee(self, like_fn=None, prior_fn=None, nwalkers=None, nsteps=int(5e4), sampler_kwargs={}, run_kwargs={},
+    def run_emcee(self, like_fn=None, prior_fn=None, p0=None, nwalkers=None, nsteps=int(5e4), sampler_kwargs={}, run_kwargs={},
                   opt_init=False, multi_proc=True, prior_fn_comment=None, burn=None, thin=None, samples_file=None, min_ess=int(1e4)):
         """
         Sample the posterior using the emcee affine-invariant MCMC algorithm.
@@ -2288,12 +2311,12 @@ class SurrogateModel(object):
             self.nwalkers = int(nwalkers)
         self.nsteps = int(nsteps)
 
-        # Optimize walker initialization?
-        if opt_init == True:
-            # start walkers near the estimated maximum
+        # Initialize walker positions
+        if p0 is not None:
+            pass  # use caller-provided p0
+        elif opt_init:
             p0 = self.find_map(prior_fn=self.prior_fn)
         else:
-            # start walkers at random points in the prior space
             p0 = ut.prior_sampler(nsample=self.nwalkers, bounds=self.bounds, sampler="uniform", random_state=None)
 
         # set up multiprocessing pool with MPI safety
@@ -2308,12 +2331,13 @@ class SurrogateModel(object):
         all_run_times = []
         accumulated_samples = 0
         run_number = 1
-        
-        while accumulated_samples < min_ess:
+        iMinSamples = max(min_ess, 1)
+
+        while accumulated_samples < iMinSamples:
             if min_ess > 0:
-                print(f"\nRun {run_number}: Need {max(0, min_ess - accumulated_samples)} more samples...")
+                print(f"\nRun {run_number}: Need {max(0, iMinSamples - accumulated_samples)} more samples...")
                 print("="*50)
-            
+
             # Run the sampler!
             emcee_t0 = time.time()
             self.emcee_sampler = emcee.EnsembleSampler(self.nwalkers, 
@@ -2343,15 +2367,15 @@ class SurrogateModel(object):
             
             current_nsamples = current_samples.shape[0]
             accumulated_samples += current_nsamples
-            
+
             if min_ess > 0:
                 print(f"Run {run_number} complete: {current_nsamples} samples")
                 print(f"Total accumulated samples: {accumulated_samples}")
-            
+
             # If min_ess requirement met, break
-            if accumulated_samples >= min_ess:
+            if accumulated_samples >= iMinSamples:
                 break
-                
+
             run_number += 1
             
             # Reset initial positions for next run (start from end of previous run)
@@ -2384,7 +2408,10 @@ class SurrogateModel(object):
 
         # get acceptance fraction and autocorrelation time
         self.acc_frac = np.mean(self.emcee_sampler.acceptance_fraction)
-        self.autcorr_time = np.mean(self.emcee_sampler.get_autocorr_time())
+        try:
+            self.autcorr_time = np.mean(self.emcee_sampler.get_autocorr_time())
+        except Exception:
+            self.autcorr_time = np.mean(self.emcee_sampler.get_autocorr_time(quiet=True))
         if self.verbose:
             print(f"Total samples: {self.emcee_samples.shape[0]}")
             print("Mean acceptance fraction: {0:.3f}".format(self.acc_frac))
@@ -2640,11 +2667,15 @@ class SurrogateModel(object):
         else:
             raise ValueError(f"mode {mode} is not a valid option. Choose 'dynamic' or 'static'.")
         
-        # set up run kwargs. default: 100% weight on posterior, 0% evidence
-        default_run_kwargs = {"wt_kwargs": {'pfrac': 1.0},
-                              "stop_kwargs": {'pfrac': 1.0},
-                              "maxiter": int(5e4),
-                              "dlogz_init": 0.5}
+        # set up run kwargs with mode-appropriate defaults
+        if mode == "dynamic":
+            default_run_kwargs = {"wt_kwargs": {'pfrac': 1.0},
+                                  "stop_kwargs": {'pfrac': 1.0},
+                                  "maxiter": int(5e4),
+                                  "dlogz_init": 0.5}
+        else:
+            default_run_kwargs = {"maxiter": int(5e4),
+                                  "dlogz": 0.5}
         for key in default_run_kwargs:
             if key not in run_kwargs:
                 run_kwargs[key] = default_run_kwargs[key]
@@ -2659,15 +2690,16 @@ class SurrogateModel(object):
         all_run_times = []
         accumulated_samples = 0
         run_number = 1
-        
-        while accumulated_samples < min_ess:
+        iMinSamples = max(min_ess, 1)
+
+        while accumulated_samples < iMinSamples:
             if min_ess > 0:
-                print(f"\nRun {run_number}: Need {max(0, min_ess - accumulated_samples)} more samples...")
+                print(f"\nRun {run_number}: Need {max(0, iMinSamples - accumulated_samples)} more samples...")
                 print("="*50)
-            
+
             # Set timing for this run
             run_start_time = dynesty_t0 if run_number == 1 else time.time()
-            
+
             # Pickle sampler?
             if save_iter is not None:
                 run_sampler = True
@@ -2716,11 +2748,11 @@ class SurrogateModel(object):
                 print(f"Total accumulated samples: {accumulated_samples}")
             
             # If min_ess requirement met, break
-            if accumulated_samples >= min_ess:
+            if accumulated_samples >= iMinSamples:
                 break
-                
+
             run_number += 1
-            
+
             # Setup for next run
             if run_number <= 10:  # Limit to prevent infinite loops
                 # Create a new sampler for the next run
