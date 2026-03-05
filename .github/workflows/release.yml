@@ -1,0 +1,30 @@
+name: Create Release on Version Change
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - pyproject.toml
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get version from pyproject.toml
+        id: get_version
+        run: |
+          VERSION=$(python -c "import tomllib; f=open('pyproject.toml','rb'); d=tomllib.load(f); print(d['project']['version'])")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v${{ steps.get_version.outputs.version }}" \
+            --title "v${{ steps.get_version.outputs.version }}" \
+            --generate-notes
