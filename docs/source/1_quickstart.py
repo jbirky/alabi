@@ -9,14 +9,7 @@ You can run this script directly or copy sections into your own code.
 """
 
 # %% [markdown]
-# # Installation + Quickstart
-# 
-# To install alabi, clone it from the git repo:
-# ```bash
-# git clone https://github.com/jbirky/alabi
-# cd alabi
-# python setup.py install
-# ```
+# # Quickstart
 
 # %% [markdown]
 # ### Step 1

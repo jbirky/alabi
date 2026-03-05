@@ -2,6 +2,7 @@
 :caption: Intro
 :hidden:
 
+0_installation
 1_quickstart
 2_save_reload
 3_gp_tutorial

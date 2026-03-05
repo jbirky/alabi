@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="alabi package" href="alabi.html"><link rel="prev" title="Stellar Evolution" href="trappist_stellar_evolution.html">
         <link rel="canonical" href="https://alabi.jessicabirky.com/modules.html">
 
-    <!-- Generated with Sphinx 8.2.3 and Furo 2025.12.19 -->
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
         <title>alabi - alabi</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
@@ -213,7 +213,8 @@
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <p class="caption" role="heading"><span class="caption-text">Intro</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="1_quickstart.html">Installation + Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="0_installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="1_quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="2_save_reload.html">Saving and Reloading</a></li>
 <li class="toctree-l1"><a class="reference internal" href="3_gp_tutorial.html">GP Training</a></li>
 <li class="toctree-l1"><a class="reference internal" href="4_mcmc_tutorial.html">MCMC sampling</a></li>
@@ -286,13 +287,133 @@
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="alabi.html">alabi package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="alabi.html#alabi-benchmarks-module">alabi.benchmarks module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="alabi.html#alabi-cache-utils-module">alabi.cache_utils module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="alabi.html#alabi-core-module">alabi.core module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="alabi.html#alabi-gp-utils-module">alabi.gp_utils module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="alabi.html#alabi-mcmc-utils-module">alabi.mcmc_utils module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="alabi.html#alabi-utility-module">alabi.utility module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="alabi.html#alabi-visualization-module">alabi.visualization module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="alabi.html#module-alabi.benchmarks">alabi.benchmarks module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#benchmarks-py"><code class="xref py py-mod docutils literal notranslate"><span class="pre">benchmarks.py</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.benchmarks.random_gaussian_covariance"><code class="docutils literal notranslate"><span class="pre">random_gaussian_covariance()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.benchmarks.multimodal_gaussian_nd"><code class="docutils literal notranslate"><span class="pre">multimodal_gaussian_nd()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="alabi.html#module-alabi.cache_utils">alabi.cache_utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#cache-utils-py"><code class="xref py py-mod docutils literal notranslate"><span class="pre">cache_utils.py</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.cache_utils.load_pickle"><code class="docutils literal notranslate"><span class="pre">load_pickle()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.cache_utils.load_model_cache"><code class="docutils literal notranslate"><span class="pre">load_model_cache()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.cache_utils.write_report_gp"><code class="docutils literal notranslate"><span class="pre">write_report_gp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.cache_utils.write_report_emcee"><code class="docutils literal notranslate"><span class="pre">write_report_emcee()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.cache_utils.write_report_dynesty"><code class="docutils literal notranslate"><span class="pre">write_report_dynesty()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="alabi.html#module-alabi.core">alabi.core module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#core-py"><code class="xref py py-mod docutils literal notranslate"><span class="pre">core.py</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel"><code class="docutils literal notranslate"><span class="pre">SurrogateModel</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.gp"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.gp</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.bounds"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.bounds</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel._bounds"><code class="docutils literal notranslate"><span class="pre">SurrogateModel._bounds</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel._theta"><code class="docutils literal notranslate"><span class="pre">SurrogateModel._theta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel._y"><code class="docutils literal notranslate"><span class="pre">SurrogateModel._y</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.ntrain"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.ntrain</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.ndim"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.ndim</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.emcee_samples"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.emcee_samples</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.dynesty_samples"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.dynesty_samples</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.__init__"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.save"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.save()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.theta"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.theta()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.y"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.y()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.refit_scalers"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.refit_scalers()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.init_train"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.init_train()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.load_train"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.load_train()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.init_samples"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.init_samples()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.set_hyperparam_prior_bounds"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.set_hyperparam_prior_bounds()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.expand_hyperparameter_vector"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.expand_hyperparameter_vector()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.set_hyperparameter_vector"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.set_hyperparameter_vector()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.get_hyperparameter_dict"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.get_hyperparameter_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.get_hyperparameter_vector"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.get_hyperparameter_vector()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.init_gp"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.init_gp()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.eval_gp_at_iteration"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.eval_gp_at_iteration()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.surrogate_log_likelihood"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.surrogate_log_likelihood()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.surrogate_likelihood"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.surrogate_likelihood()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.create_cached_surrogate_likelihood"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.create_cached_surrogate_likelihood()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.find_max_surrogate"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.find_max_surrogate()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.find_next_point"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.find_next_point()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.active_train"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.active_train()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.active_train_parallel"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.active_train_parallel()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.lnprob"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.lnprob()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.find_map"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.find_map()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.run_emcee"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.run_emcee()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.run_dynesty"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.run_dynesty()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.run_pymultinest"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.run_pymultinest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.run_ultranest"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.run_ultranest()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.plot"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.plot()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.SurrogateModel.get_chain_diversity_metrics"><code class="docutils literal notranslate"><span class="pre">SurrogateModel.get_chain_diversity_metrics()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.core.CachedSurrogateLikelihood"><code class="docutils literal notranslate"><span class="pre">CachedSurrogateLikelihood</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.core.CachedSurrogateLikelihood.__init__"><code class="docutils literal notranslate"><span class="pre">CachedSurrogateLikelihood.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="alabi.html#module-alabi.gp_utils">alabi.gp_utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#gp-utils-py"><code class="xref py py-mod docutils literal notranslate"><span class="pre">gp_utils.py</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.gp_utils.configure_gp"><code class="docutils literal notranslate"><span class="pre">configure_gp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.gp_utils.optimize_gp"><code class="docutils literal notranslate"><span class="pre">optimize_gp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.gp_utils.optimize_gp_kfold_cv"><code class="docutils literal notranslate"><span class="pre">optimize_gp_kfold_cv()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.gp_utils.regularization_term"><code class="docutils literal notranslate"><span class="pre">regularization_term()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.gp_utils.regularization_gradient"><code class="docutils literal notranslate"><span class="pre">regularization_gradient()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="alabi.html#module-alabi.mcmc_utils">alabi.mcmc_utils module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#mcmc-utils-py"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mcmc_utils.py</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.mcmc_utils.estimate_burnin"><code class="docutils literal notranslate"><span class="pre">estimate_burnin()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="alabi.html#module-alabi.utility">alabi.utility module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#utility-py"><code class="xref py py-mod docutils literal notranslate"><span class="pre">utility.py</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.agp_utility"><code class="docutils literal notranslate"><span class="pre">agp_utility()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.bape_utility"><code class="docutils literal notranslate"><span class="pre">bape_utility()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.jones_utility"><code class="docutils literal notranslate"><span class="pre">jones_utility()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.assign_utility"><code class="docutils literal notranslate"><span class="pre">assign_utility()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.minimize_objective"><code class="docutils literal notranslate"><span class="pre">minimize_objective()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.prior_sampler"><code class="docutils literal notranslate"><span class="pre">prior_sampler()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.prior_sampler_normal"><code class="docutils literal notranslate"><span class="pre">prior_sampler_normal()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.lnprior_uniform"><code class="docutils literal notranslate"><span class="pre">lnprior_uniform()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.prior_transform_uniform"><code class="docutils literal notranslate"><span class="pre">prior_transform_uniform()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.lnprior_normal"><code class="docutils literal notranslate"><span class="pre">lnprior_normal()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.prior_transform_normal"><code class="docutils literal notranslate"><span class="pre">prior_transform_normal()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.BetaWarpingFunction"><code class="docutils literal notranslate"><span class="pre">BetaWarpingFunction</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.utility.BetaWarpingFunction.__init__"><code class="docutils literal notranslate"><span class="pre">BetaWarpingFunction.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.utility.BetaWarpingFunction.fit"><code class="docutils literal notranslate"><span class="pre">BetaWarpingFunction.fit()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.utility.BetaWarpingFunction.transform"><code class="docutils literal notranslate"><span class="pre">BetaWarpingFunction.transform()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.utility.BetaWarpingFunction.fit_transform"><code class="docutils literal notranslate"><span class="pre">BetaWarpingFunction.fit_transform()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.utility.BetaWarpingFunction.inverse_transform"><code class="docutils literal notranslate"><span class="pre">BetaWarpingFunction.inverse_transform()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.beta_warping_transformer"><code class="docutils literal notranslate"><span class="pre">beta_warping_transformer()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.utility.NewFunctionTransformer"><code class="docutils literal notranslate"><span class="pre">NewFunctionTransformer</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="alabi.html#alabi.utility.NewFunctionTransformer.__init__"><code class="docutils literal notranslate"><span class="pre">NewFunctionTransformer.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="alabi.html#module-alabi.visualization">alabi.visualization module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#visualization-py"><code class="xref py py-mod docutils literal notranslate"><span class="pre">visualization.py</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_error_vs_iteration"><code class="docutils literal notranslate"><span class="pre">plot_error_vs_iteration()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_hyperparam_vs_iteration"><code class="docutils literal notranslate"><span class="pre">plot_hyperparam_vs_iteration()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_train_time_vs_iteration"><code class="docutils literal notranslate"><span class="pre">plot_train_time_vs_iteration()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_corner_lnp"><code class="docutils literal notranslate"><span class="pre">plot_corner_lnp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_corner_scatter"><code class="docutils literal notranslate"><span class="pre">plot_corner_scatter()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_gp_fit_1D"><code class="docutils literal notranslate"><span class="pre">plot_gp_fit_1D()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_gp_fit_2D"><code class="docutils literal notranslate"><span class="pre">plot_gp_fit_2D()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_contour_2D"><code class="docutils literal notranslate"><span class="pre">plot_contour_2D()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_true_fit_2D"><code class="docutils literal notranslate"><span class="pre">plot_true_fit_2D()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_utility_2D"><code class="docutils literal notranslate"><span class="pre">plot_utility_2D()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_dynesty_traceplot"><code class="docutils literal notranslate"><span class="pre">plot_dynesty_traceplot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_dynesty_runplot"><code class="docutils literal notranslate"><span class="pre">plot_dynesty_runplot()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_mcmc_comparison"><code class="docutils literal notranslate"><span class="pre">plot_mcmc_comparison()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_sampler_comparison"><code class="docutils literal notranslate"><span class="pre">plot_sampler_comparison()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_2D_panel4"><code class="docutils literal notranslate"><span class="pre">plot_2D_panel4()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="alabi.html#alabi.visualization.plot_gp_predictions_1D"><code class="docutils literal notranslate"><span class="pre">plot_gp_predictions_1D()</span></code></a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -349,8 +470,8 @@
     </aside>
   </div>
 </div><script src="_static/documentation_options.js?v=d45e8c67"></script>
-    <script src="_static/doctools.js?v=9bcbadda"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="_static/copybutton.js?v=f281be69"></script>
