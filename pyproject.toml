@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alabi"
+version = "0.1.0"
+description = "Active Learning Accelerated Bayesian Inference (ALABI)"
+authors = [{name = "Jess Birky", email = "jessbirky@pm.me"}]
+license = {text = "MIT"}
+requires-python = ">=3.8"
+dependencies = [
+    "numpy",
+    "matplotlib>=2.0.0",
+    "scipy",
+    "george",
+    "emcee>=3.0",
+    "dynesty",
+    "corner",
+    "scikit-learn",
+    "scikit-optimize",
+    "pybind11",
+    "h5py",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.urls]
+Homepage = "https://github.com/jbirky/alabi"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["alabi*"]
