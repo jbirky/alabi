@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "alabi"
-version = "0.1.4"
+version = "0.1.5"
 description = "Active Learning Accelerated Bayesian Inference (ALABI)"
 authors = [{name = "Jess Birky", email = "jessbirky@pm.me"}]
 license = {text = "MIT"}
